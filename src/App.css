@@ -56,3 +56,26 @@
   padding: 1.5rem 2rem;
   overflow-x: auto;
 }
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-data {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-data:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

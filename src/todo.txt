@@ -1,8 +1,11 @@
 Planning : 
-- Possibilité de revenir à la semaine en cours
-- Vouloir faire une activité dans la semaine et qu'on me propose un moment
-- Rajouter mes activités quotidiennes (Table des savoirs, vidéo NBA, Sport, lire)
+- Afficher un message d'alerte lorsque 2 évenements se superposent
+- Retirer l'export du fichier quand on rafraichit
+- Bug événement après 00h
+- Bug déplacer événement après 22h
 
 Recettes :
 - Faire en sorte que ce soit des vrais recettes complètes pas uniquement une viande, un légume etc...
 - Ajouter plus de recettes
+- Faire un tri de recettes par aliments
+- Ajouter à part des éléments de recette (pâte à tarte, béchamel etc..)

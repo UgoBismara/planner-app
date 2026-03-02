@@ -8,6 +8,7 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
   const [search, setSearch] = useState('');
   const [detailRecipe, setDetailRecipe] = useState(currentRecipe || null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [batchOnly, setBatchOnly] = useState(false);
   const [newRecipe, setNewRecipe] = useState({ title: '', time: '', calories: '', ingredients: '', steps: '' });
 
   const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
@@ -21,18 +22,20 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
   }, [weekMeals, dayIndex, mealType]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return allRecipes;
+    let pool = batchOnly ? allRecipes.filter((r) => r.batchCooking) : allRecipes;
+    if (!search.trim()) return pool;
     const q = search.toLowerCase();
-    return allRecipes.filter((r) =>
+    return pool.filter((r) =>
       r.title.toLowerCase().includes(q) ||
       (r.category && r.category.toLowerCase().includes(q))
     );
-  }, [search, allRecipes]);
+  }, [search, batchOnly, allRecipes]);
 
   const handleSuggest = () => {
-    const unused = allRecipes.filter((r) => !usedIds.has(r.id));
-    const pool = unused.length > 0 ? unused : allRecipes;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const pool = (batchOnly ? allRecipes.filter((r) => r.batchCooking) : allRecipes)
+      .filter((r) => !usedIds.has(r.id));
+    const base = pool.length > 0 ? pool : allRecipes;
+    const pick = base[Math.floor(Math.random() * base.length)];
     setDetailRecipe(pick);
   };
 
@@ -70,8 +73,15 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
                 onChange={(e) => setSearch(e.target.value)}
                 autoFocus
               />
+              <button
+                className={`btn-batch-filter ${batchOnly ? 'active' : ''}`}
+                onClick={() => setBatchOnly((v) => !v)}
+                title="Afficher uniquement les recettes batch cooking"
+              >
+                🥘 Batch
+              </button>
               <button className="btn-suggest" onClick={handleSuggest}>
-                Suggestion aléatoire
+                Suggestion
               </button>
             </div>
 
@@ -88,6 +98,7 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
                   {detailRecipe.category && <span className="tag">{detailRecipe.category}</span>}
                   {detailRecipe.time && <span className="tag">{detailRecipe.time} min</span>}
                   {detailRecipe.calories && <span className="tag tag-calories">{detailRecipe.calories} kcal</span>}
+                  {detailRecipe.batchCooking && <span className="tag tag-batch">batch cooking</span>}
                 </div>
                 <div className="recipe-section">
                   <strong>Ingrédients</strong>
@@ -114,6 +125,7 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
                     <div className="recipe-item-meta">
                       {recipe.category && <span className="tag">{recipe.category}</span>}
                       {recipe.time && <span className="tag">{recipe.time} min</span>}
+                      {recipe.batchCooking && <span className="tag tag-batch">batch</span>}
                       {usedIds.has(recipe.id) && <span className="tag used-tag">Déjà utilisée</span>}
                     </div>
                   </div>

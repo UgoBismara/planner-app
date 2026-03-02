@@ -205,6 +205,35 @@
   opacity: 0.88;
 }
 
+.btn-batch-filter {
+  white-space: nowrap;
+  padding: 0.5rem 0.85rem;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.btn-batch-filter:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.btn-batch-filter.active {
+  background: rgba(79, 142, 247, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tag-batch {
+  color: #f0a500;
+  border-color: #f0a500;
+}
+
 .recipe-list {
   overflow-y: auto;
   flex: 1;
