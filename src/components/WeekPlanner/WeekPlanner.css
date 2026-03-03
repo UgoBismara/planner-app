@@ -104,6 +104,23 @@
   color: var(--accent);
 }
 
+.overlap-badge {
+  font-size: 0.7rem;
+  color: #f39c12;
+  cursor: default;
+  line-height: 1;
+}
+
+.overlap-warning {
+  font-size: 0.82rem;
+  color: #f39c12;
+  background: rgba(243, 156, 18, 0.1);
+  border: 1px solid rgba(243, 156, 18, 0.35);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
 .day-name {
   font-weight: 700;
   font-size: 0.8rem;

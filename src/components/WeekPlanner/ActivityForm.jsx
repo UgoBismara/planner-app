@@ -3,7 +3,24 @@ import { useState } from 'react';
 const COLORS = ['#4f8ef7', '#e67e22', '#2ecc71', '#9b59b6', '#e74c3c', '#1abc9c', '#f39c12'];
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
-export default function ActivityForm({ dayIndex, activity, onAdd, onAddRecurring, onEdit, onClose }) {
+function toMin(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function hasTimeOverlap(time, endTime, existing) {
+  if (!time || !existing?.length) return false;
+  const start = toMin(time);
+  const end = endTime ? toMin(endTime) : start + 30;
+  return existing.some((a) => {
+    if (!a.time) return false;
+    const aStart = toMin(a.time);
+    const aEnd = a.endTime ? toMin(a.endTime) : aStart + 30;
+    return start < aEnd && end > aStart;
+  });
+}
+
+export default function ActivityForm({ dayIndex, activity, existingActivities, onAdd, onAddRecurring, onEdit, onClose }) {
   const isEditMode = !!activity;
 
   const [title, setTitle] = useState(activity?.title ?? '');
@@ -67,6 +84,9 @@ export default function ActivityForm({ dayIndex, activity, onAdd, onAddRecurring
               />
             </div>
           </div>
+          {hasTimeOverlap(time, endTime, existingActivities) && (
+            <p className="overlap-warning">⚠ Ce créneau se superpose à une activité existante.</p>
+          )}
           <div className="form-group">
             <label>Couleur</label>
             <div className="color-picker">

@@ -170,6 +170,12 @@ function timeToMinutes(timeStr) {
   return h * 60 + m;
 }
 
+// Handles post-midnight times: "00:30" → 1470 instead of 30, so they position correctly after 24h
+function timeToCalMin(timeStr) {
+  const min = timeToMinutes(timeStr);
+  return min < START_MIN ? min + 24 * 60 : min;
+}
+
 function minutesToTime(min) {
   const clamped = Math.max(START_MIN, Math.min(END_HOUR * 60 - 1, min));
   const h = Math.floor(clamped / 60) % 24;
@@ -178,19 +184,19 @@ function minutesToTime(min) {
 }
 
 function toTopPct(timeStr) {
-  return `${((timeToMinutes(timeStr) - START_MIN) / TOTAL_MINS) * 100}%`;
+  return `${((timeToCalMin(timeStr) - START_MIN) / TOTAL_MINS) * 100}%`;
 }
 
 function toHeightPct(startStr, endStr) {
-  return `${((timeToMinutes(endStr) - timeToMinutes(startStr)) / TOTAL_MINS) * 100}%`;
+  return `${((timeToCalMin(endStr) - timeToCalMin(startStr)) / TOTAL_MINS) * 100}%`;
 }
 
 // Assigns each timed event a column index so that overlapping events share space side by side.
 function computeLayout(timedEvents) {
   if (timedEvents.length === 0) return [];
-  const getStart = (e) => timeToMinutes(e.time);
+  const getStart = (e) => timeToCalMin(e.time);
   const getEnd = (e) =>
-    e.endTime ? timeToMinutes(e.endTime) : timeToMinutes(e.time) + 30;
+    e.endTime ? timeToCalMin(e.endTime) : timeToCalMin(e.time) + 30;
   const overlaps = (a, b) => getStart(a) < getEnd(b) && getEnd(a) > getStart(b);
 
   const sorted = [...timedEvents].sort((a, b) => getStart(a) - getStart(b));
@@ -316,7 +322,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     let newEndTime = ds.activity.endTime || "";
     if (ds.activity.time && ds.activity.endTime) {
       const duration =
-        timeToMinutes(ds.activity.endTime) - timeToMinutes(ds.activity.time);
+        timeToCalMin(ds.activity.endTime) - timeToCalMin(ds.activity.time);
       newEndTime = minutesToTime(
         Math.min(END_HOUR * 60 - 1, absoluteStartMin + duration),
       );
@@ -492,6 +498,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     getActivitiesForDay(i).some((a) => !a.time),
   );
 
+  // Precompute layouts for all days (used in both header and body)
+  const dayLayouts = days.map((_, i) => {
+    const timedAll = getActivitiesForDay(i).filter((a) => a.time);
+    return computeLayout(timedAll);
+  });
+
   // ── Render helpers ─────────────────────────────────────────────
   const renderDeleteBtn = (activity, i) => (
     <button
@@ -539,21 +551,27 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       <div className="calendar-wrapper">
         <div className="calendar-header">
           <div className="time-gutter-header" />
-          {days.map((date, i) => (
-            <div
-              key={i}
-              className={`cal-day-header ${isToday(date) ? "today" : ""}`}
-            >
-              <span className="day-name">{DAY_NAMES[i]}</span>
-              <span className="day-date">{formatDate(date)}</span>
-              <button
-                className="add-activity-btn"
-                onClick={() => setActiveFormDay(i)}
+          {days.map((date, i) => {
+            const hasOverlap = dayLayouts[i].some((a) => a._totalCols > 1);
+            return (
+              <div
+                key={i}
+                className={`cal-day-header ${isToday(date) ? "today" : ""}`}
               >
-                + Ajouter
-              </button>
-            </div>
-          ))}
+                <span className="day-name">{DAY_NAMES[i]}</span>
+                <span className="day-date">{formatDate(date)}</span>
+                {hasOverlap && (
+                  <span className="overlap-badge" title="Des événements se superposent sur ce jour">⚠</span>
+                )}
+                <button
+                  className="add-activity-btn"
+                  onClick={() => setActiveFormDay(i)}
+                >
+                  + Ajouter
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         <div className="calendar-body">
@@ -568,9 +586,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           </div>
 
           {days.map((date, i) => {
-            const activities = getActivitiesForDay(i);
-            const timedAll = activities.filter((a) => a.time);
-            const timedWithLayout = computeLayout(timedAll);
+            const timedWithLayout = dayLayouts[i];
             const timedFull = timedWithLayout.filter((a) => a.endTime);
             const timedStart = timedWithLayout.filter((a) => !a.endTime);
             const isGhostCol = isDragging && preview?.targetDayIndex === i;
@@ -629,8 +645,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   const beingDragged =
                     isDragging && dragRef.current?.activity.id === activity.id;
                   const durationMin =
-                    timeToMinutes(activity.endTime) -
-                    timeToMinutes(activity.time);
+                    timeToCalMin(activity.endTime) -
+                    timeToCalMin(activity.time);
                   const isCompact = durationMin < 45;
                   return (
                     <div
@@ -749,6 +765,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       {activeFormDay !== null && (
         <ActivityForm
           dayIndex={activeFormDay}
+          existingActivities={getActivitiesForDay(activeFormDay).filter((a) => a.time)}
           onAdd={(activity) => handleAdd(activeFormDay, activity)}
           onAddRecurring={handleAddRecurring}
           onClose={() => setActiveFormDay(null)}
@@ -759,6 +776,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         <ActivityForm
           dayIndex={editingActivity.dayIndex}
           activity={editingActivity.activity}
+          existingActivities={getActivitiesForDay(editingActivity.dayIndex).filter(
+            (a) => a.time && a.id !== editingActivity.activity.id,
+          )}
           onEdit={handleEdit}
           onClose={() => setEditingActivity(null)}
         />

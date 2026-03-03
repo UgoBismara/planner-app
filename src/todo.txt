@@ -1,8 +1,5 @@
 Planning : 
-- Afficher un message d'alerte lorsque 2 évenements se superposent
-- Retirer l'export du fichier quand on rafraichit
-- Bug événement après 00h
-- Bug déplacer événement après 22h
+
 
 Recettes :
 - Faire en sorte que ce soit des vrais recettes complètes pas uniquement une viande, un légume etc...

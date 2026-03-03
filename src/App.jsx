@@ -64,23 +64,6 @@ export default function App() {
     if (navigator.storage?.persist) {
       navigator.storage.persist();
     }
-
-    // Si un export en attente existe depuis la session précédente, le télécharger maintenant
-    const pending = localStorage.getItem('planner_pending_export');
-    if (pending) {
-      try {
-        triggerDownload(JSON.parse(pending));
-      } catch { /* ignore */ }
-      localStorage.removeItem('planner_pending_export');
-    }
-
-    // À la fermeture : sauvegarder un snapshot dans localStorage (toujours fiable)
-    // Le téléchargement s'effectuera à la prochaine ouverture de l'app
-    const saveSnapshot = () => {
-      localStorage.setItem('planner_pending_export', JSON.stringify(collectPlannerData()));
-    };
-    window.addEventListener('beforeunload', saveSnapshot);
-    return () => window.removeEventListener('beforeunload', saveSnapshot);
   }, []);
 
   return (
