@@ -647,7 +647,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   const durationMin =
                     timeToCalMin(activity.endTime) -
                     timeToCalMin(activity.time);
-                  const isCompact = durationMin < 45;
+                  const isCompact = durationMin < 75;
                   return (
                     <div
                       key={activity.id}
