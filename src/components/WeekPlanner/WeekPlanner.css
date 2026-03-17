@@ -136,7 +136,7 @@
 .calendar-body {
   display: grid;
   grid-template-columns: 52px repeat(7, 1fr);
-  height: calc(100dvh - 230px);
+  height: calc(100dvh - 260px);
   overflow: hidden;
 }
 
@@ -177,12 +177,7 @@
 }
 
 .hour-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--border);
-  pointer-events: none;
+  display: none;
 }
 
 /* ── Blocs d'activités (heure début + fin) ── */
@@ -194,6 +189,7 @@
   border-left: 3px solid;
   border-radius: 4px;
   padding: 4px 6px;
+  box-sizing: border-box;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -304,7 +300,374 @@
   opacity: 1;
 }
 
+/* ── Bouton effectué ── */
+.done-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.68rem;
+  padding: 0 1px;
+  color: var(--text-secondary);
+  opacity: 0;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.cal-activity-block:hover .done-toggle-btn,
+.cal-activity-pill:hover .done-toggle-btn {
+  opacity: 0.5;
+}
+
+.done-toggle-btn:hover { opacity: 1 !important; color: #2ecc71; }
+.done-toggle-btn.done-active { opacity: 1 !important; color: #2ecc71; }
+
+.cal-block-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+/* ── Événements non effectués (passés) ── */
+.cal-activity-block.is-missed,
+.cal-activity-pill.is-missed {
+  border-left-color: #e67e22 !important;
+  background-color: rgba(230, 126, 34, 0.08) !important;
+}
+
+.missed-badge {
+  font-size: 0.6rem;
+  font-weight: bold;
+  color: #e67e22;
+  background: rgba(230, 126, 34, 0.18);
+  border-radius: 50%;
+  width: 13px;
+  height: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* ── Événements effectués ── */
+.cal-activity-block.is-done,
+.cal-activity-pill.is-done {
+  opacity: 0.55;
+}
+
+.cal-activity-block.is-done .cal-activity-title,
+.cal-activity-pill.is-done .cal-activity-title {
+  text-decoration: line-through;
+}
+
+/* ── Objectifs quotidiens ── */
+.goals-row {
+  display: grid;
+  grid-template-columns: 52px repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-main);
+  min-height: 28px;
+}
+
+.goals-gutter {
+  border-right: 1px solid var(--border);
+}
+
+.goals-cell {
+  border-right: 1px solid var(--border);
+  padding: 3px 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* ── Goal item row ── */
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+.goal-priority {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 10px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.goal-checkbox {
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  width: 11px;
+  height: 11px;
+}
+
+.goal-text {
+  font-size: 0.72rem;
+  color: var(--text-main);
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.goal-text:hover { text-decoration: underline dotted; }
+
+.goal-done .goal-text {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.goal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+.goal-item:hover .goal-actions { opacity: 1; }
+
+.goal-move-btn,
+.goal-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.62rem;
+  padding: 0 1px;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.goal-move-btn:hover { color: var(--accent); }
+.goal-delete-btn:hover { color: var(--danger); }
+
+.goal-add-btn {
+  background: none;
+  border: none;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.4;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.goal-add-btn:hover { opacity: 1; color: var(--accent); }
+
+/* ── Inline edit form ── */
+.goal-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+}
+
+.goal-edit-top {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.goal-input {
+  flex: 1;
+  font-size: 0.72rem;
+  border: none;
+  border-bottom: 1px solid var(--accent);
+  background: transparent;
+  color: var(--text-main);
+  outline: none;
+  padding: 1px 2px;
+  min-width: 0;
+}
+
+.goal-save-btn,
+.goal-cancel-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0 2px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+.goal-save-btn:hover { color: var(--accent); }
+.goal-cancel-btn:hover { color: var(--danger); }
+
+.goal-link-select {
+  width: 100%;
+  font-size: 0.68rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  padding: 1px 2px;
+}
+
+.goal-link-badge {
+  display: inline-block;
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 8px;
+  border: 1px solid;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+  line-height: 1.5;
+}
+
+.goal-find-slot-btn {
+  width: 100%;
+  margin-top: 3px;
+  padding: 3px 6px;
+  font-size: 0.68rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+.goal-find-slot-btn:hover { opacity: 0.88; }
+
+.goal-create-event-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-top: 3px;
+}
+.goal-create-event-toggle input { margin: 0; }
+
+.goal-new-event-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 3px;
+}
+.goal-event-times {
+  display: flex;
+  gap: 4px;
+}
+.goal-event-times input[type="time"] {
+  flex: 1;
+  font-size: 0.68rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  padding: 1px 2px;
+}
+
 /* ── Section "Sans horaire" ── */
+/* ── À confirmer ── */
+.confirm-row {
+  border-top: 2px solid #e67e22;
+  background: rgba(230, 126, 34, 0.05);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.confirm-row-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #e67e22;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.confirm-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.confirm-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  min-width: 0;
+}
+
+.confirm-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.confirm-day {
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 24px;
+}
+
+.confirm-title {
+  color: var(--text-main);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.confirm-time {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.confirm-badge {
+  font-size: 0.62rem;
+  background: rgba(155, 89, 182, 0.18);
+  color: #9b59b6;
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+.confirm-validate-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid #2ecc71;
+  color: #2ecc71;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  padding: 1px 7px;
+  cursor: pointer;
+}
+.confirm-validate-btn:hover { background: #2ecc71; color: #fff; }
+
+.confirm-report-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  padding: 1px 7px;
+  cursor: pointer;
+}
+.confirm-report-btn:hover { border-color: #e67e22; color: #e67e22; }
+
+/* ── Sans horaire ── */
 .unscheduled-row {
   display: grid;
   grid-template-columns: 52px repeat(7, 1fr);

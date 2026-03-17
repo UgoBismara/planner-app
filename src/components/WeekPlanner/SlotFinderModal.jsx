@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const COLORS = ['#4f8ef7', '#e67e22', '#2ecc71', '#9b59b6', '#e74c3c', '#1abc9c', '#f39c12'];
+const COLORS = ['#E53935', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA', '#00897B', '#D81B60', '#F9A825', '#00ACC1', '#7CB342', '#3949AB', '#6D4C41'];
 const DURATIONS = [
   { label: '15 min', value: 15 },
   { label: '30 min', value: 30 },
@@ -21,10 +21,14 @@ function formatDate(d) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-export default function SlotFinderModal({ days, findSlots, onConfirm, onClose }) {
-  const [title, setTitle] = useState('');
+function pickDistinctColor(usedColors) {
+  return COLORS.find((c) => !usedColors.includes(c)) ?? COLORS[0];
+}
+
+export default function SlotFinderModal({ days, initialTitle = '', existingColors = [], findSlots, onConfirm, onClose }) {
+  const [title, setTitle] = useState(initialTitle);
   const [durationMin, setDurationMin] = useState(60);
-  const [color, setColor] = useState(COLORS[0]);
+  const [color, setColor] = useState(() => pickDistinctColor(existingColors));
   const [slots, setSlots] = useState(null);
   const [slotIndex, setSlotIndex] = useState(0);
 

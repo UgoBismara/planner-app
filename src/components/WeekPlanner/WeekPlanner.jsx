@@ -107,15 +107,27 @@ function getDefaultRecurring() {
   ];
 }
 
-function findFreeSlots(
-  weekData,
-  recurring,
-  durationMin,
-  searchStart = 8 * 60,
-  searchEnd = 22 * 60,
-) {
+function roundUpTo30(min) {
+  return Math.ceil(min / 30) * 30;
+}
+
+function findFreeSlots(weekData, recurring, durationMin, days = null, searchEnd = 22 * 60) {
+  const now = new Date();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
   const slots = [];
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+    // Skip past days
+    if (days) {
+      const d = new Date(days[dayIndex]); d.setHours(0, 0, 0, 0);
+      if (d < today) continue;
+    }
+
+    // For today: start after current time; for future days: start at 8:00
+    const isToday = days ? (days[dayIndex].toDateString() === now.toDateString()) : false;
+    const searchStart = isToday ? Math.max(8 * 60, currentMinutes + 5) : 8 * 60;
+
     const recurringForDay = recurring.filter((r) => r.days.includes(dayIndex));
     const weekActivities = (weekData[dayIndex] || []).filter(
       (a) => !String(a.id).startsWith("default_"),
@@ -135,18 +147,15 @@ function findFreeSlots(
       if (merged.length === 0 || s > merged[merged.length - 1][1]) {
         merged.push([s, e]);
       } else {
-        merged[merged.length - 1][1] = Math.max(
-          merged[merged.length - 1][1],
-          e,
-        );
+        merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], e);
       }
     }
-    let cursor = searchStart;
+    let cursor = roundUpTo30(searchStart);
     for (const [busyStart, busyEnd] of merged) {
       if (busyStart - cursor >= durationMin) {
         slots.push({ dayIndex, start: cursor, end: cursor + durationMin });
       }
-      cursor = Math.max(cursor, busyEnd);
+      cursor = Math.max(cursor, roundUpTo30(busyEnd));
     }
     if (searchEnd - cursor >= durationMin) {
       slots.push({ dayIndex, start: cursor, end: cursor + durationMin });
@@ -164,6 +173,13 @@ const HOURS = Array.from(
 );
 const TOTAL_MINS = (END_HOUR - START_HOUR) * 60;
 const START_MIN = START_HOUR * 60;
+// Hours 00:xx … (END_HOUR%24 - 1):xx belong to the next calendar day
+const POST_MIDNIGHT_MAX_HOUR = END_HOUR % 24; // = 2
+
+function isPostMidnight(time) {
+  if (!time) return false;
+  return parseInt(time.split(":")[0], 10) < POST_MIDNIGHT_MAX_HOUR;
+}
 
 function timeToMinutes(timeStr) {
   const [h, m] = timeStr.split(":").map(Number);
@@ -248,7 +264,18 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     "planner_recurring_exceptions",
     [],
   );
+  const [recurringDone, setRecurringDone] = useLocalStorage(
+    "planner_recurring_done",
+    [],
+  );
+  const [recurringOverrides, setRecurringOverrides] = useLocalStorage(
+    "planner_recurring_overrides",
+    {},
+  );
+  const [pendingRecurringEdit, setPendingRecurringEdit] = useState(null); // { original, updated, storedDay }
   const days = getDaysOfWeek(weekOffset);
+  const [dailyGoals, setDailyGoals] = useLocalStorage("planner_daily_goals", {});
+  const [editingGoal, setEditingGoal] = useState(null); // { dayIndex, text, linkedEventId }
   const [activeFormDay, setActiveFormDay] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [showSlotFinder, setShowSlotFinder] = useState(false);
@@ -282,21 +309,44 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   }, [isDragging]);
 
   const getActivitiesForDay = (dayIndex) => {
+    // Current day: exclude post-midnight events (they show in next day's column)
     const recurringForDay = recurring
       .filter((r) => r.days.includes(dayIndex))
       .filter((r) => !exceptions.includes(`${r.id}|${weekKey}|${dayIndex}`))
-      .map((r) => ({ ...r, _recurring: true }));
-    const weekActivities = (weekData[dayIndex] || []).filter(
-      (a) => !String(a.id).startsWith("default_"),
-    );
-    return [...recurringForDay, ...weekActivities];
+      .map((r) => {
+        const key = `${r.id}|${weekKey}|${dayIndex}`;
+        const ov = recurringOverrides[key];
+        return { ...r, ...(ov || {}), _recurring: true, _storedDayIndex: dayIndex };
+      })
+      .filter((r) => !isPostMidnight(r.time));
+    const weekActivities = (weekData[dayIndex] || [])
+      .filter((a) => !String(a.id).startsWith("default_"))
+      .filter((a) => !isPostMidnight(a.time))
+      .map((a) => ({ ...a, _storedDayIndex: dayIndex }));
+
+    // Next day: its post-midnight events (00:xx–01:xx) appear at the bottom of this column
+    // e.g. Wednesday 01:00 is the tail of Tuesday's column
+    const nextIdx = dayIndex + 1;
+    const nextMidnight = nextIdx < 7 ? [
+      ...recurring
+        .filter((r) => r.days.includes(nextIdx))
+        .filter((r) => !exceptions.includes(`${r.id}|${weekKey}|${nextIdx}`))
+        .filter((r) => isPostMidnight(r.time))
+        .map((r) => ({ ...r, _recurring: true, _storedDayIndex: nextIdx })),
+      ...(weekData[nextIdx] || [])
+        .filter((a) => !String(a.id).startsWith("default_"))
+        .filter((a) => isPostMidnight(a.time))
+        .map((a) => ({ ...a, _storedDayIndex: nextIdx })),
+    ] : [];
+
+    return [...recurringForDay, ...weekActivities, ...nextMidnight];
   };
 
   // ── Drag: compute preview from mouse position ──────────────────
   const computePreview = (clientX, clientY) => {
     const ds = dragRef.current;
     if (!ds) return null;
-    let targetDayIndex = ds.dayIndex;
+    let targetDayIndex = ds.visualDayIndex;
     let colRect = null;
     for (let i = 0; i < dayColRefs.current.length; i++) {
       const r = dayColRefs.current[i]?.getBoundingClientRect();
@@ -334,31 +384,41 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const applyDrop = (ds, p) => {
     if (!p) return;
     const { newTime, newEndTime, targetDayIndex } = p;
-    const { activity, dayIndex } = ds;
+    const { activity, dayIndex: sourceDayIndex } = ds;
+    // Post-midnight drops belong to the next day's storage
+    // (dropping to Tuesday 01:00 stores in Wednesday, since that slot is Wednesday early morning)
+    const actualTargetDay = isPostMidnight(newTime) && targetDayIndex < 6
+      ? targetDayIndex + 1
+      : targetDayIndex;
 
     if (activity._recurring) {
-      setRecurring((prev) =>
-        prev.map((r) =>
-          r.id === activity.id
-            ? { ...r, time: newTime, endTime: newEndTime }
-            : r,
-        ),
-      );
-    } else if (targetDayIndex !== dayIndex) {
+      // Move only this week's occurrence: suppress the original and add a one-time copy
+      const sourceKey = `${activity.id}|${weekKey}|${sourceDayIndex}`;
+      setExceptions((prev) => [...prev.filter((k) => k !== sourceKey), sourceKey]);
+      const moved = { ...activity, id: Date.now(), time: newTime, endTime: newEndTime };
+      delete moved._recurring;
+      delete moved._storedDayIndex;
       setWeekData((prev) => {
         const updated = [...prev];
-        updated[dayIndex] = updated[dayIndex].filter(
+        updated[actualTargetDay] = [...(updated[actualTargetDay] || []), moved];
+        return updated;
+      });
+    } else if (actualTargetDay !== sourceDayIndex) {
+      setWeekData((prev) => {
+        const updated = [...prev];
+        updated[sourceDayIndex] = updated[sourceDayIndex].filter(
           (a) => a.id !== activity.id,
         );
         const moved = { ...activity, time: newTime, endTime: newEndTime };
         delete moved._recurring;
-        updated[targetDayIndex] = [...(updated[targetDayIndex] || []), moved];
+        delete moved._storedDayIndex;
+        updated[actualTargetDay] = [...(updated[actualTargetDay] || []), moved];
         return updated;
       });
     } else {
       setWeekData((prev) => {
         const updated = [...prev];
-        updated[dayIndex] = updated[dayIndex].map((a) =>
+        updated[sourceDayIndex] = updated[sourceDayIndex].map((a) =>
           a.id === activity.id
             ? { ...a, time: newTime, endTime: newEndTime }
             : a,
@@ -412,13 +472,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     };
   }, []);
 
-  const handleBlockMouseDown = (activity, dayIndex, e) => {
+  const handleBlockMouseDown = (activity, visualDayIndex, e) => {
     if (e.button !== 0) return;
     e.preventDefault();
     const blockRect = e.currentTarget.getBoundingClientRect();
     dragRef.current = {
       activity,
-      dayIndex,
+      dayIndex: activity._storedDayIndex, // source = stored day for correct writes
+      visualDayIndex,
       startX: e.clientX,
       startY: e.clientY,
       offsetY: e.clientY - blockRect.top,
@@ -428,10 +489,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   // ── CRUD handlers ──────────────────────────────────────────────
-  const handleAdd = (dayIndex, activity) => {
+  const handleAdd = (visualDayIndex, activity) => {
+    const storedDay = isPostMidnight(activity.time) && visualDayIndex < 6
+      ? visualDayIndex + 1
+      : visualDayIndex;
     setWeekData((prev) => {
       const updated = [...prev];
-      updated[dayIndex] = [...(updated[dayIndex] || []), activity];
+      updated[storedDay] = [...(updated[storedDay] || []), activity];
       return updated;
     });
   };
@@ -445,39 +509,52 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   const handleEdit = (updatedActivity) => {
-    const { activity, dayIndex } = editingActivity;
+    const { activity } = editingActivity;
     if (activity._recurring) {
-      setRecurring((prev) =>
-        prev.map((r) =>
-          r.id === activity.id
-            ? {
-                id: r.id,
-                title: updatedActivity.title,
-                time: updatedActivity.time,
-                endTime: updatedActivity.endTime,
-                color: updatedActivity.color,
-                days: updatedActivity.days ?? r.days,
-              }
-            : r,
-        ),
-      );
+      // Show choice dialog before saving
+      setPendingRecurringEdit({ original: activity, updated: updatedActivity });
+      setEditingActivity(null);
     } else {
+      const storedDay = activity._storedDayIndex;
       setWeekData((prev) => {
-        const updated = [...prev];
-        updated[dayIndex] = updated[dayIndex].map((a) =>
+        const next = [...prev];
+        next[storedDay] = next[storedDay].map((a) =>
           a.id === activity.id ? { ...a, ...updatedActivity } : a,
         );
-        return updated;
+        return next;
       });
+      setEditingActivity(null);
     }
-    setEditingActivity(null);
   };
 
-  const handleDelete = (dayIndex, activityId, e) => {
+  const applyRecurringEditAll = () => {
+    const { original, updated } = pendingRecurringEdit;
+    setRecurring((prev) =>
+      prev.map((r) =>
+        r.id === original.id
+          ? { id: r.id, title: updated.title, time: updated.time, endTime: updated.endTime, color: updated.color, days: updated.days ?? r.days }
+          : r,
+      ),
+    );
+    setPendingRecurringEdit(null);
+  };
+
+  const applyRecurringEditOne = () => {
+    const { original, updated } = pendingRecurringEdit;
+    const key = `${original.id}|${weekKey}|${original._storedDayIndex}`;
+    setRecurringOverrides((prev) => ({
+      ...prev,
+      [key]: { title: updated.title, time: updated.time, endTime: updated.endTime, color: updated.color },
+    }));
+    setPendingRecurringEdit(null);
+  };
+
+  const handleDelete = (activity, e) => {
     e.stopPropagation();
+    const storedDay = activity._storedDayIndex;
     setWeekData((prev) => {
       const updated = [...prev];
-      updated[dayIndex] = updated[dayIndex].filter((a) => a.id !== activityId);
+      updated[storedDay] = updated[storedDay].filter((a) => a.id !== activity.id);
       return updated;
     });
   };
@@ -504,17 +581,225 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     return computeLayout(timedAll);
   });
 
+  // ── Done / past helpers ─────────────────────────────────────────
+  const isDoneActivity = (activity) => {
+    // If goals are linked to this activity, done = all linked goals are done
+    const linkedGoals = days.flatMap((_, di) =>
+      getGoalsForDay(di).filter((g) => String(g.linkedEventId) === String(activity.id))
+    );
+    if (linkedGoals.length > 0) return linkedGoals.every((g) => g.done);
+    const storedDay = activity._storedDayIndex;
+    if (activity._recurring)
+      return recurringDone.includes(`${activity.id}|${weekKey}|${storedDay}`);
+    return !!activity.done;
+  };
+
+  const handleToggleDone = (activity, visualDayIndex, e) => {
+    e.stopPropagation();
+    const storedDay = activity._storedDayIndex;
+    const newDone = !isDoneActivity(activity);
+    if (activity._recurring) {
+      const key = `${activity.id}|${weekKey}|${storedDay}`;
+      setRecurringDone((prev) =>
+        newDone ? [...prev, key] : prev.filter((k) => k !== key),
+      );
+    } else {
+      setWeekData((prev) => {
+        const updated = [...prev];
+        updated[storedDay] = updated[storedDay].map((a) =>
+          a.id === activity.id ? { ...a, done: newDone } : a,
+        );
+        return updated;
+      });
+    }
+    // Sync ALL goals across all days linked to this activity
+    days.forEach((_, di) => {
+      const dGoals = getGoalsForDay(di);
+      const hasLinked = dGoals.some((g) => String(g.linkedEventId) === String(activity.id));
+      if (hasLinked)
+        setGoalsForDay(di, dGoals.map((g) =>
+          String(g.linkedEventId) === String(activity.id) ? { ...g, done: newDone } : g,
+        ));
+    });
+  };
+
+  const isPastEvent = (date, endTime, time) => {
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    if (d < today) return true;
+    if (d.getTime() === today.getTime()) {
+      const t = endTime || time;
+      if (t) {
+        const [h, m] = t.split(":").map(Number);
+        const eventEnd = new Date(now);
+        eventEnd.setHours(h, m, 0, 0);
+        return eventEnd < now;
+      }
+    }
+    return false;
+  };
+
+  // ── Daily goals helpers ─────────────────────────────────────────
+  const dayKey = (i) => days[i].toISOString().split("T")[0];
+
+  // Goals are stored as an array per day; handle legacy single-object format
+  const getGoalsForDay = (i) => {
+    const g = dailyGoals[dayKey(i)];
+    if (!g) return [];
+    if (Array.isArray(g)) return g;
+    return g.text ? [{ id: "legacy", text: g.text, done: g.done ?? false, linkedEventId: g.linkedEventId ?? null }] : [];
+  };
+
+  const setGoalsForDay = (i, goals) =>
+    setDailyGoals((prev) => ({ ...prev, [dayKey(i)]: goals }));
+
+  const saveGoal = (i, goalId, text, linkedEventId) => {
+    if (!text.trim()) {
+      setGoalsForDay(i, getGoalsForDay(i).filter((g) => g.id !== goalId));
+    } else if (goalId) {
+      setGoalsForDay(i, getGoalsForDay(i).map((g) =>
+        g.id === goalId ? { ...g, text: text.trim(), linkedEventId: linkedEventId || null } : g,
+      ));
+    } else {
+      setGoalsForDay(i, [...getGoalsForDay(i), { id: Date.now() + 1, text: text.trim(), done: false, linkedEventId: linkedEventId || null }]);
+    }
+    setEditingGoal(null);
+  };
+
+  const toggleGoalDone = (i, goalId) => {
+    const goals = getGoalsForDay(i);
+    const goal = goals.find((g) => g.id === goalId);
+    if (!goal) return;
+    const newDone = !goal.done;
+    const updatedGoals = goals.map((g) => g.id === goalId ? { ...g, done: newDone } : g);
+    setGoalsForDay(i, updatedGoals);
+
+    if (!goal.linkedEventId) return;
+    const linked = getActivitiesForDay(i).find((a) => String(a.id) === String(goal.linkedEventId));
+    if (!linked) return;
+
+    // Event is done only when ALL goals across all days linked to it are done
+    const allLinkedGoals = days.flatMap((_, di) => {
+      const dGoals = di === i ? updatedGoals : getGoalsForDay(di);
+      return dGoals.filter((g) => String(g.linkedEventId) === String(goal.linkedEventId));
+    });
+    const allDone = allLinkedGoals.length > 0 && allLinkedGoals.every((g) => g.done);
+
+    const storedDay = linked._storedDayIndex;
+    if (linked._recurring) {
+      const key = `${linked.id}|${weekKey}|${storedDay}`;
+      setRecurringDone((prev) => allDone ? [...prev.filter((k) => k !== key), key] : prev.filter((k) => k !== key));
+    } else {
+      setWeekData((prev) => {
+        const updated = [...prev];
+        updated[storedDay] = updated[storedDay].map((a) =>
+          String(a.id) === String(goal.linkedEventId) ? { ...a, done: allDone } : a,
+        );
+        return updated;
+      });
+    }
+  };
+
+  const deleteGoal = (i, goalId) =>
+    setGoalsForDay(i, getGoalsForDay(i).filter((g) => g.id !== goalId));
+
+  const moveGoalToDay = (fromDay, goalId, toDay) => {
+    const goal = getGoalsForDay(fromDay).find((g) => g.id === goalId);
+    if (!goal) return;
+    setGoalsForDay(fromDay, getGoalsForDay(fromDay).filter((g) => g.id !== goalId));
+    setGoalsForDay(toDay, [...getGoalsForDay(toDay), goal]);
+  };
+
+  const moveGoal = (i, goalId, dir) => {
+    const goals = getGoalsForDay(i);
+    const idx = goals.findIndex((g) => g.id === goalId);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= goals.length) return;
+    const updated = [...goals];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+    setGoalsForDay(i, updated);
+  };
+
+  // ── À confirmer ────────────────────────────────────────────────
+  const isPastDay = (date) => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const d = new Date(date); d.setHours(0, 0, 0, 0);
+    return d < today;
+  };
+
+  const reportEvent = (activity) => {
+    const storedDay = activity._storedDayIndex;
+    if (activity._recurring) {
+      const key = `${activity.id}|${weekKey}|${storedDay}`;
+      setRecurringOverrides((prev) => ({
+        ...prev,
+        [key]: { ...(prev[key] || {}), time: "", endTime: "" },
+      }));
+    } else {
+      setWeekData((prev) => {
+        const updated = [...prev];
+        updated[storedDay] = updated[storedDay].map((a) =>
+          a.id === activity.id ? { ...a, time: "", endTime: "" } : a,
+        );
+        return updated;
+      });
+    }
+  };
+
+  const reportGoal = (fromDayIdx, goal) => {
+    const todayIdx = days.findIndex((d) => isToday(d));
+    if (todayIdx >= 0 && todayIdx !== fromDayIdx) {
+      setGoalsForDay(todayIdx, [
+        ...getGoalsForDay(todayIdx),
+        { id: Date.now(), text: goal.text, done: false, linkedEventId: null },
+      ]);
+    }
+  };
+
+  const confirmItems = [];
+  days.forEach((date, i) => {
+    getActivitiesForDay(i)
+      .filter((a) => a.time && !isDoneActivity(a))
+      .forEach((a) => {
+        const actualDate = days[a._storedDayIndex] ?? date;
+        if (isPastEvent(actualDate, a.endTime, a.time))
+          confirmItems.push({ type: "event", activity: a, dayIndex: i });
+      });
+    if (isPastDay(date)) {
+      getGoalsForDay(i)
+        .filter((g) => !g.done)
+        .forEach((g) => confirmItems.push({ type: "goal", goal: g, dayIndex: i }));
+    }
+  });
+
   // ── Render helpers ─────────────────────────────────────────────
-  const renderDeleteBtn = (activity, i) => (
+  const renderDoneBtn = (activity, i) => {
+    const done = isDoneActivity(activity);
+    return (
+      <button
+        className={`done-toggle-btn${done ? " done-active" : ""}`}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => handleToggleDone(activity, i, e)}
+        title={done ? "Marquer comme non effectué" : "Marquer comme effectué"}
+      >
+        ✓
+      </button>
+    );
+  };
+
+  const renderDeleteBtn = (activity) => (
     <button
       className="activity-delete"
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
         if (activity._recurring) {
-          setDeletingRecurring({ activity, dayIndex: i });
+          setDeletingRecurring({ activity, dayIndex: activity._storedDayIndex });
         } else {
-          handleDelete(i, activity.id, e);
+          handleDelete(activity, e);
         }
       }}
       title="Supprimer"
@@ -574,6 +859,148 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           })}
         </div>
 
+        <div className="goals-row">
+          <div className="goals-gutter" />
+          {days.map((_, i) => {
+            const goals = getGoalsForDay(i);
+            const timedActivities = getActivitiesForDay(i).filter((a) => a.time).sort((a, b) => a.time.localeCompare(b.time));
+            return (
+              <div key={i} className="goals-cell">
+                {goals.map((goal, idx) => {
+                  const isEditing = editingGoal?.dayIndex === i && editingGoal?.goalId === goal.id;
+                  const linked = goal.linkedEventId
+                    ? timedActivities.find((a) => String(a.id) === String(goal.linkedEventId))
+                    : null;
+                  if (isEditing) {
+                    return (
+                      <div key={goal.id} className="goal-edit-form">
+                        <div className="goal-edit-top">
+                          <input
+                            className="goal-input"
+                            autoFocus
+                            value={editingGoal.text}
+                            onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
+                              if (e.key === "Escape") setEditingGoal(null);
+                            }}
+                            placeholder={goal.text}
+                          />
+                          <button className="goal-save-btn" onMouseDown={() => saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
+                          <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
+                        </div>
+                        {timedActivities.length > 0 && (
+                          <select
+                            className="goal-link-select"
+                            value={editingGoal.linkedEventId || ""}
+                            onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
+                              if (e.key === "Escape") setEditingGoal(null);
+                            }}
+                          >
+                            <option value="">— Lier à un événement —</option>
+                            {timedActivities.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={goal.id} className={`goal-item${goal.done ? " goal-done" : ""}`}>
+                      <span className="goal-priority">{idx + 1}</span>
+                      <input
+                        type="checkbox"
+                        className="goal-checkbox"
+                        checked={goal.done}
+                        onChange={() => toggleGoalDone(i, goal.id)}
+                      />
+                      {linked && (
+                        <span
+                          className="goal-link-badge"
+                          style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
+                          title={`Lié à : ${linked.title} (${linked.time})`}
+                        >
+                          {linked.title}
+                        </span>
+                      )}
+                      <span
+                        className="goal-text"
+                        onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
+                        title="Cliquer pour modifier"
+                      >
+                        {goal.text}
+                      </span>
+                      <div className="goal-actions">
+                        {i > 0 && (
+                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i - 1)} title="Jour précédent">←</button>
+                        )}
+                        {i < 6 && (
+                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i + 1)} title="Jour suivant">→</button>
+                        )}
+                        {idx > 0 && (
+                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, -1)} title="Monter">↑</button>
+                        )}
+                        {idx < goals.length - 1 && (
+                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, 1)} title="Descendre">↓</button>
+                        )}
+                        <button className="goal-delete-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => deleteGoal(i, goal.id)} title="Supprimer">×</button>
+                      </div>
+                    </div>
+                  );
+                })}
+                <button
+                  className="goal-add-btn"
+                  onClick={() => setEditingGoal({ dayIndex: i, goalId: null, text: "", linkedEventId: null })}
+                >
+                  + Objectif
+                </button>
+                {editingGoal?.dayIndex === i && editingGoal?.goalId === null && (
+                  <div className="goal-edit-form">
+                    <div className="goal-edit-top">
+                      <input
+                        className="goal-input"
+                        autoFocus
+                        value={editingGoal.text}
+                        onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
+                          if (e.key === "Escape") setEditingGoal(null);
+                        }}
+                        placeholder="Objectif…"
+                      />
+                      <button className="goal-save-btn" onMouseDown={() => saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
+                      <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
+                    </div>
+                    {timedActivities.length > 0 && (
+                      <select
+                        className="goal-link-select"
+                        value={editingGoal.linkedEventId || ""}
+                        onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
+                          if (e.key === "Escape") setEditingGoal(null);
+                        }}
+                      >
+                        <option value="">— Lier à un événement —</option>
+                        {timedActivities.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         <div className="calendar-body">
           <div className="time-gutter">
             {HOURS.map((h) => (
@@ -598,6 +1025,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 left: `calc(${a._colIndex * w}% + 2px)`,
                 width: `calc(${w}% - 4px)`,
                 right: "auto",
+                zIndex: a._colIndex + 1,
               };
             };
 
@@ -648,10 +1076,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     timeToCalMin(activity.endTime) -
                     timeToCalMin(activity.time);
                   const isCompact = durationMin < 75;
+                  const done = isDoneActivity(activity);
+                  const actualDate = days[activity._storedDayIndex] ?? date;
+                  const missed = !done && isPastEvent(actualDate, activity.endTime, activity.time);
                   return (
                     <div
                       key={activity.id}
-                      className={`cal-activity-block${isCompact ? " block-compact" : ""}${beingDragged ? " is-dragging" : ""}`}
+                      className={`cal-activity-block${isCompact ? " block-compact" : ""}${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}`}
                       style={{
                         top: toTopPct(activity.time),
                         height: toHeightPct(activity.time, activity.endTime),
@@ -672,9 +1103,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           <span className="cal-activity-title">
                             {activity.title}
                           </span>
+                          {missed && <span className="missed-badge" title="Non effectué">!</span>}
                           <span className="cal-compact-time">
                             {activity.time}
                           </span>
+                          {renderDoneBtn(activity, i)}
                           {renderDeleteBtn(activity, i)}
                         </div>
                       ) : (
@@ -686,7 +1119,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                               )}
                               {activity.time} – {activity.endTime}
                             </span>
-                            {renderDeleteBtn(activity, i)}
+                            <div className="cal-block-actions">
+                              {missed && <span className="missed-badge" title="Non effectué">!</span>}
+                              {renderDoneBtn(activity, i)}
+                              {renderDeleteBtn(activity, i)}
+                            </div>
                           </div>
                           <span className="cal-activity-title">
                             {activity.title}
@@ -700,10 +1137,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 {timedStart.map((activity) => {
                   const beingDragged =
                     isDragging && dragRef.current?.activity.id === activity.id;
+                  const done = isDoneActivity(activity);
+                  const actualDate = days[activity._storedDayIndex] ?? date;
+                  const missed = !done && isPastEvent(actualDate, null, activity.time);
                   return (
                     <div
                       key={activity.id}
-                      className={`cal-activity-pill${beingDragged ? " is-dragging" : ""}`}
+                      className={`cal-activity-pill${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}`}
                       style={{
                         top: toTopPct(activity.time),
                         backgroundColor: activity.color + "25",
@@ -721,6 +1161,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       <span className="cal-activity-title">
                         {activity.title}
                       </span>
+                      {renderDoneBtn(activity, i)}
                       {renderDeleteBtn(activity, i)}
                     </div>
                   );
@@ -729,6 +1170,57 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             );
           })}
         </div>
+
+        {confirmItems.length > 0 && (
+          <div className="confirm-row">
+            <div className="confirm-row-label">À confirmer</div>
+            <div className="confirm-items">
+              {confirmItems.map((item, idx) =>
+                item.type === "event" ? (
+                  <div key={idx} className="confirm-item">
+                    <span className="confirm-dot" style={{ backgroundColor: item.activity.color }} />
+                    <span className="confirm-day">{DAY_NAMES[item.dayIndex]}</span>
+                    <span className="confirm-title">{item.activity.title}</span>
+                    {item.activity.time && (
+                      <span className="confirm-time">{item.activity.time}</span>
+                    )}
+                    <button
+                      className="confirm-validate-btn"
+                      onClick={(e) => handleToggleDone(item.activity, item.dayIndex, e)}
+                    >
+                      Valider
+                    </button>
+                    <button
+                      className="confirm-report-btn"
+                      onClick={() => reportEvent(item.activity)}
+                    >
+                      Reporter
+                    </button>
+                  </div>
+                ) : (
+                  <div key={idx} className="confirm-item">
+                    <span className="confirm-dot" style={{ backgroundColor: "#9b59b6" }} />
+                    <span className="confirm-day">{DAY_NAMES[item.dayIndex]}</span>
+                    <span className="confirm-title">{item.goal.text}</span>
+                    <span className="confirm-badge">Objectif</span>
+                    <button
+                      className="confirm-validate-btn"
+                      onClick={() => toggleGoalDone(item.dayIndex, item.goal.id)}
+                    >
+                      Valider
+                    </button>
+                    <button
+                      className="confirm-report-btn"
+                      onClick={() => reportGoal(item.dayIndex, item.goal)}
+                    >
+                      Reporter
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
 
         {hasUnscheduled && (
           <div className="unscheduled-row">
@@ -784,15 +1276,38 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         />
       )}
 
-      {showSlotFinder && (
+{showSlotFinder && (
         <SlotFinderModal
           days={days}
-          findSlots={(durationMin) =>
-            findFreeSlots(weekData, recurring, durationMin)
-          }
+          existingColors={days.flatMap((_, i) => getActivitiesForDay(i).map((a) => a.color))}
+          findSlots={(durationMin) => findFreeSlots(weekData, recurring, durationMin, days)}
           onConfirm={(dayIndex, activity) => handleAdd(dayIndex, activity)}
           onClose={() => setShowSlotFinder(false)}
         />
+      )}
+
+      {pendingRecurringEdit !== null && (
+        <div className="activity-form-overlay" onClick={() => setPendingRecurringEdit(null)}>
+          <div className="confirm-recur-dialog" onClick={(e) => e.stopPropagation()}>
+            <p className="confirm-recur-title">
+              Modifier <strong>"{pendingRecurringEdit.original.title}"</strong>
+            </p>
+            <p className="confirm-recur-sub">
+              Modifier uniquement cette occurrence ou toute la série ?
+            </p>
+            <div className="form-actions">
+              <button className="btn-secondary" onClick={() => setPendingRecurringEdit(null)}>
+                Annuler
+              </button>
+              <button className="btn-secondary" onClick={applyRecurringEditOne}>
+                Cette occurrence
+              </button>
+              <button className="btn-primary" onClick={applyRecurringEditAll}>
+                Toute la série
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {deletingRecurring !== null && (
