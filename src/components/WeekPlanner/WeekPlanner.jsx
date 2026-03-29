@@ -466,11 +466,47 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       dragRef.current = null;
     };
 
+    const onTouchMove = (e) => {
+      const ds = dragRef.current;
+      if (!ds) return;
+      const touch = e.touches[0];
+      if (!ds.isDragging) {
+        const dx = Math.abs(touch.clientX - ds.startX);
+        const dy = Math.abs(touch.clientY - ds.startY);
+        if (dx < 6 && dy < 6) return;
+        if (dx > dy) { dragRef.current = null; return; } // horizontal → scroll
+        ds.isDragging = true;
+        setIsDragging(true);
+      }
+      e.preventDefault();
+      const p = computePreview(touch.clientX, touch.clientY);
+      ds.currentPreview = p;
+      setPreview(p);
+    };
+
+    const onTouchEnd = () => {
+      const ds = dragRef.current;
+      if (ds) {
+        if (ds.isDragging) {
+          applyDropRef.current(ds, ds.currentPreview);
+          setIsDragging(false);
+          setPreview(null);
+        } else {
+          setEditingActivity({ activity: ds.activity, dayIndex: ds.dayIndex });
+        }
+      }
+      dragRef.current = null;
+    };
+
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd);
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
     };
   }, []);
 
@@ -480,11 +516,26 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const blockRect = e.currentTarget.getBoundingClientRect();
     dragRef.current = {
       activity,
-      dayIndex: activity._storedDayIndex, // source = stored day for correct writes
+      dayIndex: activity._storedDayIndex,
       visualDayIndex,
       startX: e.clientX,
       startY: e.clientY,
       offsetY: e.clientY - blockRect.top,
+      isDragging: false,
+      currentPreview: null,
+    };
+  };
+
+  const handleBlockTouchStart = (activity, visualDayIndex, e) => {
+    const touch = e.touches[0];
+    const blockRect = e.currentTarget.getBoundingClientRect();
+    dragRef.current = {
+      activity,
+      dayIndex: activity._storedDayIndex,
+      visualDayIndex,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      offsetY: touch.clientY - blockRect.top,
       isDragging: false,
       currentPreview: null,
     };
@@ -1132,6 +1183,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         ...overlapStyle(activity),
                       }}
                       onMouseDown={(e) => handleBlockMouseDown(activity, i, e)}
+                      onTouchStart={(e) => handleBlockTouchStart(activity, i, e)}
                     >
                       {isCompact ? (
                         <div
@@ -1192,6 +1244,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         ...overlapStyle(activity),
                       }}
                       onMouseDown={(e) => handleBlockMouseDown(activity, i, e)}
+                      onTouchStart={(e) => handleBlockTouchStart(activity, i, e)}
                     >
                       <span className="cal-activity-time">
                         {activity._recurring && (

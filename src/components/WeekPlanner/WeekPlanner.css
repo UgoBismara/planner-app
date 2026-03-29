@@ -970,3 +970,118 @@
   font-size: 0.82rem;
   color: var(--text-secondary);
 }
+
+/* ══════════════════════════════════════════
+   MOBILE — iPhone 7 et petits écrans
+   ══════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Calendrier scrollable horizontalement */
+  .calendar-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar-header,
+  .goals-row,
+  .unscheduled-row {
+    grid-template-columns: 36px repeat(7, 72px);
+    min-width: 540px;
+  }
+
+  .calendar-body {
+    grid-template-columns: 36px repeat(7, 72px);
+    min-width: 540px;
+    height: calc(100dvh - 200px);
+  }
+
+  /* Navigation semaine */
+  .week-label {
+    min-width: 0;
+    font-size: 0.78rem;
+  }
+
+  .week-nav {
+    gap: 0.5rem;
+  }
+
+  .week-nav button {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .week-nav-find-slot {
+    position: static;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .week-nav-controls {
+    gap: 0.5rem;
+  }
+
+  /* Toujours visible sur mobile (pas de hover) */
+  .activity-delete {
+    opacity: 1 !important;
+  }
+
+  .done-toggle-btn {
+    opacity: 0.6 !important;
+  }
+
+  .goal-actions {
+    opacity: 1 !important;
+  }
+
+  /* Boutons plus grands pour le tactile */
+  .activity-delete,
+  .done-toggle-btn {
+    font-size: 0.9rem;
+    padding: 2px 4px;
+  }
+
+  .goal-delete-btn,
+  .goal-move-btn {
+    font-size: 0.8rem;
+    padding: 2px 3px;
+  }
+
+  /* Modaux en bas de l'écran */
+  .activity-form-overlay {
+    align-items: flex-end;
+  }
+
+  .activity-form,
+  .confirm-recur-dialog {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+
+  /* En-têtes de jours plus compacts */
+  .cal-day-header {
+    padding: 0.3rem 0.2rem;
+  }
+
+  .day-name {
+    font-size: 0.7rem;
+  }
+
+  .day-date {
+    font-size: 0.62rem;
+  }
+
+  /* Heure gutter plus étroite */
+  .hour-label {
+    font-size: 0.55rem;
+    padding: 0 3px;
+  }
+
+  /* Confirm items empilés */
+  .confirm-item {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
