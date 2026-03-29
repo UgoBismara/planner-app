@@ -971,117 +971,212 @@
   color: var(--text-secondary);
 }
 
+/* ── Onglets jour mobile (cachés sur desktop) ── */
+.mobile-day-tabs { display: none; }
+
 /* ══════════════════════════════════════════
-   MOBILE — iPhone 7 et petits écrans
+   MOBILE — vue 1 jour à la fois
    ══════════════════════════════════════════ */
 @media (max-width: 640px) {
 
-  /* Calendrier scrollable horizontalement */
-  .calendar-wrapper {
+  /* ── Onglets de sélection de jour ── */
+  .mobile-day-tabs {
+    display: flex;
+    gap: 5px;
+    padding: 6px 4px 2px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .mobile-day-tabs::-webkit-scrollbar { display: none; }
+
+  .mobile-day-tab {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 5px 13px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .mobile-day-tab.today:not(.active) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .mobile-day-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .tab-day-name {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .tab-day-num {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* ── Navigation semaine compacte ── */
+  .week-nav {
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .week-nav-controls {
+    gap: 0.4rem;
+  }
+  .week-nav button {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.78rem;
+  }
+  .week-label {
+    min-width: 0;
+    font-size: 0.8rem;
+  }
+  .week-nav-find-slot {
+    position: static;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.7rem;
+  }
+
+  /* ── Vue 1 jour : cacher toutes les colonnes sauf l'active ── */
+  .calendar-wrapper { overflow-x: hidden; }
 
   .calendar-header,
   .goals-row,
+  .calendar-body,
   .unscheduled-row {
-    grid-template-columns: 36px repeat(7, 72px);
-    min-width: 540px;
-  }
-
-  .calendar-body {
-    grid-template-columns: 36px repeat(7, 72px);
-    min-width: 540px;
-    height: calc(100dvh - 200px);
-  }
-
-  /* Navigation semaine */
-  .week-label {
+    grid-template-columns: 36px 1fr;
     min-width: 0;
-    font-size: 0.78rem;
   }
 
-  .week-nav {
-    gap: 0.5rem;
+  .cal-day-header:not(.mobile-active),
+  .goals-cell:not(.mobile-active),
+  .cal-day-col:not(.mobile-active),
+  .unscheduled-day:not(.mobile-active) {
+    display: none;
   }
 
-  .week-nav button {
-    padding: 0.45rem 0.75rem;
+  /* ── Objectifs — pleine largeur, texte lisible ── */
+  .goals-cell.mobile-active {
+    display: flex;
+    padding: 6px 10px;
+    gap: 5px;
+  }
+
+  .goal-item {
+    gap: 7px;
+    min-height: 28px;
+  }
+
+  .goal-text {
+    font-size: 0.88rem;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .goal-link-badge {
+    max-width: 110px;
+    font-size: 0.72rem;
+    padding: 2px 7px;
+  }
+
+  .goal-link-primary {
+    font-size: 0.88rem;
+  }
+
+  .goal-checkbox {
+    width: 15px;
+    height: 15px;
+  }
+
+  .goal-add-btn {
+    font-size: 0.8rem;
+    opacity: 0.6;
+    padding: 2px 0;
+  }
+
+  /* Boutons d'action toujours visibles (pas de hover sur tactile) */
+  .goal-actions { opacity: 1; }
+  .goal-move-btn, .goal-delete-btn {
+    font-size: 0.85rem;
+    padding: 3px 5px;
+  }
+
+  /* ── Événements — pleine largeur, titres lisibles ── */
+  .cal-activity-block {
+    padding: 5px 8px;
+  }
+  .cal-activity-title {
+    font-size: 0.85rem;
+  }
+  .cal-activity-time {
+    font-size: 0.72rem;
+  }
+  .cal-activity-pill {
+    height: 30px;
+    font-size: 0.82rem;
+  }
+
+  .activity-delete { opacity: 1 !important; }
+  .done-toggle-btn { opacity: 0.7 !important; }
+  .activity-delete, .done-toggle-btn {
+    font-size: 1rem;
+    padding: 2px 5px;
+  }
+
+  /* ── Calendrier corps ── */
+  .calendar-body {
+    height: calc(100dvh - 260px);
+  }
+
+  .cal-day-header.mobile-active {
+    padding: 0.5rem 0.75rem;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .day-name { font-size: 0.9rem; }
+  .day-date { font-size: 0.8rem; }
+
+  .add-activity-btn {
+    width: auto;
+    padding: 0.3rem 0.9rem;
     font-size: 0.8rem;
   }
 
-  .week-nav-find-slot {
-    position: static;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.75rem;
+  .hour-label {
+    font-size: 0.58rem;
+    padding: 0 4px;
   }
 
-  .week-nav-controls {
-    gap: 0.5rem;
-  }
-
-  /* Toujours visible sur mobile (pas de hover) */
-  .activity-delete {
-    opacity: 1 !important;
-  }
-
-  .done-toggle-btn {
-    opacity: 0.6 !important;
-  }
-
-  .goal-actions {
-    opacity: 1 !important;
-  }
-
-  /* Boutons plus grands pour le tactile */
-  .activity-delete,
-  .done-toggle-btn {
-    font-size: 0.9rem;
-    padding: 2px 4px;
-  }
-
-  .goal-delete-btn,
-  .goal-move-btn {
-    font-size: 0.8rem;
-    padding: 2px 3px;
-  }
-
-  /* Modaux en bas de l'écran */
-  .activity-form-overlay {
-    align-items: flex-end;
-  }
-
+  /* ── Modaux en bas d'écran ── */
+  .activity-form-overlay { align-items: flex-end; }
   .activity-form,
   .confirm-recur-dialog {
     width: 100%;
     max-width: 100%;
     border-radius: 20px 20px 0 0;
-    max-height: 90dvh;
+    max-height: 92dvh;
     overflow-y: auto;
   }
 
-  /* En-têtes de jours plus compacts */
-  .cal-day-header {
-    padding: 0.3rem 0.2rem;
-  }
-
-  .day-name {
-    font-size: 0.7rem;
-  }
-
-  .day-date {
-    font-size: 0.62rem;
-  }
-
-  /* Heure gutter plus étroite */
-  .hour-label {
-    font-size: 0.55rem;
-    padding: 0 3px;
-  }
-
-  /* Confirm items empilés */
-  .confirm-item {
-    flex-wrap: wrap;
-    gap: 4px;
+  /* ── À confirmer ── */
+  .confirm-item { flex-wrap: wrap; gap: 4px; }
+  .confirm-validate-btn,
+  .confirm-report-btn {
+    font-size: 0.75rem;
+    padding: 3px 10px;
   }
 }

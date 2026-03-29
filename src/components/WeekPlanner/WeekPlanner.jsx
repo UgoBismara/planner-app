@@ -281,6 +281,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const [editingActivity, setEditingActivity] = useState(null);
   const [showSlotFinder, setShowSlotFinder] = useState(false);
   const [reportingActivity, setReportingActivity] = useState(null);
+  const [mobileDay, setMobileDay] = useState(() => {
+    const d = getDaysOfWeek(0);
+    const todayIdx = d.findIndex((day) => day.toDateString() === new Date().toDateString());
+    return todayIdx >= 0 ? todayIdx : 0;
+  });
   const [deletingRecurring, setDeletingRecurring] = useState(null); // { activity, dayIndex }
 
   // ── Drag state ──────────────────────────────────────────────────
@@ -289,6 +294,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const dragRef = useRef(null); // { activity, dayIndex, offsetY, startX, startY, isDragging, currentPreview }
   const dayColRefs = useRef([]); // refs to each .cal-day-col element
   const applyDropRef = useRef(null);
+
+  // Reset mobileDay to today (or 0) when the week changes
+  useEffect(() => {
+    const d = getDaysOfWeek(weekOffset);
+    const todayIdx = d.findIndex((day) => day.toDateString() === new Date().toDateString());
+    setMobileDay(todayIdx >= 0 ? todayIdx : 0);
+  }, [weekOffset]);
 
   // Migration: add missing default recurring entries — runs only once ever (flag in localStorage)
   useEffect(() => {
@@ -912,6 +924,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         </button>
       </div>
 
+      {/* Onglets de navigation jour — mobile uniquement */}
+      <div className="mobile-day-tabs">
+        {days.map((date, i) => (
+          <button
+            key={i}
+            className={`mobile-day-tab${mobileDay === i ? " active" : ""}${isToday(date) ? " today" : ""}`}
+            onClick={() => setMobileDay(i)}
+          >
+            <span className="tab-day-name">{DAY_NAMES[i]}</span>
+            <span className="tab-day-num">{date.getDate()}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="calendar-wrapper">
         <div className="calendar-header">
           <div className="time-gutter-header" />
@@ -920,7 +946,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             return (
               <div
                 key={i}
-                className={`cal-day-header ${isToday(date) ? "today" : ""}`}
+                className={`cal-day-header${isToday(date) ? " today" : ""}${mobileDay === i ? " mobile-active" : ""}`}
               >
                 <span className="day-name">{DAY_NAMES[i]}</span>
                 <span className="day-date">{formatDate(date)}</span>
@@ -944,7 +970,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             const goals = getGoalsForDay(i);
             const timedActivities = getActivitiesForDay(i).filter((a) => a.time).sort((a, b) => a.time.localeCompare(b.time));
             return (
-              <div key={i} className="goals-cell">
+              <div key={i} className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}>
                 {goals.map((goal, idx) => {
                   const isEditing = editingGoal?.dayIndex === i && editingGoal?.goalId === goal.id;
                   const linked = goal.linkedEventId
@@ -1125,7 +1151,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               <div
                 key={i}
                 ref={(el) => (dayColRefs.current[i] = el)}
-                className={`cal-day-col ${isToday(date) ? "today" : ""}`}
+                className={`cal-day-col${isToday(date) ? " today" : ""}${mobileDay === i ? " mobile-active" : ""}`}
               >
                 {HOURS.map((h, idx) => (
                   <div
@@ -1320,7 +1346,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           <div className="unscheduled-row">
             <div className="unscheduled-label">Sans horaire</div>
             {days.map((_, i) => (
-              <div key={i} className="unscheduled-day">
+              <div key={i} className={`unscheduled-day${mobileDay === i ? " mobile-active" : ""}`}>
                 {getActivitiesForDay(i)
                   .filter((a) => !a.time)
                   .map((activity) => {
