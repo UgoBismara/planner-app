@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import ActivityForm from "./ActivityForm";
 import SlotFinderModal from "./SlotFinderModal";
+import RescheduleModal from "./RescheduleModal";
 import "./WeekPlanner.css";
 
 function getWeekKey(weekOffset) {
@@ -279,6 +280,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const [activeFormDay, setActiveFormDay] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [showSlotFinder, setShowSlotFinder] = useState(false);
+  const [reportingActivity, setReportingActivity] = useState(null);
   const [deletingRecurring, setDeletingRecurring] = useState(null); // { activity, dayIndex }
 
   // ── Drag state ──────────────────────────────────────────────────
@@ -515,12 +517,25 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       setPendingRecurringEdit({ original: activity, updated: updatedActivity });
       setEditingActivity(null);
     } else {
-      const storedDay = activity._storedDayIndex;
+      const oldStoredDay = activity._storedDayIndex;
+      // The visual day is the day BEFORE stored day for post-midnight events
+      const visualDay = isPostMidnight(activity.time) && oldStoredDay > 0
+        ? oldStoredDay - 1
+        : oldStoredDay;
+      // Recompute storage day based on new time
+      const newStoredDay = isPostMidnight(updatedActivity.time) && visualDay < 6
+        ? visualDay + 1
+        : visualDay;
       setWeekData((prev) => {
         const next = [...prev];
-        next[storedDay] = next[storedDay].map((a) =>
-          a.id === activity.id ? { ...a, ...updatedActivity } : a,
-        );
+        if (newStoredDay !== oldStoredDay) {
+          next[oldStoredDay] = next[oldStoredDay].filter((a) => a.id !== activity.id);
+          next[newStoredDay] = [...(next[newStoredDay] || []), { ...activity, ...updatedActivity }];
+        } else {
+          next[oldStoredDay] = next[oldStoredDay].map((a) =>
+            a.id === activity.id ? { ...a, ...updatedActivity } : a,
+          );
+        }
         return next;
       });
       setEditingActivity(null);
@@ -636,6 +651,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         const [h, m] = t.split(":").map(Number);
         const eventEnd = new Date(now);
         eventEnd.setHours(h, m, 0, 0);
+        // Post-midnight end time (e.g. 02:00) actually means next calendar day
+        if (endTime && isPostMidnight(endTime)) {
+          eventEnd.setDate(eventEnd.getDate() + 1);
+        }
         return eventEnd < now;
       }
     }
@@ -657,7 +676,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     setDailyGoals((prev) => ({ ...prev, [dayKey(i)]: goals }));
 
   const saveGoal = (i, goalId, text, linkedEventId) => {
-    if (!text.trim()) {
+    const hasContent = text.trim() || linkedEventId;
+    if (!hasContent) {
       setGoalsForDay(i, getGoalsForDay(i).filter((g) => g.id !== goalId));
     } else if (goalId) {
       setGoalsForDay(i, getGoalsForDay(i).map((g) =>
@@ -731,22 +751,30 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   const reportEvent = (activity) => {
+    setReportingActivity(activity);
+  };
+
+  const handleReschedule = (dayIndex, newTime, newEndTime) => {
+    const activity = reportingActivity;
     const storedDay = activity._storedDayIndex;
     if (activity._recurring) {
       const key = `${activity.id}|${weekKey}|${storedDay}`;
       setRecurringOverrides((prev) => ({
         ...prev,
-        [key]: { ...(prev[key] || {}), time: "", endTime: "" },
+        [key]: { ...(prev[key] || {}), time: newTime, endTime: newEndTime },
       }));
     } else {
       setWeekData((prev) => {
         const updated = [...prev];
-        updated[storedDay] = updated[storedDay].map((a) =>
-          a.id === activity.id ? { ...a, time: "", endTime: "" } : a,
-        );
+        // Remove from original day
+        updated[storedDay] = updated[storedDay].filter((a) => a.id !== activity.id);
+        // Add to new day (strip computed fields)
+        const { _storedDayIndex, _recurring, _colIndex, _totalCols, ...clean } = activity;
+        updated[dayIndex] = [...updated[dayIndex], { ...clean, time: newTime, endTime: newEndTime }];
         return updated;
       });
     }
+    setReportingActivity(null);
   };
 
   const reportGoal = (fromDayIdx, goal) => {
@@ -919,22 +947,35 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         checked={goal.done}
                         onChange={() => toggleGoalDone(i, goal.id)}
                       />
-                      {linked && (
+                      {linked && !goal.text.trim() ? (
                         <span
-                          className="goal-link-badge"
+                          className="goal-link-badge goal-link-primary"
                           style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
-                          title={`Lié à : ${linked.title} (${linked.time})`}
+                          title={`Lié à : ${linked.title} (${linked.time})\nCliquer pour modifier`}
+                          onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
                         >
                           {linked.title}
                         </span>
+                      ) : (
+                        <>
+                          {linked && (
+                            <span
+                              className="goal-link-badge"
+                              style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
+                              title={`Lié à : ${linked.title} (${linked.time})`}
+                            >
+                              {linked.title}
+                            </span>
+                          )}
+                          <span
+                            className="goal-text"
+                            onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
+                            title="Cliquer pour modifier"
+                          >
+                            {goal.text}
+                          </span>
+                        </>
                       )}
-                      <span
-                        className="goal-text"
-                        onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
-                        title="Cliquer pour modifier"
-                      >
-                        {goal.text}
-                      </span>
                       <div className="goal-actions">
                         {i > 0 && (
                           <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i - 1)} title="Jour précédent">←</button>
@@ -1229,25 +1270,29 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               <div key={i} className="unscheduled-day">
                 {getActivitiesForDay(i)
                   .filter((a) => !a.time)
-                  .map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="activity-card"
-                      style={{
-                        borderLeftColor: activity.color,
-                        cursor: "pointer",
-                      }}
-                      onClick={() =>
-                        setEditingActivity({ activity, dayIndex: i })
-                      }
-                    >
-                      {activity._recurring && (
-                        <span className="recur-icon">↻ </span>
-                      )}
-                      <span className="activity-title">{activity.title}</span>
-                      {renderDeleteBtn(activity, i)}
-                    </div>
-                  ))}
+                  .map((activity) => {
+                    const done = isDoneActivity(activity);
+                    return (
+                      <div
+                        key={activity.id}
+                        className={`activity-card${done ? " is-done" : ""}`}
+                        style={{
+                          borderLeftColor: activity.color,
+                          cursor: "pointer",
+                        }}
+                        onClick={() =>
+                          setEditingActivity({ activity, dayIndex: i })
+                        }
+                      >
+                        {activity._recurring && (
+                          <span className="recur-icon">↻ </span>
+                        )}
+                        <span className="activity-title">{activity.title}</span>
+                        {renderDoneBtn(activity, i)}
+                        {renderDeleteBtn(activity, i)}
+                      </div>
+                    );
+                  })}
               </div>
             ))}
           </div>
@@ -1273,6 +1318,16 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           )}
           onEdit={handleEdit}
           onClose={() => setEditingActivity(null)}
+        />
+      )}
+
+{reportingActivity && (
+        <RescheduleModal
+          activity={reportingActivity}
+          days={days}
+          findSlots={(durationMin) => findFreeSlots(weekData, recurring, durationMin, days)}
+          onConfirm={handleReschedule}
+          onClose={() => setReportingActivity(null)}
         />
       )}
 
