@@ -1,5 +1,7 @@
 Planning : 
-
+- Rajouter le fait de pouvoir mettre des événements sur plusieurs jours
+- Pouvoir faire passer les objectifs à la semaine suivante
+- Affichage dégueu sur téléphone
 Recettes :
 - Faire en sorte que ce soit des vrais recettes complètes pas uniquement une viande, un légume etc...
 - Ajouter plus de recettes

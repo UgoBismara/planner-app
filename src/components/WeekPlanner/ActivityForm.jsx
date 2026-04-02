@@ -147,21 +147,23 @@ export default function ActivityForm({ dayIndex, activity, existingActivities, o
             </label>
           </div>
           {isRecurring && (
-            <div className="form-group">
-              <label>Jours</label>
-              <div className="recur-days-picker">
-                {DAY_LABELS.map((name, d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    className={`recur-day-btn ${recurDays.includes(d) ? 'active' : ''}`}
-                    onClick={() => toggleDay(d)}
-                  >
-                    {name}
-                  </button>
-                ))}
+            <>
+              <div className="form-group">
+                <label>Jours</label>
+                <div className="recur-days-picker">
+                  {DAY_LABELS.map((name, d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      className={`recur-day-btn ${recurDays.includes(d) ? 'active' : ''}`}
+                      onClick={() => toggleDay(d)}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            </>
           )}
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>Annuler</button>

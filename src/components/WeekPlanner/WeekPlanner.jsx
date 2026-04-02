@@ -165,6 +165,7 @@ function findFreeSlots(weekData, recurring, durationMin, days = null, searchEnd 
   return slots;
 }
 
+
 const DAY_NAMES = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const START_HOUR = 9;
 const END_HOUR = 26;
@@ -251,7 +252,65 @@ function computeLayout(timedEvents) {
   });
 }
 
+const MIN_WEEK_MONDAY = new Date('2026-03-16T00:00:00');
+const MIN_WEEK_STR = MIN_WEEK_MONDAY.toISOString().split('T')[0];
+
+function MiniCalendar({ weekOffset, onSelectWeek, onClose }) {
+  const [month, setMonth] = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  const year = month.getFullYear();
+  const m = month.getMonth();
+  const firstDay = new Date(year, m, 1);
+  const startDow = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  const daysInMonth = new Date(year, m + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, m, d));
+  while (cells.length % 7 !== 0) cells.push(null);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const currentMonday = getMondayOfWeek(weekOffset);
+
+  return (
+    <div className="mini-cal" onClick={(e) => e.stopPropagation()}>
+      <div className="mini-cal-header">
+        <button onClick={() => setMonth(new Date(year, m - 1, 1))}>‹</button>
+        <span>{firstDay.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span>
+        <button onClick={() => setMonth(new Date(year, m + 1, 1))}>›</button>
+      </div>
+      <div className="mini-cal-grid">
+        {['L','M','M','J','V','S','D'].map((d, i) => (
+          <span key={i} className="mini-cal-dow">{d}</span>
+        ))}
+        {cells.map((date, idx) => {
+          if (!date) return <span key={idx} />;
+          const cellMonday = new Date(date);
+          const dow = cellMonday.getDay() === 0 ? 6 : cellMonday.getDay() - 1;
+          cellMonday.setDate(cellMonday.getDate() - dow);
+          const isCurrentWeek = cellMonday.getTime() === currentMonday.getTime();
+          const isToday_ = date.getTime() === today.getTime();
+          const dateStr = date.toISOString().split('T')[0];
+          const isPast = dateStr < MIN_WEEK_STR;
+          return (
+            <button
+              key={idx}
+              className={`mini-cal-day${isToday_ ? ' mini-today' : ''}${isCurrentWeek ? ' mini-current-week' : ''}${isPast ? ' mini-disabled' : ''}`}
+              disabled={isPast}
+              onClick={() => {
+                const offset = Math.round((cellMonday - getMondayOfWeek(0)) / (7 * 86400000));
+                onSelectWeek(offset);
+                onClose();
+              }}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function WeekPlanner({ weekOffset, setWeekOffset }) {
+  const minWeekOffset = Math.round((MIN_WEEK_MONDAY - getMondayOfWeek(0)) / (7 * 86400000));
   const weekKey = getWeekKey(weekOffset);
   const [weekData, setWeekData] = useLocalStorage(
     weekKey,
@@ -280,6 +339,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const [activeFormDay, setActiveFormDay] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [showSlotFinder, setShowSlotFinder] = useState(false);
+  const [showMiniCal, setShowMiniCal] = useState(false);
   const [reportingActivity, setReportingActivity] = useState(null);
   const [mobileDay, setMobileDay] = useState(() => {
     const d = getDaysOfWeek(0);
@@ -294,6 +354,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const dragRef = useRef(null); // { activity, dayIndex, offsetY, startX, startY, isDragging, currentPreview }
   const dayColRefs = useRef([]); // refs to each .cal-day-col element
   const applyDropRef = useRef(null);
+
+  useEffect(() => {
+    if (!showMiniCal) return;
+    const close = () => setShowMiniCal(false);
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
+  }, [showMiniCal]);
 
   // Reset mobileDay to today (or 0) when the week changes
   useEffect(() => {
@@ -324,8 +391,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const getActivitiesForDay = (dayIndex) => {
     // Current day: exclude post-midnight events (they show in next day's column)
+    const dayDateStr = days[dayIndex].toISOString().split('T')[0];
     const recurringForDay = recurring
       .filter((r) => r.days.includes(dayIndex))
+      .filter((r) => !r.startDate || dayDateStr >= r.startDate)
+      .filter((r) => !r.endDate || dayDateStr <= r.endDate)
       .filter((r) => !exceptions.includes(`${r.id}|${weekKey}|${dayIndex}`))
       .map((r) => {
         const key = `${r.id}|${weekKey}|${dayIndex}`;
@@ -341,9 +411,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     // Next day: its post-midnight events (00:xx–01:xx) appear at the bottom of this column
     // e.g. Wednesday 01:00 is the tail of Tuesday's column
     const nextIdx = dayIndex + 1;
+    const nextDateStr = nextIdx < 7 ? days[nextIdx].toISOString().split('T')[0] : '';
     const nextMidnight = nextIdx < 7 ? [
       ...recurring
         .filter((r) => r.days.includes(nextIdx))
+        .filter((r) => !r.startDate || nextDateStr >= r.startDate)
+        .filter((r) => !r.endDate || nextDateStr <= r.endDate)
         .filter((r) => !exceptions.includes(`${r.id}|${weekKey}|${nextIdx}`))
         .filter((r) => isPostMidnight(r.time))
         .map((r) => ({ ...r, _recurring: true, _storedDayIndex: nextIdx })),
@@ -539,6 +612,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   const handleBlockTouchStart = (activity, visualDayIndex, e) => {
+    if (window.innerWidth <= 640) return; // Pas de drag sur mobile
     const touch = e.touches[0];
     const blockRect = e.currentTarget.getBoundingClientRect();
     dragRef.current = {
@@ -567,9 +641,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const handleAddRecurring = (activity) => {
     const { days: recurDays, ...activityData } = activity;
+    const startDate = activeFormDay !== null
+      ? days[activeFormDay].toISOString().split('T')[0]
+      : undefined;
     setRecurring((prev) => [
       ...prev,
-      { ...activityData, id: `recur_${Date.now()}`, days: recurDays },
+      { ...activityData, id: `recur_${Date.now()}`, days: recurDays, startDate },
     ]);
   };
 
@@ -643,6 +720,15 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const handleDeleteRecurringAll = (recurringId) => {
     setRecurring((prev) => prev.filter((r) => r.id !== recurringId));
+  };
+
+  const handleDeleteRecurringFrom = (activity, dayIndex) => {
+    const d = new Date(days[dayIndex]);
+    d.setDate(d.getDate() - 1);
+    const endDate = d.toISOString().split('T')[0];
+    setRecurring((prev) =>
+      prev.map((r) => r.id === activity.id ? { ...r, endDate } : r)
+    );
   };
 
   const isToday = (date) =>
@@ -903,18 +989,32 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     <div className="week-planner">
       <div className="week-nav">
         <div className="week-nav-controls">
-          <button onClick={() => setWeekOffset((o) => o - 1)}>
+          <button onClick={() => setWeekOffset((o) => o - 1)} disabled={weekOffset <= minWeekOffset}>
             ← Précédente
           </button>
           <span className="week-label">{formatWeekLabel(weekOffset)}</span>
           <button onClick={() => setWeekOffset((o) => o + 1)}>
             Suivante →
           </button>
-          {weekOffset !== 0 && (
-            <button className="week-nav-today" onClick={() => setWeekOffset(0)}>
-              Aujourd'hui
+          <div className="mini-cal-wrapper">
+            <button className="mini-cal-toggle" onClick={(e) => { e.stopPropagation(); setShowMiniCal((v) => !v); }} title="Aller à une date">
+              📅
             </button>
-          )}
+            {showMiniCal && (
+              <MiniCalendar
+                weekOffset={weekOffset}
+                onSelectWeek={setWeekOffset}
+                onClose={() => setShowMiniCal(false)}
+              />
+            )}
+          </div>
+          <button
+            className="week-nav-today"
+            onClick={() => setWeekOffset(0)}
+            style={{ visibility: weekOffset !== 0 ? 'visible' : 'hidden' }}
+          >
+            Aujourd'hui
+          </button>
         </div>
         <button
           className="week-nav-find-slot"
@@ -1457,9 +1557,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               Supprimer <strong>"{deletingRecurring.activity.title}"</strong>
             </p>
             <p className="confirm-recur-sub">
-              Supprimer uniquement cette occurrence ou toute la série ?
+              Supprimer uniquement cette occurrence, à partir de cette date, ou toute la série ?
             </p>
-            <div className="form-actions">
+            <div className="form-actions" style={{ flexWrap: 'wrap' }}>
               <button
                 className="btn-secondary"
                 onClick={() => setDeletingRecurring(null)}
@@ -1477,6 +1577,18 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 }}
               >
                 Cette occurrence
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  handleDeleteRecurringFrom(
+                    deletingRecurring.activity,
+                    deletingRecurring.dayIndex,
+                  );
+                  setDeletingRecurring(null);
+                }}
+              >
+                À partir de cette date
               </button>
               <button
                 className="btn-danger"
