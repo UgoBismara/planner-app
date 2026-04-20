@@ -977,74 +977,104 @@
 /* ══════════════════════════════════════════
    MOBILE — vue 1 jour à la fois
    ══════════════════════════════════════════ */
+/* ── Éléments mobiles (cachés sur desktop) ── */
+.mobile-week-header { display: none; }
+.mobile-month-view { display: none; }
+.mobile-header-center { display: none; }
+.mobile-view-toggle { display: none; }
+
 @media (max-width: 640px) {
 
-  /* ── Onglets de sélection de jour ── */
+  /* ── Cacher le nav desktop sur mobile ── */
+  .week-nav { display: none; }
+
+  .week-planner { gap: 0; }
+
+  /* ── Header iOS : Mois Année + flèches ── */
+  .mobile-week-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 4px;
+  }
+  .mobile-month-label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .mobile-week-arrow {
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    line-height: 1;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0 6px;
+    opacity: 1;
+    transition: opacity 0.15s;
+  }
+  .mobile-week-arrow:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  /* ── Onglets jour style iOS ── */
   .mobile-day-tabs {
     display: flex;
-    gap: 5px;
-    padding: 6px 4px 2px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    padding: 4px 0 0;
+    border-bottom: 0.5px solid var(--border);
+    gap: 0;
   }
   .mobile-day-tabs::-webkit-scrollbar { display: none; }
 
   .mobile-day-tab {
-    flex-shrink: 0;
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1px;
-    padding: 5px 13px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    gap: 3px;
+    padding: 4px 0 8px;
+    border: none;
     background: none;
     cursor: pointer;
-    color: var(--text-secondary);
-    transition: all 0.15s;
-  }
-  .mobile-day-tab.today:not(.active) {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .mobile-day-tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
+    transition: none;
   }
   .tab-day-name {
-    font-size: 0.68rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 400;
     text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
   }
   .tab-day-num {
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  /* ── Navigation semaine compacte ── */
-  .week-nav {
-    gap: 0.4rem;
-    flex-wrap: wrap;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    border-radius: 50%;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text-primary);
   }
-  .week-nav-controls {
-    gap: 0.4rem;
+  /* Today = cercle accent */
+  .mobile-day-tab.today .tab-day-num {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
   }
-  .week-nav button {
-    padding: 0.4rem 0.7rem;
-    font-size: 0.78rem;
+  /* Actif (pas today) = cercle léger */
+  .mobile-day-tab.active:not(.today) .tab-day-num {
+    background: rgba(79, 142, 247, 0.18);
+    color: var(--accent);
+    font-weight: 600;
   }
-  .week-label {
-    min-width: 0;
-    font-size: 0.8rem;
-  }
-  .week-nav-find-slot {
-    position: static;
-    font-size: 0.78rem;
-    padding: 0.4rem 0.7rem;
+  /* Actif + today = cercle accent (déjà géré) */
+  .mobile-day-tab.active.today .tab-day-num {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
   }
 
   /* ── Vue 1 jour : cacher toutes les colonnes sauf l'active ── */
@@ -1111,19 +1141,26 @@
     padding: 3px 5px;
   }
 
-  /* ── Événements — pleine largeur, titres lisibles ── */
+  /* ── Événements style iOS ── */
   .cal-activity-block {
     padding: 5px 8px;
+    border-left-width: 4px;
+    border-radius: 6px;
+    left: 4px;
+    right: 4px;
   }
   .cal-activity-title {
     font-size: 0.85rem;
+    font-weight: 600;
   }
   .cal-activity-time {
     font-size: 0.72rem;
+    opacity: 0.85;
   }
   .cal-activity-pill {
     height: 30px;
     font-size: 0.82rem;
+    border-radius: 8px;
   }
 
   .activity-delete { opacity: 1 !important; }
@@ -1135,7 +1172,7 @@
 
   /* ── Calendrier corps ── */
   .calendar-body {
-    height: calc(100dvh - 260px);
+    height: calc(100dvh - 220px);
   }
 
   .cal-day-header.mobile-active {
@@ -1178,6 +1215,202 @@
   .confirm-report-btn {
     font-size: 0.75rem;
     padding: 3px 10px;
+  }
+
+  /* ── Header center : label + toggle ── */
+  .mobile-header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── Toggle Jour / Mois ── */
+  .mobile-view-toggle {
+    display: flex;
+    background: var(--bg-hover);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .mobile-view-btn {
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 3px 14px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mobile-view-btn.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* ── Vue mois : masquée par défaut, visible en mode mois ── */
+  .mobile-month-view { display: none; }
+  .week-planner.month-view .mobile-month-view { display: block; }
+  .week-planner.month-view .mobile-day-tabs { display: none !important; }
+  .week-planner.month-view .calendar-wrapper { display: none; }
+
+  /* ── Grille mois ── */
+  .mobile-month-dow-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 6px 0 2px;
+  }
+  .mobile-month-dow {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .mobile-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px 0;
+    padding: 4px 0;
+  }
+  .mobile-month-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    min-height: 52px;
+  }
+  .mobile-month-num {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text-primary);
+  }
+  .mobile-month-day.out-month .mobile-month-num {
+    color: var(--text-secondary);
+    opacity: 0.35;
+  }
+  .mobile-month-day.is-today .mobile-month-num {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+  .mobile-month-day.is-selected:not(.is-today) .mobile-month-num {
+    background: rgba(79, 142, 247, 0.18);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .mobile-month-dots {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+  }
+  .mobile-month-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Aperçu rapide du jour ── */
+  .mobile-day-preview {
+    margin: 0 0 0;
+    border-top: 0.5px solid var(--border);
+    padding: 10px 16px 16px;
+    max-height: 40dvh;
+    overflow-y: auto;
+  }
+  .mobile-day-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .mobile-day-preview-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .mobile-day-preview-goto {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 0;
+  }
+  .mobile-day-preview-empty {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin: 0;
+    text-align: center;
+    padding: 8px 0;
+  }
+  .mobile-day-preview-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mobile-day-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mobile-day-preview-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .mobile-day-preview-name {
+    flex: 1;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mobile-day-preview-time {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .mobile-day-preview-check {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .mobile-day-preview-check:active {
+    background: #27ae60;
+    border-color: #27ae60;
+    color: #fff;
   }
 }
 

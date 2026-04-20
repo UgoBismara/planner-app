@@ -5,6 +5,14 @@ import SlotFinderModal from "./SlotFinderModal";
 import RescheduleModal from "./RescheduleModal";
 import "./WeekPlanner.css";
 
+function getWeekKeyForDate(date) {
+  const dow = (date.getDay() + 6) % 7;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - dow);
+  monday.setHours(0, 0, 0, 0);
+  return `planner_week_${monday.getFullYear()}_${String(getWeekNumber(monday)).padStart(2, '0')}`;
+}
+
 function getWeekKey(weekOffset) {
   const now = new Date();
   const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
@@ -43,6 +51,17 @@ function getDaysOfWeek(weekOffset) {
   });
 }
 
+function getMobileMonthLabel(weekOffset) {
+  const monday = getMondayOfWeek(weekOffset);
+  const label = monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function formatMonthYear(date) {
+  const label = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 function formatWeekLabel(weekOffset) {
   const days = getDaysOfWeek(weekOffset);
   const first = days[0];
@@ -56,56 +75,7 @@ function formatWeekLabel(weekOffset) {
 }
 
 function getDefaultRecurring() {
-  return [
-    {
-      id: "recur_am",
-      title: "Travail",
-      time: "09:00",
-      endTime: "12:30",
-      color: "#4f8ef7",
-      days: [0, 1, 2, 3, 4],
-    },
-    {
-      id: "recur_pm",
-      title: "Travail",
-      time: "14:00",
-      endTime: "17:30",
-      color: "#4f8ef7",
-      days: [0, 1, 2, 3, 4],
-    },
-    {
-      id: "recur_savoirs",
-      title: "Table des savoirs",
-      time: "",
-      endTime: "",
-      color: "#f39c12",
-      days: [0, 1, 2, 3, 4, 5, 6],
-    },
-    {
-      id: "recur_nba",
-      title: "Vidéo NBA",
-      time: "",
-      endTime: "",
-      color: "#e74c3c",
-      days: [0, 1, 2, 3, 4, 5, 6],
-    },
-    {
-      id: "recur_sport",
-      title: "Sport",
-      time: "",
-      endTime: "",
-      color: "#2ecc71",
-      days: [0, 1, 2, 3, 4, 5, 6],
-    },
-    {
-      id: "recur_lecture",
-      title: "Lire",
-      time: "",
-      endTime: "",
-      color: "#9b59b6",
-      days: [0, 1, 2, 3, 4, 5, 6],
-    },
-  ];
+  return [];
 }
 
 function roundUpTo30(min) {
@@ -255,6 +225,145 @@ function computeLayout(timedEvents) {
 const MIN_WEEK_MONDAY = new Date('2026-03-16T00:00:00');
 const MIN_WEEK_STR = MIN_WEEK_MONDAY.toISOString().split('T')[0];
 
+// eslint-disable-next-line no-unused-vars
+function MobileMonthView({ year, month, recurring, exceptions, recurringDone, selectedMonthDay, onDayTap, onGoToDay, onToggleDone, refreshKey }) {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const DOW_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+  const firstDay = new Date(year, month, 1);
+  const startDow = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells = [];
+  for (let i = 0; i < startDow; i++) {
+    cells.push(new Date(year, month, 1 - startDow + i));
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(new Date(year, month, d));
+  }
+  while (cells.length % 7 !== 0) {
+    const last = cells[cells.length - 1];
+    const next = new Date(last);
+    next.setDate(last.getDate() + 1);
+    cells.push(next);
+  }
+
+  const getEventsForDate = (date) => {
+    const dayIndex = (date.getDay() + 6) % 7;
+    const dayDateStr = date.toISOString().split('T')[0];
+    const wk = getWeekKeyForDate(date);
+
+    const recurEvents = recurring
+      .filter(r => r.days.includes(dayIndex))
+      .filter(r => !r.startDate || dayDateStr >= r.startDate)
+      .filter(r => !r.endDate || dayDateStr <= r.endDate)
+      .filter(r => !exceptions.includes(`${r.id}|${wk}|${dayIndex}`));
+
+    let oneTimeEvents = [];
+    try {
+      const stored = localStorage.getItem(wk);
+      if (stored) {
+        const data = JSON.parse(stored);
+        oneTimeEvents = data[dayIndex] || [];
+      }
+    } catch {
+      // ignore localStorage read errors
+    }
+
+    const isEventDone = (event) => {
+      if (event.days !== undefined) {
+        return recurringDone.includes(`${event.id}|${wk}|${dayIndex}`);
+      }
+      return !!event.done;
+    };
+
+    return [...recurEvents, ...oneTimeEvents]
+      .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'))
+      .filter(e => !isEventDone(e));
+  };
+
+  const getDots = (date) => {
+    return getEventsForDate(date)
+      .map(e => e.color || '#4f8ef7')
+      .filter((c, i, arr) => arr.indexOf(c) === i)
+      .slice(0, 3);
+  };
+
+  const previewEvents = selectedMonthDay ? getEventsForDate(selectedMonthDay) : [];
+  const previewLabel = selectedMonthDay
+    ? selectedMonthDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+    : '';
+
+  return (
+    <div className="mobile-month-view">
+      <div className="mobile-month-dow-header">
+        {DOW_LABELS.map((d, i) => <span key={i} className="mobile-month-dow">{d}</span>)}
+      </div>
+      <div className="mobile-month-grid">
+        {cells.map((date, idx) => {
+          const dateStr = date.toISOString().split('T')[0];
+          const inMonth = date.getMonth() === month;
+          const isToday = dateStr === todayStr;
+          const isSelected = selectedMonthDay && date.toDateString() === selectedMonthDay.toDateString();
+          const dots = inMonth ? getDots(date) : [];
+          return (
+            <button
+              key={idx}
+              className={`mobile-month-day${!inMonth ? ' out-month' : ''}${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`}
+              onClick={() => inMonth && onDayTap(date)}
+            >
+              <span className="mobile-month-num">{date.getDate()}</span>
+              {dots.length > 0 && (
+                <div className="mobile-month-dots">
+                  {dots.map((c, i) => (
+                    <span key={i} className="mobile-month-dot" style={{ background: c }} />
+                  ))}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Aperçu rapide du jour sélectionné */}
+      {selectedMonthDay && (
+        <div className="mobile-day-preview">
+          <div className="mobile-day-preview-header">
+            <span className="mobile-day-preview-title">
+              {previewLabel.charAt(0).toUpperCase() + previewLabel.slice(1)}
+            </span>
+            <button className="mobile-day-preview-goto" onClick={() => onGoToDay(selectedMonthDay)}>
+              Voir →
+            </button>
+          </div>
+          {previewEvents.length === 0 ? (
+            <p className="mobile-day-preview-empty">Aucun événement</p>
+          ) : (
+            <ul className="mobile-day-preview-list">
+              {previewEvents.map((event, i) => (
+                <li key={i} className="mobile-day-preview-item">
+                  <span className="mobile-day-preview-dot" style={{ background: event.color || '#4f8ef7' }} />
+                  <span className="mobile-day-preview-name">{event.title}</span>
+                  {event.time && (
+                    <span className="mobile-day-preview-time">
+                      {event.time}{event.endTime ? ` – ${event.endTime}` : ''}
+                    </span>
+                  )}
+                  <button
+                    className="mobile-day-preview-check"
+                    onClick={() => onToggleDone(event, selectedMonthDay)}
+                    title="Valider"
+                  >✓</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MiniCalendar({ weekOffset, onSelectWeek, onClose }) {
   const [month, setMonth] = useState(() => { const d = new Date(); d.setDate(1); return d; });
   const year = month.getFullYear();
@@ -347,6 +456,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     return todayIdx >= 0 ? todayIdx : 0;
   });
   const [deletingRecurring, setDeletingRecurring] = useState(null); // { activity, dayIndex }
+  const [mobileView, setMobileView] = useState('day');
+  const [mobileMonthDate, setMobileMonthDate] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [selectedMonthDay, setSelectedMonthDay] = useState(() => new Date());
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
 
   // ── Drag state ──────────────────────────────────────────────────
   const [isDragging, setIsDragging] = useState(false);
@@ -985,8 +1101,44 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     </button>
   );
 
+  const handlePreviewToggleDone = (event, date) => {
+    const dayIndex = (date.getDay() + 6) % 7;
+    const wk = getWeekKeyForDate(date);
+    if (event.days !== undefined) {
+      const key = `${event.id}|${wk}|${dayIndex}`;
+      setRecurringDone((prev) =>
+        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      );
+    } else {
+      try {
+        const stored = localStorage.getItem(wk);
+        if (stored) {
+          const data = JSON.parse(stored);
+          data[dayIndex] = (data[dayIndex] || []).map((e) =>
+            e.id === event.id ? { ...e, done: !e.done } : e
+          );
+          localStorage.setItem(wk, JSON.stringify(data));
+          setPreviewRefreshKey((k) => k + 1);
+        }
+      } catch {
+        // ignore localStorage errors
+      }
+    }
+  };
+
+  const handleGoToDayView = (date) => {
+    const targetMonday = new Date(date);
+    targetMonday.setDate(date.getDate() - (date.getDay() + 6) % 7);
+    targetMonday.setHours(0, 0, 0, 0);
+    const todayMonday = getMondayOfWeek(0);
+    const diffWeeks = Math.round((targetMonday - todayMonday) / (7 * 86400000));
+    setWeekOffset(diffWeeks);
+    setMobileDay((date.getDay() + 6) % 7);
+    setMobileView('day');
+  };
+
   return (
-    <div className="week-planner">
+    <div className={`week-planner${mobileView === 'month' ? ' month-view' : ''}`}>
       <div className="week-nav">
         <div className="week-nav-controls">
           <button onClick={() => setWeekOffset((o) => o - 1)} disabled={weekOffset <= minWeekOffset}>
@@ -1024,6 +1176,58 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         </button>
       </div>
 
+      {/* Header iOS mobile */}
+      <div className="mobile-week-header">
+        <button
+          className="mobile-week-arrow"
+          onClick={() => mobileView === 'day'
+            ? setWeekOffset((o) => o - 1)
+            : setMobileMonthDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+          }
+          disabled={mobileView === 'day' && weekOffset <= minWeekOffset}
+        >‹</button>
+        <div className="mobile-header-center">
+          <span className="mobile-month-label">
+            {mobileView === 'day' ? getMobileMonthLabel(weekOffset) : formatMonthYear(mobileMonthDate)}
+          </span>
+          <div className="mobile-view-toggle">
+            <button
+              className={`mobile-view-btn${mobileView === 'day' ? ' active' : ''}`}
+              onClick={() => setMobileView('day')}
+            >Jour</button>
+            <button
+              className={`mobile-view-btn${mobileView === 'month' ? ' active' : ''}`}
+              onClick={() => {
+                const monday = getMondayOfWeek(weekOffset);
+                setMobileMonthDate(new Date(monday.getFullYear(), monday.getMonth(), 1));
+                setMobileView('month');
+              }}
+            >Mois</button>
+          </div>
+        </div>
+        <button
+          className="mobile-week-arrow"
+          onClick={() => mobileView === 'day'
+            ? setWeekOffset((o) => o + 1)
+            : setMobileMonthDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+          }
+        >›</button>
+      </div>
+
+      {/* Vue mois iOS — mobile uniquement */}
+      <MobileMonthView
+        year={mobileMonthDate.getFullYear()}
+        month={mobileMonthDate.getMonth()}
+        recurring={recurring}
+        exceptions={exceptions}
+        selectedMonthDay={selectedMonthDay}
+        onDayTap={setSelectedMonthDay}
+        onGoToDay={handleGoToDayView}
+        recurringDone={recurringDone}
+        onToggleDone={handlePreviewToggleDone}
+        refreshKey={previewRefreshKey}
+      />
+
       {/* Onglets de navigation jour — mobile uniquement */}
       <div className="mobile-day-tabs">
         {days.map((date, i) => (
@@ -1032,7 +1236,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             className={`mobile-day-tab${mobileDay === i ? " active" : ""}${isToday(date) ? " today" : ""}`}
             onClick={() => setMobileDay(i)}
           >
-            <span className="tab-day-name">{DAY_NAMES[i]}</span>
+            <span className="tab-day-name">{DAY_NAMES[i].charAt(0)}</span>
             <span className="tab-day-num">{date.getDate()}</span>
           </button>
         ))}
