@@ -1056,6 +1056,37 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     setGoalsForDay(toDay, [...getGoalsForDay(toDay), goal]);
   };
 
+  const moveGoalToNextWeek = (fromDayIndex, goalId) => {
+    const goal = getGoalsForDay(fromDayIndex).find((g) => g.id === goalId);
+    if (!goal) return;
+    const nextWeekDate = new Date(days[fromDayIndex]);
+    nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+    const nextWeekKey = nextWeekDate.toISOString().split('T')[0];
+    setGoalsForDay(fromDayIndex, getGoalsForDay(fromDayIndex).filter((g) => g.id !== goalId));
+    setDailyGoals((prev) => {
+      const existing = Array.isArray(prev[nextWeekKey]) ? prev[nextWeekKey] : [];
+      return { ...prev, [nextWeekKey]: [...existing, { ...goal, done: false }] };
+    });
+  };
+
+  const moveGoalForward = (fromDayIndex, goalId) => {
+    if (fromDayIndex < 6) {
+      moveGoalToDay(fromDayIndex, goalId, fromDayIndex + 1);
+    } else {
+      // Dimanche → lundi de la semaine suivante
+      const goal = getGoalsForDay(fromDayIndex).find((g) => g.id === goalId);
+      if (!goal) return;
+      const nextMonday = new Date(days[fromDayIndex]);
+      nextMonday.setDate(nextMonday.getDate() + 1);
+      const nextMondayKey = nextMonday.toISOString().split('T')[0];
+      setGoalsForDay(fromDayIndex, getGoalsForDay(fromDayIndex).filter((g) => g.id !== goalId));
+      setDailyGoals((prev) => {
+        const existing = Array.isArray(prev[nextMondayKey]) ? prev[nextMondayKey] : [];
+        return { ...prev, [nextMondayKey]: [...existing, { ...goal }] };
+      });
+    }
+  };
+
   const moveGoal = (i, goalId, dir) => {
     const goals = getGoalsForDay(i);
     const idx = goals.findIndex((g) => g.id === goalId);
@@ -1419,14 +1450,15 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         {i > 0 && (
                           <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i - 1)} title="Jour précédent">←</button>
                         )}
-                        {i < 6 && (
-                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i + 1)} title="Jour suivant">→</button>
-                        )}
+                        <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalForward(i, goal.id)} title={i < 6 ? 'Jour suivant' : 'Lundi prochain'}>→</button>
                         {idx > 0 && (
                           <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, -1)} title="Monter">↑</button>
                         )}
                         {idx < goals.length - 1 && (
                           <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, 1)} title="Descendre">↓</button>
+                        )}
+                        {!goal.done && (
+                          <button className="goal-move-btn goal-next-week-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToNextWeek(i, goal.id)} title="Reporter à la semaine prochaine">↗</button>
                         )}
                         <button className="goal-delete-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => deleteGoal(i, goal.id)} title="Supprimer">×</button>
                       </div>

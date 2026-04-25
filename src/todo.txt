@@ -1,7 +1,9 @@
 Planning : 
 - Rajouter le fait de pouvoir mettre des événements sur plusieurs jours
-- Pouvoir faire passer les objectifs à la semaine suivante
-- Créer un widget sur téléphone
+- Créer un widget sur téléphone (impossible en l'état)
+2 options :
+    1. React Native + widget natif — vrai widget, mais ça implique de réécrire l'app en React Native et d'ajouter des modules natifs spécifiques iOS/Android. Énorme chantier.
+    2. Android uniquement via Tasker/KWGT — possible mais demande à l'utilisateur de configurer des outils tiers.
 Recettes :
 - Faire en sorte que ce soit des vrais recettes complètes pas uniquement une viande, un légume etc...
 - Ajouter plus de recettes
