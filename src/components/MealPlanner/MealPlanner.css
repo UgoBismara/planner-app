@@ -111,6 +111,84 @@
   font-size: 0.8rem;
 }
 
+.week-macro {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  border: 1px solid;
+  margin-left: auto;
+}
+
+.week-macro + .week-macro {
+  margin-left: 0.35rem;
+}
+
+.week-macro-g {
+  color: #e09a3a;
+  border-color: #e09a3a;
+  background: rgba(224, 154, 58, 0.1);
+}
+
+.week-macro-l {
+  color: #e05a7a;
+  border-color: #e05a7a;
+  background: rgba(224, 90, 122, 0.1);
+}
+
+.week-macro-p {
+  color: #4fbf8a;
+  border-color: #4fbf8a;
+  background: rgba(79, 191, 138, 0.1);
+}
+
+/* ── Diversité alimentaire ── */
+.diversity-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  font-size: 0.82rem;
+}
+
+.diversity-label {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+}
+
+.diversity-track {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.diversity-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #4fbf8a);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.diversity-count {
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.diversity-count.reached {
+  color: #4fbf8a;
+}
+
 .meal-add-hint {
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -481,9 +559,94 @@
   color: var(--danger);
 }
 
+/* ── Sections par type de repas ── */
+.shopping-meal-section {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.shopping-meal-header {
+  width: 100%;
+  background: var(--bg-hover);
+  border: none;
+  cursor: pointer;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.shopping-meal-header:hover { background: var(--bg-main); }
+
+.shopping-meal-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--accent);
+  flex: 1;
+}
+
+.shopping-meal-progress {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.shopping-meal-body {
+  padding: 0.5rem 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .tag-calories {
   color: var(--accent);
   border-color: var(--accent);
+}
+
+.recipe-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.btn-like {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s, transform 0.1s;
+}
+
+.btn-like:hover {
+  transform: scale(1.2);
+  color: #e05a7a;
+}
+
+.btn-like.active {
+  color: #e05a7a;
+}
+
+.recipe-item.liked {
+  border-color: rgba(224, 90, 122, 0.3);
+}
+
+.recipe-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-like-detail {
+  font-size: 1.3rem;
+  padding: 0 4px;
 }
 
 /* Add custom recipe form */

@@ -225,6 +225,62 @@ function computeLayout(timedEvents) {
 const MIN_WEEK_MONDAY = new Date('2026-03-16T00:00:00');
 const MIN_WEEK_STR = MIN_WEEK_MONDAY.toISOString().split('T')[0];
 
+const DAILY_KCAL_TARGET = 2200;
+
+function MealForm({ onSubmit, onClose }) {
+  const [title, setTitle] = useState('');
+  const [kcal, setKcal] = useState('');
+  const [color, setColor] = useState('#e67e22');
+  const [days, setDays] = useState([0, 1, 2, 3, 4, 5, 6]);
+  const DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+  const toggleDay = (i) =>
+    setDays((prev) => prev.includes(i) ? prev.filter((d) => d !== i) : [...prev, i].sort((a, b) => a - b));
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!title.trim() || !kcal) return;
+    onSubmit({ title: title.trim(), kcal: parseInt(kcal), color, days });
+    onClose();
+  };
+
+  return (
+    <div className="activity-form-overlay" onClick={onClose}>
+      <form className="activity-form meal-form" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
+        <h3 className="form-title">Ajouter un repas</h3>
+        <div className="form-group">
+          <label>Nom du repas</label>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex : Déjeuner" required autoFocus />
+        </div>
+        <div className="form-row">
+          <div className="form-group" style={{ flex: 1 }}>
+            <label>Calories (kcal)</label>
+            <input type="number" value={kcal} onChange={(e) => setKcal(e.target.value)} placeholder="Ex : 650" min="0" required />
+          </div>
+          <div className="form-group">
+            <label>Couleur</label>
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} style={{ height: '38px', width: '48px' }} />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Jours</label>
+          <div className="meal-day-selector">
+            {DAY_LABELS.map((d, i) => (
+              <button key={i} type="button"
+                className={`meal-day-btn${days.includes(i) ? ' active' : ''}`}
+                onClick={() => toggleDay(i)}>{d}</button>
+            ))}
+          </div>
+        </div>
+        <div className="form-actions">
+          <button type="button" className="btn-secondary" onClick={onClose}>Annuler</button>
+          <button type="submit" className="btn-primary">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // eslint-disable-next-line no-unused-vars
 function MobileMonthView({ year, month, recurring, exceptions, recurringDone, selectedMonthDay, onDayTap, onGoToDay, onToggleDone, refreshKey }) {
   const todayStr = new Date().toISOString().split('T')[0];
@@ -463,6 +519,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   });
   const [selectedMonthDay, setSelectedMonthDay] = useState(() => new Date());
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
+  const [meals, setMeals] = useLocalStorage('planner_meals', []);
+  const [showMealForm, setShowMealForm] = useState(false);
 
   // ── Drag state ──────────────────────────────────────────────────
   const [isDragging, setIsDragging] = useState(false);
@@ -1423,6 +1481,40 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           })}
         </div>
 
+        {/* ── Repas ── */}
+        <div className="meals-row">
+          <div className="meals-gutter">
+            <span className="meals-label">Repas</span>
+          </div>
+          {days.map((_, i) => {
+            const dayMeals = meals.filter((m) => m.days.includes(i));
+            const totalKcal = dayMeals.reduce((sum, m) => sum + (m.kcal || 0), 0);
+            const pct = Math.min(100, Math.round((totalKcal / DAILY_KCAL_TARGET) * 100));
+            const barColor = pct >= 100 ? '#2ecc71' : pct >= 75 ? '#f39c12' : '#e67e22';
+            return (
+              <div key={i} className={`meals-cell${mobileDay === i ? ' mobile-active' : ''}`}>
+                {dayMeals.map((meal) => (
+                  <div key={meal.id} className="meal-item">
+                    <span className="meal-dot" style={{ background: meal.color }} />
+                    <span className="meal-name">{meal.title}</span>
+                    <span className="meal-kcal">{meal.kcal} kcal</span>
+                    <button className="meal-delete-btn" onClick={() => setMeals((prev) => prev.filter((m) => m.id !== meal.id))}>×</button>
+                  </div>
+                ))}
+                {dayMeals.length > 0 && (
+                  <div className="meal-total-row">
+                    <div className="meal-progress-bar">
+                      <div className="meal-progress-fill" style={{ width: `${pct}%`, background: barColor }} />
+                    </div>
+                    <span className="meal-total-text">{totalKcal} / {DAILY_KCAL_TARGET} kcal</span>
+                  </div>
+                )}
+                <button className="meal-add-btn" onClick={() => setShowMealForm(true)}>+ Repas</button>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="calendar-body">
           <div className="time-gutter">
             {HOURS.map((h) => (
@@ -1721,6 +1813,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           findSlots={(durationMin) => findFreeSlots(weekData, recurring, durationMin, days)}
           onConfirm={(dayIndex, activity) => handleAdd(dayIndex, activity)}
           onClose={() => setShowSlotFinder(false)}
+        />
+      )}
+
+      {showMealForm && (
+        <MealForm
+          onSubmit={(meal) => setMeals((prev) => [...prev, { ...meal, id: `meal_${Date.now()}` }])}
+          onClose={() => setShowMealForm(false)}
         />
       )}
 

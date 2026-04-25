@@ -8,7 +8,7 @@ export const RECIPES = [
     time: 20,
     // Pour 2 : 200g pâtes crues (680) + 2 œufs (156) + 100g lardons (300) + 50g parmesan (195) = 1331 / 2
     calories: 665,
-    ingredients: ["200g de spaghetti", "2 œufs", "100g de lardons fumés", "50g de parmesan râpé", "Poivre noir", "Sel"],
+    ingredients: ["200g de spaghetti (crus)", "2 œufs", "100g de lardons fumés", "50g de parmesan râpé", "Poivre noir", "Sel"],
     steps: [
       "Cuire les pâtes al dente dans de l'eau bouillante salée.",
       "Faire revenir les lardons à sec dans une poêle.",
@@ -42,7 +42,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 200g lentilles corail (680) + 2 carottes (70) + oignon (40) + 1 c.s. huile (90) = 880 / 4
     calories: 220,
-    ingredients: ["200g de lentilles corail", "1 oignon", "2 carottes", "1 c.c. de cumin", "1 c.c. de curcuma", "Bouillon de légumes", "Huile d'olive"],
+    ingredients: ["200g de lentilles corail (crues)", "1 oignon", "2 carottes", "1 c.c. de cumin", "1 c.c. de curcuma", "Bouillon de légumes", "Huile d'olive"],
     steps: [
       "Faire revenir l'oignon émincé dans l'huile.",
       "Ajouter les carottes coupées en rondelles, le cumin et le curcuma.",
@@ -90,7 +90,7 @@ export const RECIPES = [
     time: 35,
     // Pour 4 : 300g riz arborio (1080) + 300g champignons (60) + 150ml vin blanc (110) + 50g parmesan (195) + 30g beurre (225) = 1670 / 4
     calories: 420,
-    ingredients: ["300g de riz arborio", "300g de champignons", "1 oignon", "150ml de vin blanc", "1L de bouillon", "Parmesan", "Beurre"],
+    ingredients: ["300g de riz arborio (cru)", "300g de champignons", "1 oignon", "150ml de vin blanc", "1L de bouillon", "Parmesan", "Beurre"],
     steps: [
       "Faire revenir l'oignon dans le beurre, ajouter les champignons.",
       "Incorporer le riz et le nacrer 2 minutes.",
@@ -137,7 +137,7 @@ export const RECIPES = [
     time: 25,
     // Pour 2 : 2 pavés saumon 300g (540) + courgette (30) + 1 c.s. huile (90) = 660 / 2
     calories: 330,
-    ingredients: ["2 pavés de saumon", "1 citron", "Aneth", "1 courgette", "1 c.s. d'huile d'olive", "Sel, poivre"],
+    ingredients: ["2 pavés de saumon (crus, ~150g chacun)", "1 citron", "Aneth", "1 courgette", "1 c.s. d'huile d'olive", "Sel, poivre"],
     steps: [
       "Préchauffer le four à 200°C.",
       "Déposer chaque pavé sur une feuille de papier cuisson.",
@@ -170,7 +170,7 @@ export const RECIPES = [
     time: 15,
     // Pour 2 : 400g bœuf haché 15%MG (840) + 1 œuf (78) + chapelure 30g (110) = 1028 / 2
     calories: 515,
-    ingredients: ["400g de bœuf haché", "1 œuf", "Chapelure", "Persil", "Sel, poivre", "Moutarde (optionnel)"],
+    ingredients: ["400g de bœuf haché (cru)", "1 œuf", "Chapelure", "Persil", "Sel, poivre", "Moutarde (optionnel)"],
     steps: [
       "Mélanger la viande avec l'œuf, un peu de chapelure, persil, sel et poivre.",
       "Former des steaks et les saisir à feu vif 3 minutes par côté.",
@@ -200,7 +200,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 400g viande hachée (840) + 400g spaghetti crus (1360) + légumes (150) + sauce tomate (120) + 100ml vin rouge (85) = 2555 / 4
     calories: 640,
-    ingredients: ["400g de viande hachée", "1 oignon", "2 carottes", "Sauce tomate", "Vin rouge", "Spaghetti", "Parmesan"],
+    ingredients: ["400g de viande hachée (crue)", "1 oignon", "2 carottes", "Sauce tomate", "Vin rouge", "400g de spaghetti (crus)", "Parmesan"],
     steps: [
       "Faire revenir oignon et carottes en brunoise, ajouter la viande.",
       "Déglacer au vin rouge, incorporer la sauce tomate.",
@@ -215,7 +215,7 @@ export const RECIPES = [
     time: 20,
     // Pour 4 : 200g semoule (690) + tomates 200g (36) + concombre 200g (24) + herbes (10) + 3 c.s. huile (360) + jus citron (15) = 1135 / 4
     calories: 285,
-    ingredients: ["200g de semoule", "Tomates", "Concombre", "Menthe fraîche", "Persil", "Citron", "Huile d'olive"],
+    ingredients: ["200g de semoule (crue)", "Tomates", "Concombre", "Menthe fraîche", "Persil", "Citron", "Huile d'olive"],
     steps: [
       "Verser de l'eau bouillante sur la semoule et laisser gonfler 10 minutes.",
       "Ajouter tous les légumes coupés en petits dés.",
@@ -343,7 +343,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 300g lentilles du Puy (1020) + 4 saucisses Morteau 600g (1380) + légumes (110) = 2510 / 4
     calories: 630,
-    ingredients: ["300g de lentilles vertes du Puy", "4 saucisses de Morteau", "2 carottes", "1 oignon", "Bouquet garni", "Moutarde"],
+    ingredients: ["300g de lentilles vertes du Puy (crues)", "4 saucisses de Morteau", "2 carottes", "1 oignon", "Bouquet garni", "Moutarde"],
     steps: [
       "Faire revenir l'oignon, ajouter les carottes et les lentilles.",
       "Couvrir de bouillon avec le bouquet garni.",
@@ -479,6 +479,24 @@ export const RECIPES = [
     ]
   },
 
+  {
+    id: 66,
+    title: "Riz dinde légumes",
+    category: "viande",
+    time: 25,
+    // 90g riz basmati cru (322) + 160g blanc de dinde (178) + 200g brocolis (62) + 1,5 c.s. huile (22.5ml=20g → 180) + épices (5) = ~750 kcal
+    calories: 750,
+    ingredients: ["90g de riz basmati (cru)", "160g de blanc de dinde (cru)", "200g de brocolis (ou courgettes)", "1,5 c.s. d'huile d'olive", "1 gousse d'ail", "Paprika", "Herbes de Provence", "Sel, poivre"],
+    steps: [
+      "Cuire le riz basmati dans de l'eau bouillante salée (10-12 min), égoutter.",
+      "Couper la dinde en lanières, assaisonner de paprika, herbes, sel et poivre.",
+      "Faire chauffer l'huile dans une poêle, saisir la dinde 3-4 min de chaque côté.",
+      "Retirer la dinde, faire revenir l'ail dans la même poêle.",
+      "Ajouter les brocolis (ou courgettes en dés), cuire 5-6 min en remuant.",
+      "Remettre la dinde, mélanger avec les légumes 1 minute et servir sur le riz."
+    ]
+  },
+
   // ── Recettes batch cooking ────────────────────────────────────────────────
   {
     id: 31,
@@ -488,7 +506,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 400g bœuf haché (840) + haricots rouges 400g (340) + tomates concassées (70) + oignon (40) = 1290 / 4
     calories: 325,
-    ingredients: ["400g de bœuf haché", "1 boîte de haricots rouges", "1 boîte de tomates concassées", "1 oignon", "2 gousses d'ail", "1 c.c. de cumin", "1 c.c. de paprika fumé", "Piment selon goût", "Sel, poivre"],
+    ingredients: ["400g de bœuf haché (cru)", "1 boîte de haricots rouges", "1 boîte de tomates concassées", "1 oignon", "2 gousses d'ail", "1 c.c. de cumin", "1 c.c. de paprika fumé", "Piment selon goût", "Sel, poivre"],
     steps: [
       "Faire revenir l'oignon émincé et l'ail dans un filet d'huile.",
       "Ajouter la viande hachée et faire dorer en émiettant.",
@@ -523,7 +541,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 400g bœuf haché (840) + 800g pommes de terre (640) + 50g beurre (375) + 100ml lait (60) + 60g gruyère (240) = 2155 / 4
     calories: 540,
-    ingredients: ["400g de bœuf haché", "800g de pommes de terre", "1 oignon", "50g de beurre", "100ml de lait", "60g de gruyère râpé", "Muscade", "Sel, poivre"],
+    ingredients: ["400g de bœuf haché (cru)", "800g de pommes de terre", "1 oignon", "50g de beurre", "100ml de lait", "60g de gruyère râpé", "Muscade", "Sel, poivre"],
     steps: [
       "Cuire les pommes de terre à l'eau salée, les écraser en purée avec beurre, lait et muscade.",
       "Faire revenir l'oignon, ajouter la viande et cuire jusqu'à coloration.",
@@ -540,7 +558,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 250g lentilles corail (850) + lait de coco 200ml (420) + tomates (70) + oignon (40) + épices (20) = 1400 / 4
     calories: 350,
-    ingredients: ["250g de lentilles corail", "1 boîte de lait de coco", "1 boîte de tomates concassées", "1 oignon", "2 gousses d'ail", "1 c.c. de curcuma", "1 c.c. de garam masala", "1 c.c. de gingembre râpé", "Sel"],
+    ingredients: ["250g de lentilles corail (crues)", "1 boîte de lait de coco", "1 boîte de tomates concassées", "1 oignon", "2 gousses d'ail", "1 c.c. de curcuma", "1 c.c. de garam masala", "1 c.c. de gingembre râpé", "Sel"],
     steps: [
       "Faire revenir l'oignon, l'ail et le gingembre dans l'huile.",
       "Ajouter les épices et cuire 1 minute pour les libérer.",
@@ -575,7 +593,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 500g viande hachée (1050) + tomates concassées 800g (140) + chapelure/œuf (158) = 1348 / 4
     calories: 335,
-    ingredients: ["500g de viande hachée (bœuf ou agneau)", "800g de tomates concassées", "1 œuf", "30g de chapelure", "2 gousses d'ail", "Persil", "1 oignon", "1 c.c. de paprika", "Sel, poivre"],
+    ingredients: ["500g de viande hachée crue (bœuf ou agneau)", "800g de tomates concassées", "1 œuf", "30g de chapelure", "2 gousses d'ail", "Persil", "1 oignon", "1 c.c. de paprika", "Sel, poivre"],
     steps: [
       "Mélanger la viande avec l'œuf, la chapelure, l'ail, le persil, sel, poivre et paprika.",
       "Former des boulettes de la taille d'une noix.",
@@ -593,7 +611,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 800g cuisses de poulet (1280) + semoule 200g (690) + légumes 500g (170) + épices (10) + 1 c.s. huile (90) = 2240 / 4
     calories: 560,
-    ingredients: ["800g de cuisses de poulet", "200g de semoule moyenne", "2 carottes", "2 courgettes", "1 boîte de pois chiches", "1 oignon", "Ras-el-hanout", "Harissa", "Bouillon de volaille"],
+    ingredients: ["800g de cuisses de poulet (crues)", "200g de semoule (crue)", "2 carottes", "2 courgettes", "1 boîte de pois chiches", "1 oignon", "Ras-el-hanout", "Harissa", "Bouillon de volaille"],
     steps: [
       "Faire dorer les cuisses de poulet avec l'oignon et le ras-el-hanout.",
       "Ajouter les carottes, les pois chiches et couvrir de bouillon.",
@@ -665,7 +683,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 6 : agneau haché 500g (1150) + aubergines 600g (100) + béchamel légère (505) + sauce tomate (120) + gruyère 60g (240) = 2115 / 6
     calories: 355,
-    ingredients: ["500g de viande hachée d'agneau", "2 aubergines", "1 boîte de tomates concassées", "1 oignon", "Cannelle", "30g de beurre", "30g de farine", "300ml de lait", "60g de gruyère râpé", "Sel, poivre"],
+    ingredients: ["500g de viande hachée d'agneau (crue)", "2 aubergines", "1 boîte de tomates concassées", "1 oignon", "Cannelle", "30g de beurre", "30g de farine", "300ml de lait", "60g de gruyère râpé", "Sel, poivre"],
     steps: [
       "Trancher les aubergines et les faire rôtir au four à 200°C, 20 minutes.",
       "Préparer la bolognaise d'agneau avec oignon, tomates, cannelle.",
@@ -701,7 +719,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 600g blancs de poulet (660) + lait de coco 400ml (840) + tomates concassées (70) + oignon (40) + épices (20) = 1630 / 4
     calories: 410,
-    ingredients: ["600g de blancs de poulet", "1 boîte de lait de coco", "1 boîte de tomates concassées", "1 oignon", "3 gousses d'ail", "Gingembre frais", "2 c.s. de pâte tandoori", "1 c.c. de garam masala", "Coriandre fraîche"],
+    ingredients: ["600g de blancs de poulet (crus)", "1 boîte de lait de coco", "1 boîte de tomates concassées", "1 oignon", "3 gousses d'ail", "Gingembre frais", "2 c.s. de pâte tandoori", "1 c.c. de garam masala", "Coriandre fraîche"],
     steps: [
       "Couper le poulet en cubes, les enrober de pâte tandoori et mariner 30 minutes.",
       "Faire revenir l'oignon, l'ail et le gingembre.",
@@ -719,7 +737,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 6 : 600g viande hachée (1260) + 2 œufs (156) + chapelure 50g (175) + oignon (40) = 1631 / 6
     calories: 270,
-    ingredients: ["600g de viande hachée (bœuf + porc)", "2 œufs", "50g de chapelure", "1 oignon", "2 gousses d'ail", "Persil", "1 c.s. de moutarde", "Ketchup pour glacer", "Sel, poivre"],
+    ingredients: ["600g de viande hachée crue (bœuf + porc)", "2 œufs", "50g de chapelure", "1 oignon", "2 gousses d'ail", "Persil", "1 c.s. de moutarde", "Ketchup pour glacer", "Sel, poivre"],
     steps: [
       "Préchauffer le four à 180°C.",
       "Mélanger la viande avec les œufs, la chapelure, l'oignon haché, l'ail, le persil et la moutarde.",
@@ -729,6 +747,300 @@ export const RECIPES = [
       "Se coupe en tranches, se mange froid ou chaud. Se congèle très bien."
     ]
   },
+  // ── Petit-déjeuner ───────────────────────────────────────────────────────
+  {
+    id: 46,
+    title: "Porridge aux fruits rouges",
+    category: "petit-déjeuner",
+    time: 10,
+    calories: 380,
+    ingredients: ["80g de flocons d'avoine (secs)", "300ml de lait (ou lait végétal)", "100g de fruits rouges surgelés", "1 c.s. de miel", "1 c.s. de graines de chia"],
+    steps: [
+      "Verser les flocons et le lait dans une casserole.",
+      "Cuire 5 minutes à feu moyen en remuant.",
+      "Ajouter le miel et les graines de chia.",
+      "Servir dans un bol avec les fruits rouges décongelés dessus."
+    ]
+  },
+  {
+    id: 47,
+    title: "Pancakes maison",
+    category: "petit-déjeuner",
+    time: 20,
+    calories: 420,
+    ingredients: ["150g de farine", "1 c.s. de sucre", "1 c.c. de levure chimique", "1 pincée de sel", "2 œufs", "150ml de lait", "1 c.s. d'huile", "Sirop d'érable ou miel"],
+    steps: [
+      "Mélanger farine, sucre, levure et sel dans un bol.",
+      "Incorporer les œufs battus, le lait et l'huile.",
+      "Mélanger sans trop travailler la pâte.",
+      "Cuire des petits cercles dans une poêle légèrement huilée, 2 min par côté.",
+      "Servir avec sirop d'érable, miel ou fruits frais."
+    ]
+  },
+  {
+    id: 48,
+    title: "Avocado toast œuf poché",
+    category: "petit-déjeuner",
+    time: 15,
+    calories: 440,
+    ingredients: ["2 tranches de pain complet", "1 avocat mûr", "2 œufs", "Jus de citron", "Piment d'Espelette", "Fleur de sel", "Quelques feuilles de roquette"],
+    steps: [
+      "Toaster le pain.",
+      "Écraser l'avocat avec le jus de citron, saler.",
+      "Porter une casserole d'eau à frémissement, ajouter un filet de vinaigre.",
+      "Casser les œufs un par un dans l'eau et pocher 3 minutes.",
+      "Étaler l'avocat sur le pain, poser l'œuf, piment d'Espelette et roquette."
+    ]
+  },
+  {
+    id: 49,
+    title: "Bowl yaourt granola fruits",
+    category: "petit-déjeuner",
+    time: 5,
+    calories: 350,
+    ingredients: ["200g de yaourt grec", "50g de granola", "1 banane", "Quelques framboises", "1 c.s. de miel", "1 c.s. de beurre d'amande (optionnel)"],
+    steps: [
+      "Verser le yaourt grec dans un bol.",
+      "Couper la banane en rondelles et disposer sur le yaourt.",
+      "Ajouter les framboises et le granola.",
+      "Finir avec le miel et le beurre d'amande."
+    ]
+  },
+  {
+    id: 50,
+    title: "Œufs brouillés crémeux",
+    category: "petit-déjeuner",
+    time: 10,
+    calories: 390,
+    ingredients: ["3 œufs", "2 c.s. de crème fraîche", "10g de beurre", "2 tranches de pain de mie grillé", "Ciboulette", "Sel, poivre"],
+    steps: [
+      "Battre les œufs avec la crème, saler et poivrer.",
+      "Faire fondre le beurre à feu très doux.",
+      "Verser les œufs et remuer doucement en faisant des mouvements lents.",
+      "Retirer du feu avant la fin de la cuisson — ils continuent de cuire hors du feu.",
+      "Servir sur le pain grillé avec la ciboulette ciselée."
+    ]
+  },
+  {
+    id: 51,
+    title: "Smoothie bowl banane-épinards",
+    category: "petit-déjeuner",
+    time: 10,
+    calories: 320,
+    ingredients: ["2 bananes congelées", "1 poignée d'épinards frais", "100ml de lait végétal", "Granola", "Kiwi", "Graines de tournesol"],
+    steps: [
+      "Mixer les bananes congelées avec les épinards et le lait végétal jusqu'à consistance lisse.",
+      "Verser dans un bol — la texture doit être épaisse.",
+      "Disposer le granola, le kiwi tranché et les graines dessus."
+    ]
+  },
+  {
+    id: 52,
+    title: "Pain perdu à la cannelle",
+    category: "petit-déjeuner",
+    time: 15,
+    calories: 460,
+    ingredients: ["4 tranches de brioche ou pain rassis", "2 œufs", "100ml de lait", "1 c.s. de sucre", "1 c.c. de cannelle", "Beurre", "Sucre glace"],
+    steps: [
+      "Battre les œufs avec le lait, le sucre et la cannelle.",
+      "Tremper les tranches de pain des deux côtés.",
+      "Faire dorer dans le beurre chaud 2-3 minutes par côté.",
+      "Saupoudrer de sucre glace. Servir avec des fruits ou du sirop."
+    ]
+  },
+  {
+    id: 53,
+    title: "Bircher muesli (prep nuit)",
+    category: "petit-déjeuner",
+    time: 5,
+    calories: 400,
+    ingredients: ["80g de flocons d'avoine (secs)", "150ml de lait (ou yaourt)", "1 pomme râpée", "1 c.s. de miel", "1 c.s. de raisins secs", "Noix concassées", "Cannelle"],
+    steps: [
+      "Mélanger les flocons avec le lait, la pomme râpée, le miel et les raisins.",
+      "Couvrir et mettre au frigo toute la nuit.",
+      "Le matin, ajouter les noix et une pincée de cannelle."
+    ]
+  },
+  {
+    id: 54,
+    title: "Tartines fromage blanc fruits",
+    category: "petit-déjeuner",
+    time: 5,
+    calories: 290,
+    ingredients: ["3 tranches de pain complet", "150g de fromage blanc", "1 c.s. de miel", "Fruits de saison (fraises, myrtilles, pêche)", "Quelques noix"],
+    steps: [
+      "Toaster légèrement le pain.",
+      "Étaler le fromage blanc sur chaque tranche.",
+      "Disposer les fruits coupés, les noix et le filet de miel."
+    ]
+  },
+  {
+    id: 55,
+    title: "Galette de sarrasin œuf-fromage",
+    category: "petit-déjeuner",
+    time: 15,
+    calories: 370,
+    ingredients: ["2 galettes de sarrasin (prêtes à l'emploi)", "2 œufs", "40g d'emmental râpé", "Sel, poivre", "Beurre"],
+    steps: [
+      "Faire chauffer chaque galette dans une poêle beurrée.",
+      "Casser un œuf au centre, saler, poivrer.",
+      "Parsemer d'emmental et replier les bords.",
+      "Cuire jusqu'à ce que l'œuf soit cuit selon les préférences."
+    ]
+  },
+
+  // ── Goûter ───────────────────────────────────────────────────────────────
+  {
+    id: 56,
+    title: "Banana bread maison",
+    category: "goûter",
+    time: 60,
+    batchCooking: true,
+    calories: 280,
+    ingredients: ["3 bananes très mûres", "200g de farine", "2 œufs", "80g de sucre", "60g de beurre fondu", "1 c.c. de levure", "1 c.c. de cannelle", "Noix (optionnel)"],
+    steps: [
+      "Préchauffer le four à 175°C.",
+      "Écraser les bananes à la fourchette.",
+      "Mélanger avec les œufs, le beurre fondu et le sucre.",
+      "Incorporer la farine, la levure et la cannelle.",
+      "Ajouter les noix si souhaité.",
+      "Verser dans un moule à cake et cuire 50-55 minutes."
+    ]
+  },
+  {
+    id: 57,
+    title: "Energy balls cacao-avoine",
+    category: "goûter",
+    time: 15,
+    calories: 220,
+    ingredients: ["100g de flocons d'avoine", "80g de beurre de cacahuète", "2 c.s. de cacao en poudre", "2 c.s. de miel", "1 c.s. de graines de chia", "1 c.s. de pépites de chocolat noir"],
+    steps: [
+      "Mélanger tous les ingrédients dans un bol.",
+      "Réfrigérer 20 minutes si la pâte est trop collante.",
+      "Former des boules avec les mains.",
+      "Conserver au frigo jusqu'à 1 semaine."
+    ]
+  },
+  {
+    id: 58,
+    title: "Muffins aux myrtilles",
+    category: "goûter",
+    time: 30,
+    batchCooking: true,
+    calories: 250,
+    ingredients: ["200g de farine", "100g de sucre", "2 œufs", "80ml d'huile", "100ml de lait", "1 c.c. de levure", "150g de myrtilles (fraîches ou surgelées)"],
+    steps: [
+      "Préchauffer le four à 180°C.",
+      "Mélanger les ingrédients secs d'un côté, les liquides de l'autre.",
+      "Incorporer les liquides aux secs sans trop mélanger.",
+      "Ajouter délicatement les myrtilles.",
+      "Remplir les moules à muffins aux 3/4 et cuire 20-22 minutes."
+    ]
+  },
+  {
+    id: 59,
+    title: "Cookies pépites de chocolat",
+    category: "goûter",
+    time: 25,
+    batchCooking: true,
+    calories: 260,
+    ingredients: ["200g de farine", "120g de beurre mou", "100g de sucre brun", "50g de sucre blanc", "1 œuf", "1 c.c. de vanille", "150g de pépites de chocolat noir", "1 pincée de sel"],
+    steps: [
+      "Préchauffer le four à 180°C.",
+      "Crémer le beurre avec les sucres.",
+      "Incorporer l'œuf et la vanille.",
+      "Ajouter la farine et le sel, puis les pépites.",
+      "Former des boules, les espacer sur une plaque et cuire 11-12 minutes.",
+      "Laisser refroidir — ils durcissent en refroidissant."
+    ]
+  },
+  {
+    id: 60,
+    title: "Yaourt miel noix",
+    category: "goûter",
+    time: 5,
+    calories: 250,
+    ingredients: ["200g de yaourt grec", "1 c.s. de miel", "30g de noix concassées", "5 dattes ou quelques raisins secs"],
+    steps: [
+      "Verser le yaourt dans un bol.",
+      "Arroser de miel.",
+      "Parsemer de noix et de dattes coupées."
+    ]
+  },
+  {
+    id: 61,
+    title: "Tartines beurre de cacahuète banane",
+    category: "goûter",
+    time: 5,
+    calories: 360,
+    ingredients: ["2 tranches de pain complet", "2 c.s. de beurre de cacahuète", "1 banane", "1 filet de miel", "Graines de sésame (optionnel)"],
+    steps: [
+      "Toaster le pain.",
+      "Étaler généreusement le beurre de cacahuète.",
+      "Disposer les rondelles de banane et arroser de miel."
+    ]
+  },
+  {
+    id: 62,
+    title: "Crêpes sucrées",
+    category: "goûter",
+    time: 30,
+    calories: 300,
+    ingredients: ["250g de farine", "3 œufs", "500ml de lait", "2 c.s. de sucre", "1 sachet de sucre vanillé", "30g de beurre fondu", "Garniture au choix : Nutella, confiture, citron-sucre"],
+    steps: [
+      "Mélanger la farine, le sucre et les œufs.",
+      "Incorporer progressivement le lait pour éviter les grumeaux.",
+      "Ajouter le beurre fondu et laisser reposer 30 minutes.",
+      "Cuire dans une poêle légèrement beurrée.",
+      "Garnir selon les envies."
+    ]
+  },
+  {
+    id: 63,
+    title: "Pomme cuite cannelle-amande",
+    category: "goûter",
+    time: 15,
+    calories: 180,
+    ingredients: ["2 pommes", "2 c.s. de miel", "1 c.c. de cannelle", "20g d'amandes effilées", "1 filet de jus de citron"],
+    steps: [
+      "Éplucher et couper les pommes en quartiers.",
+      "Faire revenir dans une poêle avec le miel et la cannelle.",
+      "Ajouter un filet de jus de citron.",
+      "Parsemer d'amandes effilées et servir tiède.",
+      "Variante : passer au four 20 minutes à 180°C dans des pommes entières évvidées."
+    ]
+  },
+  {
+    id: 64,
+    title: "Riz au lait maison",
+    category: "goûter",
+    time: 40,
+    batchCooking: true,
+    calories: 280,
+    ingredients: ["150g de riz rond (cru)", "700ml de lait entier", "50g de sucre", "1 gousse de vanille", "1 pincée de sel", "Cannelle en poudre"],
+    steps: [
+      "Fendre la gousse de vanille et gratter les graines.",
+      "Porter le lait à frémissement avec le sucre, la vanille et le sel.",
+      "Ajouter le riz et cuire à feu très doux 35-40 minutes en remuant souvent.",
+      "Servir tiède ou froid avec une pincée de cannelle.",
+      "Se conserve 3 jours au frigo."
+    ]
+  },
+  {
+    id: 65,
+    title: "Toast chèvre miel noix",
+    category: "goûter",
+    time: 10,
+    calories: 320,
+    ingredients: ["2 tranches de pain de campagne", "60g de fromage de chèvre frais", "1 c.s. de miel", "15g de cerneaux de noix", "Quelques feuilles de thym frais"],
+    steps: [
+      "Toaster le pain.",
+      "Étaler le fromage de chèvre.",
+      "Parsemer les noix grossièrement concassées.",
+      "Arroser de miel et décorer avec le thym."
+    ]
+  },
+
   {
     id: 45,
     title: "Gratin de pâtes au jambon",
@@ -737,7 +1049,7 @@ export const RECIPES = [
     batchCooking: true,
     // Pour 4 : 300g pâtes (1050) + jambon 200g (290) + béchamel (570) + gruyère 80g (320) = 2230 / 4
     calories: 560,
-    ingredients: ["300g de pâtes (penne ou rigatoni)", "200g de jambon en dés", "30g de beurre", "30g de farine", "400ml de lait", "80g de gruyère râpé", "Muscade", "Sel, poivre"],
+    ingredients: ["300g de pâtes crues (penne ou rigatoni)", "200g de jambon en dés", "30g de beurre", "30g de farine", "400ml de lait", "80g de gruyère râpé", "Muscade", "Sel, poivre"],
     steps: [
       "Cuire les pâtes al dente, égoutter.",
       "Préparer la béchamel : faire fondre le beurre, ajouter la farine, verser le lait progressivement.",

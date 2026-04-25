@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { RECIPES } from '../../data/recipes';
+import { RECIPE_MACROS, extractFoodName } from '../../data/macros';
 import MealCell from './MealCell';
 import RecipeModal from './RecipeModal';
 import './MealPlanner.css';
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const MEAL_ORDER = ['breakfast', 'lunch', 'snack', 'dinner'];
+const MEAL_LABELS_FR = { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', snack: 'Goûter', dinner: 'Dîner' };
 
 function getMealsKey(weekOffset) {
   const now = new Date();
@@ -32,6 +35,8 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const [checkedItems, setCheckedItems] = useLocalStorage(`planner_shopping_${mealsKey}`, {});
   const [modal, setModal] = useState(null);
   const [showShopping, setShowShopping] = useState(true);
+  const [openSections, setOpenSections] = useState({ breakfast: true, lunch: true, snack: true, dinner: true });
+  const toggleSection = (type) => setOpenSections((prev) => ({ ...prev, [type]: !prev[type] }));
 
   const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
 
@@ -64,7 +69,7 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
       .sort(([a], [b]) => {
         const [dayA, mealA] = a.split('_');
         const [dayB, mealB] = b.split('_');
-        return parseInt(dayA) - parseInt(dayB) || (mealA === 'lunch' ? -1 : 1);
+        return MEAL_ORDER.indexOf(mealA) - MEAL_ORDER.indexOf(mealB) || parseInt(dayA) - parseInt(dayB);
       })
       .forEach(([key, recipeId]) => {
         if (!recipeId) return;
@@ -83,20 +88,56 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const totalIngredients = shoppingList.reduce((sum, e) => sum + e.recipe.ingredients.length, 0);
   const checkedCount = Object.values(checkedItems).filter(Boolean).length;
 
-  // ── Calories ──────────────────────────────────────────────────────────────
+  // ── Calories & Macros ─────────────────────────────────────────────────────
+  const getMacros = (recipe) => RECIPE_MACROS[recipe?.id] ?? { glucides: 0, lipides: 0, proteines: 0 };
+
+  // Calories calculées depuis les macros (source unique de vérité)
+  const getCalories = (recipe) => {
+    if (!recipe) return 0;
+    const m = getMacros(recipe);
+    const fromMacros = m.glucides * 4 + m.lipides * 9 + m.proteines * 4;
+    return fromMacros > 0 ? fromMacros : (recipe.calories ?? 0);
+  };
+
   const getDayCalories = (dayIndex) => {
     let total = 0;
-    ['lunch', 'dinner'].forEach((mealType) => {
-      const recipe = getRecipe(dayIndex, mealType);
-      if (recipe?.calories) total += recipe.calories;
+    MEAL_ORDER.forEach((mealType) => {
+      total += getCalories(getRecipe(dayIndex, mealType));
     });
     return total;
   };
 
-  const weekCalories = Array.from({ length: 7 }, (_, i) => getDayCalories(i)).reduce(
-    (sum, c) => sum + c,
-    0
-  );
+  const weekCalories = Array.from({ length: 7 }, (_, i) => getDayCalories(i)).reduce((s, c) => s + c, 0);
+
+  const weekMacros = useMemo(() => {
+    let glucides = 0, lipides = 0, proteines = 0;
+    Object.values(weekMeals).forEach((id) => {
+      if (!id) return;
+      const recipe = allRecipes.find((r) => r.id === id || r.id === parseInt(id));
+      if (!recipe) return;
+      const m = getMacros(recipe);
+      glucides  += m.glucides;
+      lipides   += m.lipides;
+      proteines += m.proteines;
+    });
+    return { glucides, lipides, proteines };
+  }, [weekMeals, allRecipes]);
+
+  // ── Diversité alimentaire ──────────────────────────────────────────────────
+
+  const uniqueFoodsCount = useMemo(() => {
+    const foods = new Set();
+    Object.values(weekMeals).forEach((id) => {
+      if (!id) return;
+      const recipe = allRecipes.find((r) => r.id === id || r.id === parseInt(id));
+      if (!recipe) return;
+      recipe.ingredients.forEach((ing) => {
+        const name = extractFoodName(ing);
+        if (name) foods.add(name);
+      });
+    });
+    return foods.size;
+  }, [weekMeals, allRecipes]);
 
   return (
     <div className="meal-planner">
@@ -108,9 +149,25 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
 
       {weekCalories > 0 && (
         <div className="week-calories-bar">
-          Total semaine : <strong>{weekCalories.toLocaleString('fr-FR')} kcal</strong>
-          <span className="week-calories-avg">
-            · {Math.round(weekCalories / 7)} kcal/jour en moyenne
+          <span>Total semaine : <strong>{weekCalories.toLocaleString('fr-FR')} kcal</strong></span>
+          <span className="week-calories-avg">· {Math.round(weekCalories / 7)} kcal/jour</span>
+          <span className="week-macro week-macro-g">G {weekMacros.glucides}g</span>
+          <span className="week-macro week-macro-l">L {weekMacros.lipides}g</span>
+          <span className="week-macro week-macro-p">P {weekMacros.proteines}g</span>
+        </div>
+      )}
+
+      {uniqueFoodsCount > 0 && (
+        <div className="diversity-bar">
+          <span className="diversity-label">Diversité alimentaire</span>
+          <div className="diversity-track">
+            <div
+              className="diversity-fill"
+              style={{ width: `${Math.min(uniqueFoodsCount / 30 * 100, 100)}%` }}
+            />
+          </div>
+          <span className={`diversity-count ${uniqueFoodsCount >= 30 ? 'reached' : ''}`}>
+            {uniqueFoodsCount}/30 aliments
           </span>
         </div>
       )}
@@ -121,16 +178,18 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
           return (
             <div key={i} className="meal-day">
               <div className="meal-day-name">{dayName}</div>
-              <MealCell
-                recipe={getRecipe(i, 'lunch')}
-                mealType="lunch"
-                onClick={() => setModal({ dayIndex: i, mealType: 'lunch' })}
-              />
-              <MealCell
-                recipe={getRecipe(i, 'dinner')}
-                mealType="dinner"
-                onClick={() => setModal({ dayIndex: i, mealType: 'dinner' })}
-              />
+              {MEAL_ORDER.map((mealType) => {
+                const recipe = getRecipe(i, mealType);
+                return (
+                  <MealCell
+                    key={mealType}
+                    recipe={recipe}
+                    calories={getCalories(recipe)}
+                    mealType={mealType}
+                    onClick={() => setModal({ dayIndex: i, mealType })}
+                  />
+                );
+              })}
               {dayCalories > 0 && (
                 <div className="day-calories">{dayCalories} kcal</div>
               )}
@@ -139,56 +198,62 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
         })}
       </div>
 
-      {/* ── Liste de courses ── */}
+      {/* ── Listes de courses par repas ── */}
       {shoppingList.length > 0 && (
         <div className="shopping-section">
-          <button
-            className="shopping-toggle"
-            onClick={() => setShowShopping((v) => !v)}
-          >
-            <span>Liste de courses</span>
-            <span className="shopping-progress">
-              {checkedCount}/{totalIngredients} cochés
-            </span>
+          <button className="shopping-toggle" onClick={() => setShowShopping((v) => !v)}>
+            <span>Listes de courses</span>
+            <span className="shopping-progress">{checkedCount}/{totalIngredients} cochés</span>
             <span className="shopping-chevron">{showShopping ? '▲' : '▼'}</span>
           </button>
 
           {showShopping && (
             <div className="shopping-body">
-              <div className="shopping-groups">
-                {shoppingList.map(({ key: mealKey, dayIndex, mealType, recipe }) => (
-                  <div key={mealKey} className="shopping-group">
-                    <div className="shopping-group-header">
-                      <span className="shopping-recipe-name">{recipe.title}</span>
-                      <span className="shopping-group-meta">
-                        {DAY_NAMES[dayIndex]} · {mealType === 'lunch' ? 'Déjeuner' : 'Dîner'}
-                      </span>
-                    </div>
-                    <ul className="shopping-items">
-                      {recipe.ingredients.map((ing, idx) => {
-                        const itemKey = `${mealKey}_${idx}`;
-                        const checked = !!checkedItems[itemKey];
-                        return (
-                          <li key={itemKey} className={`shopping-item ${checked ? 'checked' : ''}`}>
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggleItem(itemKey)}
-                              />
-                              <span>{ing}</span>
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
+              {MEAL_ORDER.map((mealType) => {
+                const items = shoppingList.filter((e) => e.mealType === mealType);
+                if (items.length === 0) return null;
+                const isOpen = openSections[mealType];
+                const sectionTotal = items.reduce((s, e) => s + e.recipe.ingredients.length, 0);
+                const sectionChecked = items.reduce((s, { key: mk, recipe }) =>
+                  s + recipe.ingredients.filter((_, idx) => !!checkedItems[`${mk}_${idx}`]).length, 0);
+                return (
+                  <div key={mealType} className="shopping-meal-section">
+                    <button className="shopping-meal-header" onClick={() => toggleSection(mealType)}>
+                      <span className="shopping-meal-label">{MEAL_LABELS_FR[mealType]}</span>
+                      <span className="shopping-meal-progress">{sectionChecked}/{sectionTotal}</span>
+                      <span className="shopping-chevron">{isOpen ? '▲' : '▼'}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="shopping-meal-body">
+                        {items.map(({ key: mealKey, dayIndex, recipe }) => (
+                          <div key={mealKey} className="shopping-group">
+                            <div className="shopping-group-header">
+                              <span className="shopping-recipe-name">{recipe.title}</span>
+                              <span className="shopping-group-meta">{DAY_NAMES[dayIndex]}</span>
+                            </div>
+                            <ul className="shopping-items">
+                              {recipe.ingredients.map((ing, idx) => {
+                                const itemKey = `${mealKey}_${idx}`;
+                                const checked = !!checkedItems[itemKey];
+                                return (
+                                  <li key={itemKey} className={`shopping-item ${checked ? 'checked' : ''}`}>
+                                    <label>
+                                      <input type="checkbox" checked={checked} onChange={() => toggleItem(itemKey)} />
+                                      <span>{ing}</span>
+                                    </label>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
               {checkedCount > 0 && (
-                <button className="shopping-reset" onClick={() => setCheckedItems({})}>
-                  Tout décocher
-                </button>
+                <button className="shopping-reset" onClick={() => setCheckedItems({})}>Tout décocher</button>
               )}
             </div>
           )}

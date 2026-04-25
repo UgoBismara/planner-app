@@ -1,8 +1,23 @@
 import { useState, useMemo } from 'react';
 import { RECIPES } from '../../data/recipes';
+import { RECIPE_MACROS } from '../../data/macros';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
+
+const getCalories = (recipe) => {
+  if (!recipe) return 0;
+  const m = RECIPE_MACROS[recipe.id];
+  if (m) return m.glucides * 4 + m.lipides * 9 + m.proteines * 4;
+  return recipe.calories ?? 0;
+};
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const MEAL_LABELS = { lunch: 'Déjeuner', dinner: 'Dîner' };
+const MEAL_LABELS = { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', snack: 'Goûter', dinner: 'Dîner' };
+const MEAL_CATEGORIES = {
+  breakfast: (r) => r.category === 'petit-déjeuner',
+  snack:     (r) => r.category === 'goûter',
+  lunch:     (r) => r.category !== 'petit-déjeuner' && r.category !== 'goûter',
+  dinner:    (r) => r.category !== 'petit-déjeuner' && r.category !== 'goûter',
+};
 
 export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMeals, customRecipes, onSelect, onClose }) {
   const [search, setSearch] = useState('');
@@ -10,6 +25,14 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
   const [showAddForm, setShowAddForm] = useState(false);
   const [batchOnly, setBatchOnly] = useState(false);
   const [newRecipe, setNewRecipe] = useState({ title: '', time: '', calories: '', ingredients: '', steps: '' });
+  const [likedIds, setLikedIds] = useLocalStorage('planner_liked_recipes', []);
+
+  const toggleLike = (e, id) => {
+    e.stopPropagation();
+    setLikedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
 
@@ -21,20 +44,28 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
     return ids;
   }, [weekMeals, dayIndex, mealType]);
 
+  const mealFilter = useMemo(() => MEAL_CATEGORIES[mealType] ?? (() => true), [mealType]);
+
   const filtered = useMemo(() => {
-    let pool = batchOnly ? allRecipes.filter((r) => r.batchCooking) : allRecipes;
-    if (!search.trim()) return pool;
-    const q = search.toLowerCase();
-    return pool.filter((r) =>
-      r.title.toLowerCase().includes(q) ||
-      (r.category && r.category.toLowerCase().includes(q))
-    );
-  }, [search, batchOnly, allRecipes]);
+    let pool = allRecipes.filter(mealFilter);
+    if (batchOnly) pool = pool.filter((r) => r.batchCooking);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      pool = pool.filter((r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.category && r.category.toLowerCase().includes(q))
+      );
+    }
+    return [...pool].sort((a, b) => {
+      const aLiked = likedIds.includes(a.id) ? 0 : 1;
+      const bLiked = likedIds.includes(b.id) ? 0 : 1;
+      return aLiked - bLiked;
+    });
+  }, [search, batchOnly, allRecipes, mealFilter, likedIds]);
 
   const handleSuggest = () => {
-    const pool = (batchOnly ? allRecipes.filter((r) => r.batchCooking) : allRecipes)
-      .filter((r) => !usedIds.has(r.id));
-    const base = pool.length > 0 ? pool : allRecipes;
+    const pool = allRecipes.filter(mealFilter).filter((r) => !usedIds.has(r.id));
+    const base = pool.length > 0 ? pool : allRecipes.filter(mealFilter);
     const pick = base[Math.floor(Math.random() * base.length)];
     setDetailRecipe(pick);
   };
@@ -89,15 +120,24 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
               <div className="recipe-detail">
                 <div className="recipe-detail-header">
                   <button className="btn-back" onClick={() => setDetailRecipe(null)}>← Retour</button>
-                  <button className="btn-primary" onClick={() => onSelect(detailRecipe)}>
-                    Choisir cette recette
-                  </button>
+                  <div className="recipe-detail-actions">
+                    <button
+                      className={`btn-like btn-like-detail ${likedIds.includes(detailRecipe.id) ? 'active' : ''}`}
+                      onClick={(e) => toggleLike(e, detailRecipe.id)}
+                      title={likedIds.includes(detailRecipe.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    >
+                      {likedIds.includes(detailRecipe.id) ? '♥' : '♡'}
+                    </button>
+                    <button className="btn-primary" onClick={() => onSelect(detailRecipe)}>
+                      Choisir cette recette
+                    </button>
+                  </div>
                 </div>
                 <h4>{detailRecipe.title}</h4>
                 <div className="recipe-meta">
                   {detailRecipe.category && <span className="tag">{detailRecipe.category}</span>}
                   {detailRecipe.time && <span className="tag">{detailRecipe.time} min</span>}
-                  {detailRecipe.calories && <span className="tag tag-calories">{detailRecipe.calories} kcal</span>}
+                  {getCalories(detailRecipe) > 0 && <span className="tag tag-calories">{getCalories(detailRecipe)} kcal</span>}
                   {detailRecipe.batchCooking && <span className="tag tag-batch">batch cooking</span>}
                 </div>
                 <div className="recipe-section">
@@ -115,21 +155,33 @@ export default function RecipeModal({ dayIndex, mealType, currentRecipe, weekMea
               </div>
             ) : (
               <div className="recipe-list">
-                {filtered.map((recipe) => (
-                  <div
-                    key={recipe.id}
-                    className={`recipe-item ${usedIds.has(recipe.id) ? 'used' : ''}`}
-                    onClick={() => setDetailRecipe(recipe)}
-                  >
-                    <div className="recipe-item-title">{recipe.title}</div>
-                    <div className="recipe-item-meta">
-                      {recipe.category && <span className="tag">{recipe.category}</span>}
-                      {recipe.time && <span className="tag">{recipe.time} min</span>}
-                      {recipe.batchCooking && <span className="tag tag-batch">batch</span>}
-                      {usedIds.has(recipe.id) && <span className="tag used-tag">Déjà utilisée</span>}
+                {filtered.map((recipe) => {
+                  const liked = likedIds.includes(recipe.id);
+                  return (
+                    <div
+                      key={recipe.id}
+                      className={`recipe-item ${usedIds.has(recipe.id) ? 'used' : ''} ${liked ? 'liked' : ''}`}
+                      onClick={() => setDetailRecipe(recipe)}
+                    >
+                      <div className="recipe-item-top">
+                        <div className="recipe-item-title">{recipe.title}</div>
+                        <button
+                          className={`btn-like ${liked ? 'active' : ''}`}
+                          onClick={(e) => toggleLike(e, recipe.id)}
+                          title={liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                        >
+                          {liked ? '♥' : '♡'}
+                        </button>
+                      </div>
+                      <div className="recipe-item-meta">
+                        {recipe.category && <span className="tag">{recipe.category}</span>}
+                        {recipe.time && <span className="tag">{recipe.time} min</span>}
+                        {recipe.batchCooking && <span className="tag tag-batch">batch</span>}
+                        {usedIds.has(recipe.id) && <span className="tag used-tag">Déjà utilisée</span>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {filtered.length === 0 && (
                   <p className="no-results">Aucune recette trouvée.</p>
                 )}
