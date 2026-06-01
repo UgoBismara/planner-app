@@ -1721,7 +1721,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
         {confirmItems.length > 0 && (
           <div className="confirm-row">
-            <div className="confirm-row-label">À confirmer</div>
+            <div className="confirm-row-label">
+              À confirmer
+              <button
+                className="confirm-validate-all-btn"
+                onClick={() => {
+                  confirmItems.forEach((item) => {
+                    if (item.type === 'event') handleToggleDone(item.activity, item.dayIndex, { stopPropagation: () => {} });
+                    else toggleGoalDone(item.dayIndex, item.goal.id);
+                  });
+                }}
+              >
+                Tout valider
+              </button>
+            </div>
             <div className="confirm-items">
               {confirmItems.map((item, idx) =>
                 item.type === "event" ? (
