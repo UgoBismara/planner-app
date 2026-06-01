@@ -50,7 +50,16 @@ export function useLocalStorage(key, initialValue) {
       (snap) => {
         // Ignore snapshots caused by our own pending writes
         if (snap.metadata.hasPendingWrites) return;
-        if (!snap.exists()) return;
+
+        if (!snap.exists()) {
+          // Firestore has no data for this key — push localStorage if we have it
+          const localItem = window.localStorage.getItem(key);
+          if (localItem !== null) {
+            setDoc(doc(db, 'planner', key), { v: localItem }).catch(() => {});
+          }
+          return;
+        }
+
         try {
           const remote = JSON.parse(snap.data().v);
           const remoteStr = JSON.stringify(remote);
