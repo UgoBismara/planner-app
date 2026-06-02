@@ -967,6 +967,15 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     today.setHours(0, 0, 0, 0);
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
+    // Event was yesterday but has a post-midnight endTime (extends into today)
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (d.getTime() === yesterday.getTime() && endTime && isPostMidnight(endTime)) {
+      const [h, m] = endTime.split(':').map(Number);
+      const eventEnd = new Date(now);
+      eventEnd.setHours(h, m, 0, 0);
+      return eventEnd < now;
+    }
     if (d < today) return true;
     if (d.getTime() === today.getTime()) {
       const t = endTime || time;
