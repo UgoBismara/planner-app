@@ -967,24 +967,32 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     today.setHours(0, 0, 0, 0);
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
-    // Event was yesterday but has a post-midnight endTime (extends into today)
+
+    // endTime is on the next calendar day if it's before the start time (crosses midnight)
+    const endCrossesMidnight = endTime && time && (() => {
+      const [sh, sm] = time.split(':').map(Number);
+      const [eh, em] = endTime.split(':').map(Number);
+      return (eh * 60 + em) <= (sh * 60 + sm);
+    })();
+
+    // Event was yesterday but endTime crosses midnight (still ongoing today)
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    if (d.getTime() === yesterday.getTime() && endTime && isPostMidnight(endTime)) {
+    if (d.getTime() === yesterday.getTime() && endCrossesMidnight) {
       const [h, m] = endTime.split(':').map(Number);
       const eventEnd = new Date(now);
       eventEnd.setHours(h, m, 0, 0);
       return eventEnd < now;
     }
+
     if (d < today) return true;
     if (d.getTime() === today.getTime()) {
       const t = endTime || time;
       if (t) {
-        const [h, m] = t.split(":").map(Number);
+        const [h, m] = t.split(':').map(Number);
         const eventEnd = new Date(now);
         eventEnd.setHours(h, m, 0, 0);
-        // Post-midnight end time (e.g. 02:00) actually means next calendar day
-        if (endTime && isPostMidnight(endTime)) {
+        if (endCrossesMidnight) {
           eventEnd.setDate(eventEnd.getDate() + 1);
         }
         return eventEnd < now;
