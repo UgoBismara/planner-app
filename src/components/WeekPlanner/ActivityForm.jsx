@@ -54,6 +54,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
       endTime: isAllDay ? '' : endTime,
       color,
       id: activity?.id ?? Date.now(),
+      ...(isAllDay ? { allDay: true } : {}),
       ...(endDayOffset > 0 && !isRecurring && !isAllDay ? { endDayOffset } : {}),
     };
 

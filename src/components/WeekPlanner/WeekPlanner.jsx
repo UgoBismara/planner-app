@@ -601,9 +601,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       .filter((a) => !isPostMidnight(a.time))
       .map((a) => {
         const offset = a.endDayOffset ?? 0;
-        return offset > 0
-          ? { ...a, _storedDayIndex: dayIndex, _displayEndTime: MULTIDAY_DISPLAY_END }
-          : { ...a, _storedDayIndex: dayIndex };
+        if (a.allDay) return { ...a, _storedDayIndex: dayIndex, _displayTime: MULTIDAY_DISPLAY_START, _displayEndTime: MULTIDAY_DISPLAY_END };
+        if (offset > 0) return { ...a, _storedDayIndex: dayIndex, _displayEndTime: MULTIDAY_DISPLAY_END };
+        return { ...a, _storedDayIndex: dayIndex };
       });
 
     // Next day: its post-midnight events (00:xx–01:xx) appear at the bottom of this column
@@ -991,12 +991,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const formatDate = (d) =>
     d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   const hasUnscheduled = days.some((_, i) =>
-    getActivitiesForDay(i).some((a) => !a.time),
+    getActivitiesForDay(i).some((a) => !a.time && !a.allDay),
   );
 
   // Precompute layouts for all days (used in both header and body)
   const dayLayouts = days.map((_, i) => {
-    const timedAll = getActivitiesForDay(i).filter((a) => a.time);
+    const timedAll = getActivitiesForDay(i).filter((a) => a.time || a.allDay);
     return computeLayout(timedAll);
   });
 
@@ -1660,8 +1660,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
           {days.map((date, i) => {
             const timedWithLayout = dayLayouts[i];
-            const timedFull = timedWithLayout.filter((a) => a.endTime || a._isContinuation || (a.endDayOffset ?? 0) > 0);
-            const timedStart = timedWithLayout.filter((a) => !a.endTime && !a._isContinuation && !(a.endDayOffset ?? 0));
+            const timedFull = timedWithLayout.filter((a) => a.endTime || a._isContinuation || (a.endDayOffset ?? 0) > 0 || a.allDay);
+            const timedStart = timedWithLayout.filter((a) => !a.endTime && !a._isContinuation && !(a.endDayOffset ?? 0) && !a.allDay);
             const isGhostCol = isDragging && preview?.targetDayIndex === i;
 
             const overlapStyle = (a) => {
@@ -1912,7 +1912,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             {days.map((_, i) => (
               <div key={i} className={`unscheduled-day${mobileDay === i ? " mobile-active" : ""}`}>
                 {getActivitiesForDay(i)
-                  .filter((a) => !a.time)
+                  .filter((a) => !a.time && !a.allDay)
                   .map((activity) => {
                     const done = isDoneActivity(activity);
                     return (
