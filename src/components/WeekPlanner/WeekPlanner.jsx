@@ -145,6 +145,8 @@ const HOURS = Array.from(
 );
 const TOTAL_MINS = (END_HOUR - START_HOUR) * 60;
 const START_MIN = START_HOUR * 60;
+const MULTIDAY_DISPLAY_START = `${String(START_HOUR).padStart(2, '0')}:00`;
+const MULTIDAY_DISPLAY_END   = `${String(END_HOUR % 24).padStart(2, '0')}:00`;
 // Hours 00:xx … (END_HOUR%24 - 1):xx belong to the next calendar day
 const POST_MIDNIGHT_MAX_HOUR = END_HOUR % 24; // = 2
 
@@ -182,9 +184,11 @@ function toHeightPct(startStr, endStr) {
 // Assigns each timed event a column index so that overlapping events share space side by side.
 function computeLayout(timedEvents) {
   if (timedEvents.length === 0) return [];
-  const getStart = (e) => timeToCalMin(e.time);
-  const getEnd = (e) =>
-    e.endTime ? timeToCalMin(e.endTime) : timeToCalMin(e.time) + 30;
+  const getStart = (e) => timeToCalMin(e._displayTime ?? e.time);
+  const getEnd = (e) => {
+    const end = e._displayEndTime ?? e.endTime;
+    return end ? timeToCalMin(end) : timeToCalMin(e._displayTime ?? e.time) + 30;
+  };
   const overlaps = (a, b) => getStart(a) < getEnd(b) && getEnd(a) > getStart(b);
 
   const sorted = [...timedEvents].sort((a, b) => getStart(a) - getStart(b));
@@ -477,8 +481,23 @@ function MiniCalendar({ weekOffset, onSelectWeek, onClose }) {
 export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const minWeekOffset = Math.round((MIN_WEEK_MONDAY - getMondayOfWeek(0)) / (7 * 86400000));
   const weekKey = getWeekKey(weekOffset);
+  const prevWeekKey = getWeekKey(weekOffset - 1);
+  const prevPrevWeekKey = getWeekKey(weekOffset - 2);
+  const prevPrevPrevWeekKey = getWeekKey(weekOffset - 3);
   const [weekData, setWeekData] = useLocalStorage(
     weekKey,
+    Array.from({ length: 7 }, () => []),
+  );
+  const [prevWeekData, setPrevWeekData] = useLocalStorage(
+    prevWeekKey,
+    Array.from({ length: 7 }, () => []),
+  );
+  const [prevPrevWeekData, setPrevPrevWeekData] = useLocalStorage(
+    prevPrevWeekKey,
+    Array.from({ length: 7 }, () => []),
+  );
+  const [prevPrevPrevWeekData, setPrevPrevPrevWeekData] = useLocalStorage(
+    prevPrevPrevWeekKey,
     Array.from({ length: 7 }, () => []),
   );
   const [recurring, setRecurring] = useLocalStorage(
@@ -580,7 +599,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const weekActivities = (weekData[dayIndex] || [])
       .filter((a) => !String(a.id).startsWith("default_"))
       .filter((a) => !isPostMidnight(a.time))
-      .map((a) => ({ ...a, _storedDayIndex: dayIndex }));
+      .map((a) => {
+        const offset = a.endDayOffset ?? 0;
+        return offset > 0
+          ? { ...a, _storedDayIndex: dayIndex, _displayEndTime: MULTIDAY_DISPLAY_END }
+          : { ...a, _storedDayIndex: dayIndex };
+      });
 
     // Next day: its post-midnight events (00:xx–01:xx) appear at the bottom of this column
     // e.g. Wednesday 01:00 is the tail of Tuesday's column
@@ -600,7 +624,52 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         .map((a) => ({ ...a, _storedDayIndex: nextIdx })),
     ] : [];
 
-    return [...recurringForDay, ...weekActivities, ...nextMidnight];
+    // Carryover blocks from multi-day events starting on earlier days of the same week
+    const carryover = [];
+    for (let j = 0; j < dayIndex; j++) {
+      for (const a of (weekData[j] || [])) {
+        const offset = a.endDayOffset ?? 0;
+        if (!offset || j + offset < dayIndex) continue;
+        const isLastDay = (j + offset === dayIndex);
+        carryover.push({
+          ...a,
+          _storedDayIndex: j,
+          _isContinuation: true,
+          _isLastDay: isLastDay,
+          _displayTime: MULTIDAY_DISPLAY_START,
+          _displayEndTime: isLastDay ? (a.endTime || MULTIDAY_DISPLAY_END) : MULTIDAY_DISPLAY_END,
+        });
+      }
+    }
+
+    // Carryover from past weeks (up to 3 weeks back covers ~28-day events)
+    const pastWeeks = [
+      { data: prevWeekData,        setter: setPrevWeekData,        weeksBack: 1 },
+      { data: prevPrevWeekData,    setter: setPrevPrevWeekData,    weeksBack: 2 },
+      { data: prevPrevPrevWeekData, setter: setPrevPrevPrevWeekData, weeksBack: 3 },
+    ];
+    for (const { data, setter, weeksBack } of pastWeeks) {
+      for (let j = 0; j <= 6; j++) {
+        for (const a of (data[j] || [])) {
+          const offset = a.endDayOffset ?? 0;
+          if (!offset) continue;
+          const daysIntoCurrentWeek = j + offset - weeksBack * 7;
+          if (daysIntoCurrentWeek < 0 || daysIntoCurrentWeek < dayIndex) continue;
+          const isLastDay = daysIntoCurrentWeek === dayIndex;
+          carryover.push({
+            ...a,
+            _storedDayIndex: j,
+            _fromPastWeekSetter: setter,
+            _isContinuation: true,
+            _isLastDay: isLastDay,
+            _displayTime: MULTIDAY_DISPLAY_START,
+            _displayEndTime: isLastDay ? (a.endTime || MULTIDAY_DISPLAY_END) : MULTIDAY_DISPLAY_END,
+          });
+        }
+      }
+    }
+
+    return [...recurringForDay, ...weekActivities, ...nextMidnight, ...carryover];
   };
 
   // ── Drag: compute preview from mouse position ──────────────────
@@ -771,6 +840,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const handleBlockMouseDown = (activity, visualDayIndex, e) => {
     if (e.button !== 0) return;
+    if ((activity.endDayOffset ?? 0) > 0 || activity._isContinuation) {
+      setEditingActivity({ activity: activity._isContinuation
+        ? { ...activity, _storedDayIndex: activity._storedDayIndex }
+        : activity, dayIndex: visualDayIndex });
+      return;
+    }
     e.preventDefault();
     const blockRect = e.currentTarget.getBoundingClientRect();
     dragRef.current = {
@@ -787,6 +862,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const handleBlockTouchStart = (activity, visualDayIndex, e) => {
     if (window.innerWidth <= 640) return; // Pas de drag sur mobile
+    if ((activity.endDayOffset ?? 0) > 0 || activity._isContinuation) return;
     const touch = e.touches[0];
     const blockRect = e.currentTarget.getBoundingClientRect();
     dragRef.current = {
@@ -806,9 +882,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const storedDay = isPostMidnight(activity.time) && visualDayIndex < 6
       ? visualDayIndex + 1
       : visualDayIndex;
+    const safeActivity = {
+      ...activity,
+      endDayOffset: activity.endDayOffset || undefined,
+    };
     setWeekData((prev) => {
       const updated = [...prev];
-      updated[storedDay] = [...(updated[storedDay] || []), activity];
+      updated[storedDay] = [...(updated[storedDay] || []), safeActivity];
       return updated;
     });
   };
@@ -881,7 +961,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const handleDelete = (activity, e) => {
     e.stopPropagation();
     const storedDay = activity._storedDayIndex;
-    setWeekData((prev) => {
+    const setter = activity._fromPastWeekSetter ?? setWeekData;
+    setter((prev) => {
       const updated = [...prev];
       updated[storedDay] = updated[storedDay].filter((a) => a.id !== activity.id);
       return updated;
@@ -1140,7 +1221,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         // Remove from original day
         updated[storedDay] = updated[storedDay].filter((a) => a.id !== activity.id);
         // Add to new day (strip computed fields)
-        const { _storedDayIndex, _recurring, _colIndex, _totalCols, ...clean } = activity;
+        const { _storedDayIndex, _recurring, _colIndex, _totalCols,
+                _isContinuation, _isLastDay, _displayTime, _displayEndTime, ...clean } = activity;
         updated[dayIndex] = [...updated[dayIndex], { ...clean, time: newTime, endTime: newEndTime }];
         return updated;
       });
@@ -1161,10 +1243,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const confirmItems = [];
   days.forEach((date, i) => {
     getActivitiesForDay(i)
-      .filter((a) => a.time && !isDoneActivity(a))
+      .filter((a) => a.time && !isDoneActivity(a) && !a._isContinuation)
       .forEach((a) => {
-        const actualDate = days[a._storedDayIndex] ?? date;
-        if (isPastEvent(actualDate, a.endTime, a.time))
+        const offset = a.endDayOffset ?? 0;
+        const endDate = offset > 0 ? (days[a._storedDayIndex + offset] ?? date) : (days[a._storedDayIndex] ?? date);
+        if (isPastEvent(endDate, a.endTime, a.time))
           confirmItems.push({ type: "event", activity: a, dayIndex: i });
       });
     if (isPastDay(date)) {
@@ -1577,18 +1660,22 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
           {days.map((date, i) => {
             const timedWithLayout = dayLayouts[i];
-            const timedFull = timedWithLayout.filter((a) => a.endTime);
-            const timedStart = timedWithLayout.filter((a) => !a.endTime);
+            const timedFull = timedWithLayout.filter((a) => a.endTime || a._isContinuation || (a.endDayOffset ?? 0) > 0);
+            const timedStart = timedWithLayout.filter((a) => !a.endTime && !a._isContinuation && !(a.endDayOffset ?? 0));
             const isGhostCol = isDragging && preview?.targetDayIndex === i;
 
             const overlapStyle = (a) => {
               if (a._totalCols <= 1) return {};
-              const w = 100 / a._totalCols;
+              const n = a._totalCols;
+              // Cascade style: each event is offset but keeps most of its width
+              const offsetPct = Math.min(18, Math.round(54 / n));
+              const widthPct = 100 - offsetPct * (n - 1);
               return {
-                left: `calc(${a._colIndex * w}% + 2px)`,
-                width: `calc(${w}% - 4px)`,
+                left: `calc(${a._colIndex * offsetPct}% + 2px)`,
+                width: `calc(${widthPct}% - 4px)`,
                 right: "auto",
                 zIndex: a._colIndex + 1,
+                boxShadow: a._colIndex > 0 ? '-2px 0 6px rgba(0,0,0,0.15)' : 'none',
               };
             };
 
@@ -1633,22 +1720,30 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 )}
 
                 {timedFull.map((activity) => {
+                  const displayTime    = activity._displayTime    ?? activity.time;
+                  const displayEndTime = activity._displayEndTime ?? activity.endTime;
                   const beingDragged =
                     isDragging && dragRef.current?.activity.id === activity.id;
-                  const durationMin =
-                    timeToCalMin(activity.endTime) -
-                    timeToCalMin(activity.time);
+                  const durationMin = timeToCalMin(displayEndTime) - timeToCalMin(displayTime);
                   const isCompact = durationMin < 75;
                   const done = isDoneActivity(activity);
-                  const actualDate = days[activity._storedDayIndex] ?? date;
-                  const missed = !done && isPastEvent(actualDate, activity.endTime, activity.time);
+                  const isMultiDayStart = (activity.endDayOffset ?? 0) > 0 && !activity._isContinuation;
+                  const missed = !done && !activity._isContinuation && (() => {
+                    const offset = activity.endDayOffset ?? 0;
+                    const endDate = offset > 0 ? (days[activity._storedDayIndex + offset] ?? date) : (days[activity._storedDayIndex] ?? date);
+                    return isPastEvent(endDate, activity.endTime, activity.time);
+                  })();
+                  const multidayClass = isMultiDayStart ? ' block-multiday-start'
+                    : activity._isContinuation && !activity._isLastDay ? ' block-multiday-cont'
+                    : activity._isContinuation && activity._isLastDay ? ' block-multiday-end'
+                    : '';
                   return (
                     <div
-                      key={activity.id}
-                      className={`cal-activity-block${isCompact ? " block-compact" : ""}${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}`}
+                      key={activity._isContinuation ? `${activity.id}_cont_${i}` : activity.id}
+                      className={`cal-activity-block${isCompact ? " block-compact" : ""}${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}${multidayClass}`}
                       style={{
-                        top: toTopPct(activity.time),
-                        height: toHeightPct(activity.time, activity.endTime),
+                        top: toTopPct(displayTime),
+                        height: toHeightPct(displayTime, displayEndTime),
                         backgroundColor: activity.color + "25",
                         borderLeftColor: activity.color,
                         ...overlapStyle(activity),
@@ -1669,9 +1764,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           </span>
                           {missed && <span className="missed-badge" title="Non effectué">!</span>}
                           <span className="cal-compact-time">
-                            {activity.time}
+                            {activity._isContinuation ? (activity._isLastDay ? `→${activity.endTime}` : '↕') : activity.time}
                           </span>
-                          {renderDoneBtn(activity, i)}
+                          {!activity._isContinuation && renderDoneBtn(activity, i)}
                           {renderDeleteBtn(activity, i)}
                         </div>
                       ) : (
@@ -1681,15 +1776,26 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                               {activity._recurring && (
                                 <span className="recur-icon">↻ </span>
                               )}
-                              {activity.time} – {activity.endTime}
+                              {activity._isContinuation
+                                ? (activity._isLastDay
+                                    ? <span className="multiday-cont-label">← jusqu'à {activity.endTime}</span>
+                                    : <span className="multiday-cont-label">↕ suite</span>)
+                                : isMultiDayStart
+                                  ? <>{activity.time} – {activity.endTime} <span className="multiday-cont-label">→</span></>
+                                  : <>{activity.time} – {activity.endTime}</>
+                              }
                             </span>
                             <div className="cal-block-actions">
                               {missed && <span className="missed-badge" title="Non effectué">!</span>}
-                              {renderDoneBtn(activity, i)}
+                              {!activity._isContinuation && renderDoneBtn(activity, i)}
                               {renderDeleteBtn(activity, i)}
                             </div>
                           </div>
-                          <span className="cal-activity-title">
+                          <span
+                            className="cal-activity-title"
+                            style={activity._totalCols > 1 ? { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } : {}}
+                            title={activity._totalCols > 1 ? activity.title : undefined}
+                          >
                             {activity.title}
                           </span>
                         </>
@@ -1839,6 +1945,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       {activeFormDay !== null && (
         <ActivityForm
           dayIndex={activeFormDay}
+          days={days}
           existingActivities={getActivitiesForDay(activeFormDay).filter((a) => a.time)}
           onAdd={(activity) => handleAdd(activeFormDay, activity)}
           onAddRecurring={handleAddRecurring}
@@ -1848,7 +1955,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
       {editingActivity !== null && (
         <ActivityForm
-          dayIndex={editingActivity.dayIndex}
+          dayIndex={editingActivity.activity._isContinuation ? editingActivity.activity._storedDayIndex : editingActivity.dayIndex}
+          days={days}
           activity={editingActivity.activity}
           existingActivities={getActivitiesForDay(editingActivity.dayIndex).filter(
             (a) => a.time && a.id !== editingActivity.activity.id,

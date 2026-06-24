@@ -24,8 +24,9 @@ function pickDistinctColor(usedColors) {
   return COLORS.find((c) => !usedColors.includes(c)) ?? COLORS[0];
 }
 
-export default function ActivityForm({ dayIndex, activity, existingActivities, onAdd, onAddRecurring, onEdit, onClose }) {
+export default function ActivityForm({ dayIndex, days, activity, existingActivities, onAdd, onAddRecurring, onEdit, onClose }) {
   const isEditMode = !!activity;
+  const effectiveDayIndex = activity?._isContinuation ? activity._storedDayIndex : (dayIndex ?? 0);
 
   const [title, setTitle] = useState(activity?.title ?? '');
   const [isAllDay, setIsAllDay] = useState(isEditMode && !activity.time);
@@ -35,7 +36,8 @@ export default function ActivityForm({ dayIndex, activity, existingActivities, o
     activity?.color ?? pickDistinctColor((existingActivities || []).map((a) => a.color))
   );
   const [isRecurring, setIsRecurring] = useState(activity?._recurring ?? false);
-  const [recurDays, setRecurDays] = useState(activity?.days ?? [dayIndex ?? 0]);
+  const [recurDays, setRecurDays] = useState(activity?.days ?? [effectiveDayIndex]);
+  const [endDayOffset, setEndDayOffset] = useState(activity?.endDayOffset ?? 0);
 
   const toggleDay = (d) => {
     setRecurDays((prev) =>
@@ -52,17 +54,35 @@ export default function ActivityForm({ dayIndex, activity, existingActivities, o
       endTime: isAllDay ? '' : endTime,
       color,
       id: activity?.id ?? Date.now(),
+      ...(endDayOffset > 0 && !isRecurring && !isAllDay ? { endDayOffset } : {}),
     };
 
     if (isEditMode) {
       onEdit({ ...base, days: isRecurring ? recurDays : undefined });
     } else if (isRecurring) {
-      onAddRecurring({ ...base, days: recurDays.length > 0 ? recurDays : [dayIndex ?? 0] });
+      onAddRecurring({ ...base, days: recurDays.length > 0 ? recurDays : [effectiveDayIndex] });
     } else {
       onAdd(base);
     }
     onClose();
   };
+
+  const maxOffset = 30; // max 31 days span
+
+  // Day name labels for the end-day select
+  const endDayOptions = days
+    ? [
+        { value: 0, label: 'Même jour' },
+        ...Array.from({ length: maxOffset }, (_, k) => {
+          const offset = k + 1;
+          const d = days[effectiveDayIndex + offset];
+          const label = d
+            ? d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+            : `J+${offset}`;
+          return { value: offset, label: label.charAt(0).toUpperCase() + label.slice(1) };
+        }),
+      ]
+    : [{ value: 0, label: 'Même jour' }];
 
   return (
     <div className="activity-form-overlay" onClick={onClose}>
@@ -87,7 +107,7 @@ export default function ActivityForm({ dayIndex, activity, existingActivities, o
                 checked={isAllDay}
                 onChange={(e) => {
                   setIsAllDay(e.target.checked);
-                  if (e.target.checked) { setTime(''); setEndTime(''); }
+                  if (e.target.checked) { setTime(''); setEndTime(''); setEndDayOffset(0); }
                 }}
               />
               Toute la journée
@@ -114,8 +134,20 @@ export default function ActivityForm({ dayIndex, activity, existingActivities, o
                   />
                 </div>
               </div>
-              {hasTimeOverlap(time, endTime, existingActivities) && (
+              {endDayOffset === 0 && hasTimeOverlap(time, endTime, existingActivities) && (
                 <p className="overlap-warning">⚠ Ce créneau se superpose à une activité existante.</p>
+              )}
+              {!isRecurring && maxOffset > 0 && (
+                <div className="form-group">
+                  <label>Durée (jours)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={maxOffset + 1}
+                    value={endDayOffset + 1}
+                    onChange={(e) => setEndDayOffset(Math.min(maxOffset, Math.max(0, Number(e.target.value) - 1)))}
+                  />
+                </div>
               )}
             </>
           )}
