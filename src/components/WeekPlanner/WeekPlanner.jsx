@@ -1457,162 +1457,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           })}
         </div>
 
-        <div className="goals-row">
-          <div className="goals-gutter" />
-          {days.map((_, i) => {
-            const goals = getGoalsForDay(i);
-            const timedActivities = getActivitiesForDay(i).filter((a) => a.time).sort((a, b) => a.time.localeCompare(b.time));
-            return (
-              <div key={i} className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}>
-                {goals.map((goal, idx) => {
-                  const isEditing = editingGoal?.dayIndex === i && editingGoal?.goalId === goal.id;
-                  const linked = goal.linkedEventId
-                    ? timedActivities.find((a) => String(a.id) === String(goal.linkedEventId))
-                    : null;
-                  if (isEditing) {
-                    return (
-                      <div key={goal.id} className="goal-edit-form">
-                        <div className="goal-edit-top">
-                          <input
-                            className="goal-input"
-                            autoFocus
-                            value={editingGoal.text}
-                            onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
-                              if (e.key === "Escape") setEditingGoal(null);
-                            }}
-                            placeholder={goal.text}
-                          />
-                          <button className="goal-save-btn" onMouseDown={() => saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
-                          <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
-                        </div>
-                        {timedActivities.length > 0 && (
-                          <select
-                            className="goal-link-select"
-                            value={editingGoal.linkedEventId || ""}
-                            onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
-                              if (e.key === "Escape") setEditingGoal(null);
-                            }}
-                          >
-                            <option value="">— Lier à un événement —</option>
-                            {timedActivities.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    );
-                  }
-                  return (
-                    <div key={goal.id} className={`goal-item${goal.done ? " goal-done" : ""}`}>
-                      <span className="goal-priority">{idx + 1}</span>
-                      <input
-                        type="checkbox"
-                        className="goal-checkbox"
-                        checked={goal.done}
-                        onChange={() => toggleGoalDone(i, goal.id)}
-                      />
-                      {linked && !goal.text.trim() ? (
-                        <span
-                          className="goal-link-badge goal-link-primary"
-                          style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
-                          title={`Lié à : ${linked.title} (${linked.time})\nCliquer pour modifier`}
-                          onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
-                        >
-                          {linked.title}
-                        </span>
-                      ) : (
-                        <>
-                          {linked && (
-                            <span
-                              className="goal-link-badge"
-                              style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
-                              title={`Lié à : ${linked.title} (${linked.time})`}
-                            >
-                              {linked.title}
-                            </span>
-                          )}
-                          <span
-                            className="goal-text"
-                            onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
-                            title="Cliquer pour modifier"
-                          >
-                            {goal.text}
-                          </span>
-                        </>
-                      )}
-                      <div className="goal-actions">
-                        {i > 0 && (
-                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i - 1)} title="Jour précédent">←</button>
-                        )}
-                        <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalForward(i, goal.id)} title={i < 6 ? 'Jour suivant' : 'Lundi prochain'}>→</button>
-                        {idx > 0 && (
-                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, -1)} title="Monter">↑</button>
-                        )}
-                        {idx < goals.length - 1 && (
-                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, 1)} title="Descendre">↓</button>
-                        )}
-                        {!goal.done && (
-                          <button className="goal-move-btn goal-next-week-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToNextWeek(i, goal.id)} title="Reporter à la semaine prochaine">↗</button>
-                        )}
-                        <button className="goal-delete-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => deleteGoal(i, goal.id)} title="Supprimer">×</button>
-                      </div>
-                    </div>
-                  );
-                })}
-                <button
-                  className="goal-add-btn"
-                  onClick={() => setEditingGoal({ dayIndex: i, goalId: null, text: "", linkedEventId: null })}
-                >
-                  + Objectif
-                </button>
-                {editingGoal?.dayIndex === i && editingGoal?.goalId === null && (
-                  <div className="goal-edit-form">
-                    <div className="goal-edit-top">
-                      <input
-                        className="goal-input"
-                        autoFocus
-                        value={editingGoal.text}
-                        onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
-                          if (e.key === "Escape") setEditingGoal(null);
-                        }}
-                        placeholder="Objectif…"
-                      />
-                      <button className="goal-save-btn" onMouseDown={() => saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
-                      <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
-                    </div>
-                    {timedActivities.length > 0 && (
-                      <select
-                        className="goal-link-select"
-                        value={editingGoal.linkedEventId || ""}
-                        onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
-                          if (e.key === "Escape") setEditingGoal(null);
-                        }}
-                      >
-                        <option value="">— Lier à un événement —</option>
-                        {timedActivities.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
         {/* ── Repas ── */}
         <div className="meals-row">
           <div className="meals-gutter">
@@ -1940,6 +1784,165 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             ))}
           </div>
         )}
+
+        {/* ── Objectifs ── */}
+        <div className="goals-row">
+          <div className="goals-gutter" />
+          {days.map((_, i) => {
+            const goals = getGoalsForDay(i);
+            const sortedGoals = [...goals.filter((g) => !g.done), ...goals.filter((g) => g.done)];
+            const timedActivities = getActivitiesForDay(i).filter((a) => a.time).sort((a, b) => a.time.localeCompare(b.time));
+            return (
+              <div key={i} className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}>
+                {sortedGoals.map((goal) => {
+                  const idx = goals.findIndex((g) => g.id === goal.id);
+                  const isEditing = editingGoal?.dayIndex === i && editingGoal?.goalId === goal.id;
+                  const linked = goal.linkedEventId
+                    ? timedActivities.find((a) => String(a.id) === String(goal.linkedEventId))
+                    : null;
+                  if (isEditing) {
+                    return (
+                      <div key={goal.id} className="goal-edit-form">
+                        <div className="goal-edit-top">
+                          <input
+                            className="goal-input"
+                            autoFocus
+                            value={editingGoal.text}
+                            onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
+                              if (e.key === "Escape") setEditingGoal(null);
+                            }}
+                            placeholder={goal.text}
+                          />
+                          <button className="goal-save-btn" onMouseDown={() => saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
+                          <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
+                        </div>
+                        {timedActivities.length > 0 && (
+                          <select
+                            className="goal-link-select"
+                            value={editingGoal.linkedEventId || ""}
+                            onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
+                              if (e.key === "Escape") setEditingGoal(null);
+                            }}
+                          >
+                            <option value="">— Lier à un événement —</option>
+                            {timedActivities.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={goal.id} className={`goal-item${goal.done ? " goal-done" : ""}`}>
+                      <span className="goal-priority">{idx + 1}</span>
+                      <input
+                        type="checkbox"
+                        className="goal-checkbox"
+                        checked={goal.done}
+                        onChange={() => toggleGoalDone(i, goal.id)}
+                      />
+                      {linked && !goal.text.trim() ? (
+                        <span
+                          className="goal-link-badge goal-link-primary"
+                          style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
+                          title={`Lié à : ${linked.title} (${linked.time})\nCliquer pour modifier`}
+                          onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
+                        >
+                          {linked.title}
+                        </span>
+                      ) : (
+                        <>
+                          {linked && (
+                            <span
+                              className="goal-link-badge"
+                              style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
+                              title={`Lié à : ${linked.title} (${linked.time})`}
+                            >
+                              {linked.title}
+                            </span>
+                          )}
+                          <span
+                            className="goal-text"
+                            onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
+                            title="Cliquer pour modifier"
+                          >
+                            {goal.text}
+                          </span>
+                        </>
+                      )}
+                      <div className="goal-actions">
+                        {i > 0 && (
+                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i - 1)} title="Jour précédent">←</button>
+                        )}
+                        <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalForward(i, goal.id)} title={i < 6 ? 'Jour suivant' : 'Lundi prochain'}>→</button>
+                        {idx > 0 && (
+                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, -1)} title="Monter">↑</button>
+                        )}
+                        {idx < goals.length - 1 && (
+                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, 1)} title="Descendre">↓</button>
+                        )}
+                        {!goal.done && (
+                          <button className="goal-move-btn goal-next-week-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToNextWeek(i, goal.id)} title="Reporter à la semaine prochaine">↗</button>
+                        )}
+                        <button className="goal-delete-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => deleteGoal(i, goal.id)} title="Supprimer">×</button>
+                      </div>
+                    </div>
+                  );
+                })}
+                <button
+                  className="goal-add-btn"
+                  onClick={() => setEditingGoal({ dayIndex: i, goalId: null, text: "", linkedEventId: null })}
+                >
+                  + Objectif
+                </button>
+                {editingGoal?.dayIndex === i && editingGoal?.goalId === null && (
+                  <div className="goal-edit-form">
+                    <div className="goal-edit-top">
+                      <input
+                        className="goal-input"
+                        autoFocus
+                        value={editingGoal.text}
+                        onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
+                          if (e.key === "Escape") setEditingGoal(null);
+                        }}
+                        placeholder="Objectif…"
+                      />
+                      <button className="goal-save-btn" onMouseDown={() => saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
+                      <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
+                    </div>
+                    {timedActivities.length > 0 && (
+                      <select
+                        className="goal-link-select"
+                        value={editingGoal.linkedEventId || ""}
+                        onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
+                          if (e.key === "Escape") setEditingGoal(null);
+                        }}
+                      >
+                        <option value="">— Lier à un événement —</option>
+                        {timedActivities.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {activeFormDay !== null && (

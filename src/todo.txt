@@ -1,6 +1,6 @@
 Planning : 
 - Rajouter le fait de cliquer sur OK sur téléphone pour valider objectif
-- Mettre plutôt les objectifs en bas
+- Pouvoir classer rapidement les objectifs
 - Mettre uniquement les minutes qui se finissent par 0 ou 5 dans la liste déroulante
 - Créer un widget sur téléphone (impossible en l'état)
 2 options :
