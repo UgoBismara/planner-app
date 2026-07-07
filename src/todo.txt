@@ -1,6 +1,7 @@
 Planning : 
 - Rajouter le fait de cliquer sur OK sur téléphone pour valider objectif
 - Pouvoir classer rapidement les objectifs
+- Les événements sur plusieurs jours ne s'affichent pas lorsqu'on est dans l'affichage "mois"
 - Mettre uniquement les minutes qui se finissent par 0 ou 5 dans la liste déroulante
 - Créer un widget sur téléphone (impossible en l'état)
 2 options :

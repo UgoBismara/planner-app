@@ -1703,6 +1703,49 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             const timedActivities = getActivitiesForDay(i).filter((a) => a.time).sort((a, b) => a.time.localeCompare(b.time));
             return (
               <div key={i} className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}>
+                <button
+                  className="goal-add-btn"
+                  onClick={() => setEditingGoal({ dayIndex: i, goalId: null, text: "", linkedEventId: null })}
+                >
+                  + Objectif
+                </button>
+                {editingGoal?.dayIndex === i && editingGoal?.goalId === null && (
+                  <div className="goal-edit-form">
+                    <div className="goal-edit-top">
+                      <input
+                        className="goal-input"
+                        autoFocus
+                        value={editingGoal.text}
+                        onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
+                          if (e.key === "Escape") setEditingGoal(null);
+                        }}
+                        placeholder="Objectif…"
+                      />
+                      <button className="goal-save-btn" onMouseDown={() => saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
+                      <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
+                    </div>
+                    {timedActivities.length > 0 && (
+                      <select
+                        className="goal-link-select"
+                        value={editingGoal.linkedEventId || ""}
+                        onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
+                          if (e.key === "Escape") setEditingGoal(null);
+                        }}
+                      >
+                        <option value="">— Lier à un événement —</option>
+                        {timedActivities.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
                 {sortedGoals.map((goal) => {
                   const idx = goals.findIndex((g) => g.id === goal.id);
                   const isEditing = editingGoal?.dayIndex === i && editingGoal?.goalId === goal.id;
@@ -1805,49 +1848,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     </div>
                   );
                 })}
-                <button
-                  className="goal-add-btn"
-                  onClick={() => setEditingGoal({ dayIndex: i, goalId: null, text: "", linkedEventId: null })}
-                >
-                  + Objectif
-                </button>
-                {editingGoal?.dayIndex === i && editingGoal?.goalId === null && (
-                  <div className="goal-edit-form">
-                    <div className="goal-edit-top">
-                      <input
-                        className="goal-input"
-                        autoFocus
-                        value={editingGoal.text}
-                        onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
-                          if (e.key === "Escape") setEditingGoal(null);
-                        }}
-                        placeholder="Objectif…"
-                      />
-                      <button className="goal-save-btn" onMouseDown={() => saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
-                      <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
-                    </div>
-                    {timedActivities.length > 0 && (
-                      <select
-                        className="goal-link-select"
-                        value={editingGoal.linkedEventId || ""}
-                        onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
-                          if (e.key === "Escape") setEditingGoal(null);
-                        }}
-                      >
-                        <option value="">— Lier à un événement —</option>
-                        {timedActivities.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })}
