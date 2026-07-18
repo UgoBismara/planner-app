@@ -73,6 +73,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--bg-card);
+  touch-action: pan-y;
 }
 
 /* ── En-têtes des jours ── */
@@ -834,6 +835,14 @@
 .form-group-inline > div {
   flex: 1;
 }
+
+.time-picker-inline {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.time-picker-inline select { flex: 1; }
+.time-picker-inline span { font-weight: bold; color: var(--text-secondary); padding: 0 2px; }
 
 .color-picker {
   display: flex;

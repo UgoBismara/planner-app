@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import ActivityForm from "./ActivityForm";
-import SlotFinderModal from "./SlotFinderModal";
 import RescheduleModal from "./RescheduleModal";
 import "./WeekPlanner.css";
 
@@ -10,7 +9,7 @@ function getWeekKeyForDate(date) {
   const monday = new Date(date);
   monday.setDate(date.getDate() - dow);
   monday.setHours(0, 0, 0, 0);
-  return `planner_week_${monday.getFullYear()}_${String(getWeekNumber(monday)).padStart(2, '0')}`;
+  return `planner_week_${monday.getFullYear()}_${String(getWeekNumber(monday)).padStart(2, "0")}`;
 }
 
 function getWeekKey(weekOffset) {
@@ -53,12 +52,18 @@ function getDaysOfWeek(weekOffset) {
 
 function getMobileMonthLabel(weekOffset) {
   const monday = getMondayOfWeek(weekOffset);
-  const label = monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const label = monday.toLocaleDateString("fr-FR", {
+    month: "long",
+    year: "numeric",
+  });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 function formatMonthYear(date) {
-  const label = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const label = date.toLocaleDateString("fr-FR", {
+    month: "long",
+    year: "numeric",
+  });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -82,21 +87,31 @@ function roundUpTo30(min) {
   return Math.ceil(min / 30) * 30;
 }
 
-function findFreeSlots(weekData, recurring, durationMin, days = null, searchEnd = 22 * 60) {
+function findFreeSlots(
+  weekData,
+  recurring,
+  durationMin,
+  days = null,
+  searchEnd = 22 * 60,
+) {
   const now = new Date();
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   const slots = [];
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
     // Skip past days
     if (days) {
-      const d = new Date(days[dayIndex]); d.setHours(0, 0, 0, 0);
+      const d = new Date(days[dayIndex]);
+      d.setHours(0, 0, 0, 0);
       if (d < today) continue;
     }
 
     // For today: start after current time; for future days: start at 8:00
-    const isToday = days ? (days[dayIndex].toDateString() === now.toDateString()) : false;
+    const isToday = days
+      ? days[dayIndex].toDateString() === now.toDateString()
+      : false;
     const searchStart = isToday ? Math.max(8 * 60, currentMinutes + 5) : 8 * 60;
 
     const recurringForDay = recurring.filter((r) => r.days.includes(dayIndex));
@@ -118,7 +133,10 @@ function findFreeSlots(weekData, recurring, durationMin, days = null, searchEnd 
       if (merged.length === 0 || s > merged[merged.length - 1][1]) {
         merged.push([s, e]);
       } else {
-        merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], e);
+        merged[merged.length - 1][1] = Math.max(
+          merged[merged.length - 1][1],
+          e,
+        );
       }
     }
     let cursor = roundUpTo30(searchStart);
@@ -135,7 +153,6 @@ function findFreeSlots(weekData, recurring, durationMin, days = null, searchEnd 
   return slots;
 }
 
-
 const DAY_NAMES = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const START_HOUR = 9;
 const END_HOUR = 26;
@@ -145,8 +162,8 @@ const HOURS = Array.from(
 );
 const TOTAL_MINS = (END_HOUR - START_HOUR) * 60;
 const START_MIN = START_HOUR * 60;
-const MULTIDAY_DISPLAY_START = `${String(START_HOUR).padStart(2, '0')}:00`;
-const MULTIDAY_DISPLAY_END   = `${String(END_HOUR % 24).padStart(2, '0')}:00`;
+const MULTIDAY_DISPLAY_START = `${String(START_HOUR).padStart(2, "0")}:00`;
+const MULTIDAY_DISPLAY_END = `${String(END_HOUR % 24).padStart(2, "0")}:00`;
 // Hours 00:xx … (END_HOUR%24 - 1):xx belong to the next calendar day
 const POST_MIDNIGHT_MAX_HOUR = END_HOUR % 24; // = 2
 
@@ -187,7 +204,9 @@ function computeLayout(timedEvents) {
   const getStart = (e) => timeToCalMin(e._displayTime ?? e.time);
   const getEnd = (e) => {
     const end = e._displayEndTime ?? e.endTime;
-    return end ? timeToCalMin(end) : timeToCalMin(e._displayTime ?? e.time) + 30;
+    return end
+      ? timeToCalMin(end)
+      : timeToCalMin(e._displayTime ?? e.time) + 30;
   };
   const overlaps = (a, b) => getStart(a) < getEnd(b) && getEnd(a) > getStart(b);
 
@@ -226,14 +245,24 @@ function computeLayout(timedEvents) {
   });
 }
 
-const MIN_WEEK_MONDAY = new Date('2026-03-16T00:00:00');
-const MIN_WEEK_STR = MIN_WEEK_MONDAY.toISOString().split('T')[0];
-
+const MIN_WEEK_MONDAY = new Date("2026-03-16T00:00:00");
+const MIN_WEEK_STR = MIN_WEEK_MONDAY.toISOString().split("T")[0];
 
 // eslint-disable-next-line no-unused-vars
-function MobileMonthView({ year, month, recurring, exceptions, recurringDone, selectedMonthDay, onDayTap, onGoToDay, onToggleDone, refreshKey }) {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const DOW_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+function MobileMonthView({
+  year,
+  month,
+  recurring,
+  exceptions,
+  recurringDone,
+  selectedMonthDay,
+  onDayTap,
+  onGoToDay,
+  onToggleDone,
+  refreshKey,
+}) {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const DOW_LABELS = ["L", "M", "M", "J", "V", "S", "D"];
 
   const firstDay = new Date(year, month, 1);
   const startDow = (firstDay.getDay() + 6) % 7;
@@ -255,14 +284,14 @@ function MobileMonthView({ year, month, recurring, exceptions, recurringDone, se
 
   const getEventsForDate = (date) => {
     const dayIndex = (date.getDay() + 6) % 7;
-    const dayDateStr = date.toISOString().split('T')[0];
+    const dayDateStr = date.toISOString().split("T")[0];
     const wk = getWeekKeyForDate(date);
 
     const recurEvents = recurring
-      .filter(r => r.days.includes(dayIndex))
-      .filter(r => !r.startDate || dayDateStr >= r.startDate)
-      .filter(r => !r.endDate || dayDateStr <= r.endDate)
-      .filter(r => !exceptions.includes(`${r.id}|${wk}|${dayIndex}`));
+      .filter((r) => r.days.includes(dayIndex))
+      .filter((r) => !r.startDate || dayDateStr >= r.startDate)
+      .filter((r) => !r.endDate || dayDateStr <= r.endDate)
+      .filter((r) => !exceptions.includes(`${r.id}|${wk}|${dayIndex}`));
 
     let oneTimeEvents = [];
     try {
@@ -270,6 +299,14 @@ function MobileMonthView({ year, month, recurring, exceptions, recurringDone, se
       if (stored) {
         const data = JSON.parse(stored);
         oneTimeEvents = data[dayIndex] || [];
+        // Inclure les événements multi-jours démarrés avant ce jour dans la même semaine
+        for (let j = 0; j < dayIndex; j++) {
+          (data[j] || []).forEach((a) => {
+            if ((a.endDayOffset ?? 0) >= dayIndex - j) {
+              oneTimeEvents = [...oneTimeEvents, a];
+            }
+          });
+        }
       }
     } catch {
       // ignore localStorage read errors
@@ -283,45 +320,61 @@ function MobileMonthView({ year, month, recurring, exceptions, recurringDone, se
     };
 
     return [...recurEvents, ...oneTimeEvents]
-      .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'))
-      .filter(e => !isEventDone(e));
+      .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"))
+      .filter((e) => !isEventDone(e));
   };
 
   const getDots = (date) => {
     return getEventsForDate(date)
-      .map(e => e.color || '#4f8ef7')
+      .map((e) => e.color || "#4f8ef7")
       .filter((c, i, arr) => arr.indexOf(c) === i)
       .slice(0, 3);
   };
 
-  const previewEvents = selectedMonthDay ? getEventsForDate(selectedMonthDay) : [];
+  const previewEvents = selectedMonthDay
+    ? getEventsForDate(selectedMonthDay)
+    : [];
   const previewLabel = selectedMonthDay
-    ? selectedMonthDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-    : '';
+    ? selectedMonthDay.toLocaleDateString("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      })
+    : "";
 
   return (
     <div className="mobile-month-view">
       <div className="mobile-month-dow-header">
-        {DOW_LABELS.map((d, i) => <span key={i} className="mobile-month-dow">{d}</span>)}
+        {DOW_LABELS.map((d, i) => (
+          <span key={i} className="mobile-month-dow">
+            {d}
+          </span>
+        ))}
       </div>
       <div className="mobile-month-grid">
         {cells.map((date, idx) => {
-          const dateStr = date.toISOString().split('T')[0];
+          const dateStr = date.toISOString().split("T")[0];
           const inMonth = date.getMonth() === month;
           const isToday = dateStr === todayStr;
-          const isSelected = selectedMonthDay && date.toDateString() === selectedMonthDay.toDateString();
+          const isSelected =
+            selectedMonthDay &&
+            date.toDateString() === selectedMonthDay.toDateString();
           const dots = inMonth ? getDots(date) : [];
           return (
             <button
               key={idx}
-              className={`mobile-month-day${!inMonth ? ' out-month' : ''}${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`}
+              className={`mobile-month-day${!inMonth ? " out-month" : ""}${isToday ? " is-today" : ""}${isSelected ? " is-selected" : ""}`}
               onClick={() => inMonth && onDayTap(date)}
             >
               <span className="mobile-month-num">{date.getDate()}</span>
               {dots.length > 0 && (
                 <div className="mobile-month-dots">
                   {dots.map((c, i) => (
-                    <span key={i} className="mobile-month-dot" style={{ background: c }} />
+                    <span
+                      key={i}
+                      className="mobile-month-dot"
+                      style={{ background: c }}
+                    />
                   ))}
                 </div>
               )}
@@ -337,7 +390,10 @@ function MobileMonthView({ year, month, recurring, exceptions, recurringDone, se
             <span className="mobile-day-preview-title">
               {previewLabel.charAt(0).toUpperCase() + previewLabel.slice(1)}
             </span>
-            <button className="mobile-day-preview-goto" onClick={() => onGoToDay(selectedMonthDay)}>
+            <button
+              className="mobile-day-preview-goto"
+              onClick={() => onGoToDay(selectedMonthDay)}
+            >
               Voir →
             </button>
           </div>
@@ -347,18 +403,24 @@ function MobileMonthView({ year, month, recurring, exceptions, recurringDone, se
             <ul className="mobile-day-preview-list">
               {previewEvents.map((event, i) => (
                 <li key={i} className="mobile-day-preview-item">
-                  <span className="mobile-day-preview-dot" style={{ background: event.color || '#4f8ef7' }} />
+                  <span
+                    className="mobile-day-preview-dot"
+                    style={{ background: event.color || "#4f8ef7" }}
+                  />
                   <span className="mobile-day-preview-name">{event.title}</span>
                   {event.time && (
                     <span className="mobile-day-preview-time">
-                      {event.time}{event.endTime ? ` – ${event.endTime}` : ''}
+                      {event.time}
+                      {event.endTime ? ` – ${event.endTime}` : ""}
                     </span>
                   )}
                   <button
                     className="mobile-day-preview-check"
                     onClick={() => onToggleDone(event, selectedMonthDay)}
                     title="Valider"
-                  >✓</button>
+                  >
+                    ✓
+                  </button>
                 </li>
               ))}
             </ul>
@@ -370,7 +432,11 @@ function MobileMonthView({ year, month, recurring, exceptions, recurringDone, se
 }
 
 function MiniCalendar({ weekOffset, onSelectWeek, onClose }) {
-  const [month, setMonth] = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  const [month, setMonth] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d;
+  });
   const year = month.getFullYear();
   const m = month.getMonth();
   const firstDay = new Date(year, m, 1);
@@ -380,36 +446,47 @@ function MiniCalendar({ weekOffset, onSelectWeek, onClose }) {
   for (let i = 0; i < startDow; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, m, d));
   while (cells.length % 7 !== 0) cells.push(null);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const currentMonday = getMondayOfWeek(weekOffset);
 
   return (
     <div className="mini-cal" onClick={(e) => e.stopPropagation()}>
       <div className="mini-cal-header">
         <button onClick={() => setMonth(new Date(year, m - 1, 1))}>‹</button>
-        <span>{firstDay.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span>
+        <span>
+          {firstDay.toLocaleDateString("fr-FR", {
+            month: "long",
+            year: "numeric",
+          })}
+        </span>
         <button onClick={() => setMonth(new Date(year, m + 1, 1))}>›</button>
       </div>
       <div className="mini-cal-grid">
-        {['L','M','M','J','V','S','D'].map((d, i) => (
-          <span key={i} className="mini-cal-dow">{d}</span>
+        {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
+          <span key={i} className="mini-cal-dow">
+            {d}
+          </span>
         ))}
         {cells.map((date, idx) => {
           if (!date) return <span key={idx} />;
           const cellMonday = new Date(date);
           const dow = cellMonday.getDay() === 0 ? 6 : cellMonday.getDay() - 1;
           cellMonday.setDate(cellMonday.getDate() - dow);
-          const isCurrentWeek = cellMonday.getTime() === currentMonday.getTime();
+          const isCurrentWeek =
+            cellMonday.getTime() === currentMonday.getTime();
           const isToday_ = date.getTime() === today.getTime();
-          const dateStr = date.toISOString().split('T')[0];
+          const dateStr = date.toISOString().split("T")[0];
           const isPast = dateStr < MIN_WEEK_STR;
           return (
             <button
               key={idx}
-              className={`mini-cal-day${isToday_ ? ' mini-today' : ''}${isCurrentWeek ? ' mini-current-week' : ''}${isPast ? ' mini-disabled' : ''}`}
+              className={`mini-cal-day${isToday_ ? " mini-today" : ""}${isCurrentWeek ? " mini-current-week" : ""}${isPast ? " mini-disabled" : ""}`}
               disabled={isPast}
               onClick={() => {
-                const offset = Math.round((cellMonday - getMondayOfWeek(0)) / (7 * 86400000));
+                const offset = Math.round(
+                  (cellMonday - getMondayOfWeek(0)) / (7 * 86400000),
+                );
                 onSelectWeek(offset);
                 onClose();
               }}
@@ -424,7 +501,9 @@ function MiniCalendar({ weekOffset, onSelectWeek, onClose }) {
 }
 
 export default function WeekPlanner({ weekOffset, setWeekOffset }) {
-  const minWeekOffset = Math.round((MIN_WEEK_MONDAY - getMondayOfWeek(0)) / (7 * 86400000));
+  const minWeekOffset = Math.round(
+    (MIN_WEEK_MONDAY - getMondayOfWeek(0)) / (7 * 86400000),
+  );
   const weekKey = getWeekKey(weekOffset);
   const prevWeekKey = getWeekKey(weekOffset - 1);
   const prevPrevWeekKey = getWeekKey(weekOffset - 2);
@@ -463,20 +542,24 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   );
   const [pendingRecurringEdit, setPendingRecurringEdit] = useState(null); // { original, updated, storedDay }
   const days = getDaysOfWeek(weekOffset);
-  const [dailyGoals, setDailyGoals] = useLocalStorage("planner_daily_goals", {});
+  const [dailyGoals, setDailyGoals] = useLocalStorage(
+    "planner_daily_goals",
+    {},
+  );
   const [editingGoal, setEditingGoal] = useState(null); // { dayIndex, text, linkedEventId }
   const [activeFormDay, setActiveFormDay] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
-  const [showSlotFinder, setShowSlotFinder] = useState(false);
   const [showMiniCal, setShowMiniCal] = useState(false);
   const [reportingActivity, setReportingActivity] = useState(null);
   const [mobileDay, setMobileDay] = useState(() => {
     const d = getDaysOfWeek(0);
-    const todayIdx = d.findIndex((day) => day.toDateString() === new Date().toDateString());
+    const todayIdx = d.findIndex(
+      (day) => day.toDateString() === new Date().toDateString(),
+    );
     return todayIdx >= 0 ? todayIdx : 0;
   });
   const [deletingRecurring, setDeletingRecurring] = useState(null); // { activity, dayIndex }
-  const [mobileView, setMobileView] = useState('day');
+  const [mobileView, setMobileView] = useState("day");
   const [mobileMonthDate, setMobileMonthDate] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -490,18 +573,98 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const dragRef = useRef(null); // { activity, dayIndex, offsetY, startX, startY, isDragging, currentPreview }
   const dayColRefs = useRef([]); // refs to each .cal-day-col element
   const applyDropRef = useRef(null);
+  const swipeWeekRef = useRef(null);
+  const calWrapperRef = useRef(null);
+
+  // Swipe sur la barre des onglets → changer de semaine
+  const handleTabsSwipeStart = (e) => {
+    swipeWeekRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const handleTabsSwipeEnd = (e) => {
+    if (!swipeWeekRef.current) return;
+    const dx = e.changedTouches[0].clientX - swipeWeekRef.current.x;
+    const dy = e.changedTouches[0].clientY - swipeWeekRef.current.y;
+    swipeWeekRef.current = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) {
+      // Swipe gauche = semaine précédente, atterrir sur dimanche
+      if (mobileView === "day" && weekOffset > minWeekOffset) {
+        swipeWeekChangeRef.current = true;
+        setWeekOffset((o) => o - 1);
+        setMobileDay(6);
+      } else if (mobileView === "month")
+        setMobileMonthDate(
+          (d) => new Date(d.getFullYear(), d.getMonth() - 1, 1),
+        );
+    } else {
+      // Swipe droit = semaine suivante, atterrir sur lundi
+      if (mobileView === "day") {
+        swipeWeekChangeRef.current = true;
+        setWeekOffset((o) => o + 1);
+        setMobileDay(0);
+      } else
+        setMobileMonthDate(
+          (d) => new Date(d.getFullYear(), d.getMonth() + 1, 1),
+        );
+    }
+  };
+
+  // Swipe dans le calendrier via listeners natifs (contourne le scroll vertical)
+  const mobileDayRef = useRef(mobileDay);
+  const weekOffsetRef = useRef(weekOffset);
+  const minWeekOffsetRef = useRef(minWeekOffset);
+  const swipeWeekChangeRef = useRef(false); // empêche le reset de mobileDay après un swipe
+  useEffect(() => { mobileDayRef.current = mobileDay; }, [mobileDay]);
+  useEffect(() => { weekOffsetRef.current = weekOffset; }, [weekOffset]);
+  useEffect(() => { minWeekOffsetRef.current = minWeekOffset; }, [minWeekOffset]);
+
+  useEffect(() => {
+    const el = calWrapperRef.current;
+    if (!el) return;
+    let startX = 0, startY = 0;
+    const onStart = (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+    const onEnd = (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+      const d = mobileDayRef.current;
+      const wo = weekOffsetRef.current;
+      const minWo = minWeekOffsetRef.current;
+      if (dx < 0) {
+        // Swipe gauche = jour précédent
+        if (d > 0) { setMobileDay(d - 1); }
+        else if (wo > minWo) { swipeWeekChangeRef.current = true; setWeekOffset(wo - 1); setMobileDay(6); }
+      } else {
+        // Swipe droit = jour suivant
+        if (d < 6) { setMobileDay(d + 1); }
+        else { swipeWeekChangeRef.current = true; setWeekOffset(wo + 1); setMobileDay(0); }
+      }
+    };
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchend", onEnd);
+    };
+  }, [setMobileDay, setWeekOffset]);
 
   useEffect(() => {
     if (!showMiniCal) return;
     const close = () => setShowMiniCal(false);
-    window.addEventListener('click', close);
-    return () => window.removeEventListener('click', close);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
   }, [showMiniCal]);
 
-  // Reset mobileDay to today (or 0) when the week changes
+  // Reset mobileDay to today (or 0) when the week changes (sauf si c'est un swipe)
   useEffect(() => {
+    if (swipeWeekChangeRef.current) { swipeWeekChangeRef.current = false; return; }
     const d = getDaysOfWeek(weekOffset);
-    const todayIdx = d.findIndex((day) => day.toDateString() === new Date().toDateString());
+    const todayIdx = d.findIndex(
+      (day) => day.toDateString() === new Date().toDateString(),
+    );
     setMobileDay(todayIdx >= 0 ? todayIdx : 0);
   }, [weekOffset]);
 
@@ -527,7 +690,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const getActivitiesForDay = (dayIndex) => {
     // Current day: exclude post-midnight events (they show in next day's column)
-    const dayDateStr = days[dayIndex].toISOString().split('T')[0];
+    const dayDateStr = days[dayIndex].toISOString().split("T")[0];
     const recurringForDay = recurring
       .filter((r) => r.days.includes(dayIndex))
       .filter((r) => !r.startDate || dayDateStr >= r.startDate)
@@ -536,7 +699,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       .map((r) => {
         const key = `${r.id}|${weekKey}|${dayIndex}`;
         const ov = recurringOverrides[key];
-        return { ...r, ...(ov || {}), _recurring: true, _storedDayIndex: dayIndex };
+        return {
+          ...r,
+          ...(ov || {}),
+          _recurring: true,
+          _storedDayIndex: dayIndex,
+        };
       })
       .filter((r) => !isPostMidnight(r.time));
     const weekActivities = (weekData[dayIndex] || [])
@@ -544,60 +712,88 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       .filter((a) => !isPostMidnight(a.time))
       .map((a) => {
         const offset = a.endDayOffset ?? 0;
-        if (a.allDay) return { ...a, _storedDayIndex: dayIndex, _displayTime: MULTIDAY_DISPLAY_START, _displayEndTime: MULTIDAY_DISPLAY_END };
-        if (offset > 0) return { ...a, _storedDayIndex: dayIndex, _displayEndTime: MULTIDAY_DISPLAY_END };
+        if (a.allDay)
+          return {
+            ...a,
+            _storedDayIndex: dayIndex,
+            _displayTime: MULTIDAY_DISPLAY_START,
+            _displayEndTime: MULTIDAY_DISPLAY_END,
+          };
+        if (offset > 0)
+          return {
+            ...a,
+            _storedDayIndex: dayIndex,
+            _displayEndTime: MULTIDAY_DISPLAY_END,
+          };
         return { ...a, _storedDayIndex: dayIndex };
       });
 
     // Next day: its post-midnight events (00:xx–01:xx) appear at the bottom of this column
     // e.g. Wednesday 01:00 is the tail of Tuesday's column
     const nextIdx = dayIndex + 1;
-    const nextDateStr = nextIdx < 7 ? days[nextIdx].toISOString().split('T')[0] : '';
-    const nextMidnight = nextIdx < 7 ? [
-      ...recurring
-        .filter((r) => r.days.includes(nextIdx))
-        .filter((r) => !r.startDate || nextDateStr >= r.startDate)
-        .filter((r) => !r.endDate || nextDateStr <= r.endDate)
-        .filter((r) => !exceptions.includes(`${r.id}|${weekKey}|${nextIdx}`))
-        .filter((r) => isPostMidnight(r.time))
-        .map((r) => ({ ...r, _recurring: true, _storedDayIndex: nextIdx })),
-      ...(weekData[nextIdx] || [])
-        .filter((a) => !String(a.id).startsWith("default_"))
-        .filter((a) => isPostMidnight(a.time))
-        .map((a) => ({ ...a, _storedDayIndex: nextIdx })),
-    ] : [];
+    const nextDateStr =
+      nextIdx < 7 ? days[nextIdx].toISOString().split("T")[0] : "";
+    const nextMidnight =
+      nextIdx < 7
+        ? [
+            ...recurring
+              .filter((r) => r.days.includes(nextIdx))
+              .filter((r) => !r.startDate || nextDateStr >= r.startDate)
+              .filter((r) => !r.endDate || nextDateStr <= r.endDate)
+              .filter(
+                (r) => !exceptions.includes(`${r.id}|${weekKey}|${nextIdx}`),
+              )
+              .filter((r) => isPostMidnight(r.time))
+              .map((r) => ({
+                ...r,
+                _recurring: true,
+                _storedDayIndex: nextIdx,
+              })),
+            ...(weekData[nextIdx] || [])
+              .filter((a) => !String(a.id).startsWith("default_"))
+              .filter((a) => isPostMidnight(a.time))
+              .map((a) => ({ ...a, _storedDayIndex: nextIdx })),
+          ]
+        : [];
 
     // Carryover blocks from multi-day events starting on earlier days of the same week
     const carryover = [];
     for (let j = 0; j < dayIndex; j++) {
-      for (const a of (weekData[j] || [])) {
+      for (const a of weekData[j] || []) {
         const offset = a.endDayOffset ?? 0;
         if (!offset || j + offset < dayIndex) continue;
-        const isLastDay = (j + offset === dayIndex);
+        const isLastDay = j + offset === dayIndex;
         carryover.push({
           ...a,
           _storedDayIndex: j,
           _isContinuation: true,
           _isLastDay: isLastDay,
           _displayTime: MULTIDAY_DISPLAY_START,
-          _displayEndTime: isLastDay ? (a.endTime || MULTIDAY_DISPLAY_END) : MULTIDAY_DISPLAY_END,
+          _displayEndTime: isLastDay
+            ? a.endTime || MULTIDAY_DISPLAY_END
+            : MULTIDAY_DISPLAY_END,
         });
       }
     }
 
     // Carryover from past weeks (up to 3 weeks back covers ~28-day events)
     const pastWeeks = [
-      { data: prevWeekData,        setter: setPrevWeekData,        weeksBack: 1 },
-      { data: prevPrevWeekData,    setter: setPrevPrevWeekData,    weeksBack: 2 },
-      { data: prevPrevPrevWeekData, setter: setPrevPrevPrevWeekData, weeksBack: 3 },
+      { data: prevWeekData, setter: setPrevWeekData, weeksBack: 1 },
+      { data: prevPrevWeekData, setter: setPrevPrevWeekData, weeksBack: 2 },
+      {
+        data: prevPrevPrevWeekData,
+        setter: setPrevPrevPrevWeekData,
+        weeksBack: 3,
+      },
     ];
     for (const { data, setter, weeksBack } of pastWeeks) {
       for (let j = 0; j <= 6; j++) {
-        for (const a of (data[j] || [])) {
+        for (const a of data[j] || []) {
           const offset = a.endDayOffset ?? 0;
           if (!offset) continue;
           const daysIntoCurrentWeek = j + offset - weeksBack * 7;
-          if (daysIntoCurrentWeek < 0 || daysIntoCurrentWeek < dayIndex) continue;
+          if (daysIntoCurrentWeek < 0 || daysIntoCurrentWeek < dayIndex)
+            continue;
           const isLastDay = daysIntoCurrentWeek === dayIndex;
           carryover.push({
             ...a,
@@ -606,13 +802,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             _isContinuation: true,
             _isLastDay: isLastDay,
             _displayTime: MULTIDAY_DISPLAY_START,
-            _displayEndTime: isLastDay ? (a.endTime || MULTIDAY_DISPLAY_END) : MULTIDAY_DISPLAY_END,
+            _displayEndTime: isLastDay
+              ? a.endTime || MULTIDAY_DISPLAY_END
+              : MULTIDAY_DISPLAY_END,
           });
         }
       }
     }
 
-    return [...recurringForDay, ...weekActivities, ...nextMidnight, ...carryover];
+    return [
+      ...recurringForDay,
+      ...weekActivities,
+      ...nextMidnight,
+      ...carryover,
+    ];
   };
 
   // ── Drag: compute preview from mouse position ──────────────────
@@ -660,15 +863,24 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const { activity, dayIndex: sourceDayIndex } = ds;
     // Post-midnight drops belong to the next day's storage
     // (dropping to Tuesday 01:00 stores in Wednesday, since that slot is Wednesday early morning)
-    const actualTargetDay = isPostMidnight(newTime) && targetDayIndex < 6
-      ? targetDayIndex + 1
-      : targetDayIndex;
+    const actualTargetDay =
+      isPostMidnight(newTime) && targetDayIndex < 6
+        ? targetDayIndex + 1
+        : targetDayIndex;
 
     if (activity._recurring) {
       // Move only this week's occurrence: suppress the original and add a one-time copy
       const sourceKey = `${activity.id}|${weekKey}|${sourceDayIndex}`;
-      setExceptions((prev) => [...prev.filter((k) => k !== sourceKey), sourceKey]);
-      const moved = { ...activity, id: Date.now(), time: newTime, endTime: newEndTime };
+      setExceptions((prev) => [
+        ...prev.filter((k) => k !== sourceKey),
+        sourceKey,
+      ]);
+      const moved = {
+        ...activity,
+        id: Date.now(),
+        time: newTime,
+        endTime: newEndTime,
+      };
       delete moved._recurring;
       delete moved._storedDayIndex;
       setWeekData((prev) => {
@@ -745,7 +957,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         const dx = Math.abs(touch.clientX - ds.startX);
         const dy = Math.abs(touch.clientY - ds.startY);
         if (dx < 6 && dy < 6) return;
-        if (dx > dy) { dragRef.current = null; return; } // horizontal → scroll
+        if (dx > dy) {
+          dragRef.current = null;
+          return;
+        } // horizontal → scroll
         ds.isDragging = true;
         setIsDragging(true);
       }
@@ -784,9 +999,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const handleBlockMouseDown = (activity, visualDayIndex, e) => {
     if (e.button !== 0) return;
     if ((activity.endDayOffset ?? 0) > 0 || activity._isContinuation) {
-      setEditingActivity({ activity: activity._isContinuation
-        ? { ...activity, _storedDayIndex: activity._storedDayIndex }
-        : activity, dayIndex: visualDayIndex });
+      setEditingActivity({
+        activity: activity._isContinuation
+          ? { ...activity, _storedDayIndex: activity._storedDayIndex }
+          : activity,
+        dayIndex: visualDayIndex,
+      });
       return;
     }
     e.preventDefault();
@@ -822,9 +1040,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   // ── CRUD handlers ──────────────────────────────────────────────
   const handleAdd = (visualDayIndex, activity) => {
-    const storedDay = isPostMidnight(activity.time) && visualDayIndex < 6
-      ? visualDayIndex + 1
-      : visualDayIndex;
+    const storedDay =
+      isPostMidnight(activity.time) && visualDayIndex < 6
+        ? visualDayIndex + 1
+        : visualDayIndex;
     const safeActivity = {
       ...activity,
       endDayOffset: activity.endDayOffset || undefined,
@@ -838,12 +1057,18 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const handleAddRecurring = (activity) => {
     const { days: recurDays, ...activityData } = activity;
-    const startDate = activeFormDay !== null
-      ? days[activeFormDay].toISOString().split('T')[0]
-      : undefined;
+    const startDate =
+      activeFormDay !== null
+        ? days[activeFormDay].toISOString().split("T")[0]
+        : undefined;
     setRecurring((prev) => [
       ...prev,
-      { ...activityData, id: `recur_${Date.now()}`, days: recurDays, startDate },
+      {
+        ...activityData,
+        id: `recur_${Date.now()}`,
+        days: recurDays,
+        startDate,
+      },
     ]);
   };
 
@@ -856,18 +1081,25 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     } else {
       const oldStoredDay = activity._storedDayIndex;
       // The visual day is the day BEFORE stored day for post-midnight events
-      const visualDay = isPostMidnight(activity.time) && oldStoredDay > 0
-        ? oldStoredDay - 1
-        : oldStoredDay;
+      const visualDay =
+        isPostMidnight(activity.time) && oldStoredDay > 0
+          ? oldStoredDay - 1
+          : oldStoredDay;
       // Recompute storage day based on new time
-      const newStoredDay = isPostMidnight(updatedActivity.time) && visualDay < 6
-        ? visualDay + 1
-        : visualDay;
+      const newStoredDay =
+        isPostMidnight(updatedActivity.time) && visualDay < 6
+          ? visualDay + 1
+          : visualDay;
       setWeekData((prev) => {
         const next = [...prev];
         if (newStoredDay !== oldStoredDay) {
-          next[oldStoredDay] = next[oldStoredDay].filter((a) => a.id !== activity.id);
-          next[newStoredDay] = [...(next[newStoredDay] || []), { ...activity, ...updatedActivity }];
+          next[oldStoredDay] = next[oldStoredDay].filter(
+            (a) => a.id !== activity.id,
+          );
+          next[newStoredDay] = [
+            ...(next[newStoredDay] || []),
+            { ...activity, ...updatedActivity },
+          ];
         } else {
           next[oldStoredDay] = next[oldStoredDay].map((a) =>
             a.id === activity.id ? { ...a, ...updatedActivity } : a,
@@ -884,7 +1116,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     setRecurring((prev) =>
       prev.map((r) =>
         r.id === original.id
-          ? { id: r.id, title: updated.title, time: updated.time, endTime: updated.endTime, color: updated.color, days: updated.days ?? r.days }
+          ? {
+              id: r.id,
+              title: updated.title,
+              time: updated.time,
+              endTime: updated.endTime,
+              color: updated.color,
+              days: updated.days ?? r.days,
+            }
           : r,
       ),
     );
@@ -896,7 +1135,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const key = `${original.id}|${weekKey}|${original._storedDayIndex}`;
     setRecurringOverrides((prev) => ({
       ...prev,
-      [key]: { title: updated.title, time: updated.time, endTime: updated.endTime, color: updated.color },
+      [key]: {
+        title: updated.title,
+        time: updated.time,
+        endTime: updated.endTime,
+        color: updated.color,
+      },
     }));
     setPendingRecurringEdit(null);
   };
@@ -907,7 +1151,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const setter = activity._fromPastWeekSetter ?? setWeekData;
     setter((prev) => {
       const updated = [...prev];
-      updated[storedDay] = updated[storedDay].filter((a) => a.id !== activity.id);
+      updated[storedDay] = updated[storedDay].filter(
+        (a) => a.id !== activity.id,
+      );
       return updated;
     });
   };
@@ -923,9 +1169,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const handleDeleteRecurringFrom = (activity, dayIndex) => {
     const d = new Date(days[dayIndex]);
     d.setDate(d.getDate() - 1);
-    const endDate = d.toISOString().split('T')[0];
+    const endDate = d.toISOString().split("T")[0];
     setRecurring((prev) =>
-      prev.map((r) => r.id === activity.id ? { ...r, endDate } : r)
+      prev.map((r) => (r.id === activity.id ? { ...r, endDate } : r)),
     );
   };
 
@@ -947,7 +1193,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const isDoneActivity = (activity) => {
     // If goals are linked to this activity, done = all linked goals are done
     const linkedGoals = days.flatMap((_, di) =>
-      getGoalsForDay(di).filter((g) => String(g.linkedEventId) === String(activity.id))
+      getGoalsForDay(di).filter(
+        (g) => String(g.linkedEventId) === String(activity.id),
+      ),
     );
     if (linkedGoals.length > 0) return linkedGoals.every((g) => g.done);
     const storedDay = activity._storedDayIndex;
@@ -977,11 +1225,18 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     // Sync ALL goals across all days linked to this activity
     days.forEach((_, di) => {
       const dGoals = getGoalsForDay(di);
-      const hasLinked = dGoals.some((g) => String(g.linkedEventId) === String(activity.id));
+      const hasLinked = dGoals.some(
+        (g) => String(g.linkedEventId) === String(activity.id),
+      );
       if (hasLinked)
-        setGoalsForDay(di, dGoals.map((g) =>
-          String(g.linkedEventId) === String(activity.id) ? { ...g, done: newDone } : g,
-        ));
+        setGoalsForDay(
+          di,
+          dGoals.map((g) =>
+            String(g.linkedEventId) === String(activity.id)
+              ? { ...g, done: newDone }
+              : g,
+          ),
+        );
     });
   };
 
@@ -993,17 +1248,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     d.setHours(0, 0, 0, 0);
 
     // endTime is on the next calendar day if it's before the start time (crosses midnight)
-    const endCrossesMidnight = endTime && time && (() => {
-      const [sh, sm] = time.split(':').map(Number);
-      const [eh, em] = endTime.split(':').map(Number);
-      return (eh * 60 + em) <= (sh * 60 + sm);
-    })();
+    const endCrossesMidnight =
+      endTime &&
+      time &&
+      (() => {
+        const [sh, sm] = time.split(":").map(Number);
+        const [eh, em] = endTime.split(":").map(Number);
+        return eh * 60 + em <= sh * 60 + sm;
+      })();
 
     // Event was yesterday but endTime crosses midnight (still ongoing today)
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
     if (d.getTime() === yesterday.getTime() && endCrossesMidnight) {
-      const [h, m] = endTime.split(':').map(Number);
+      const [h, m] = endTime.split(":").map(Number);
       const eventEnd = new Date(now);
       eventEnd.setHours(h, m, 0, 0);
       return eventEnd < now;
@@ -1013,7 +1271,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     if (d.getTime() === today.getTime()) {
       const t = endTime || time;
       if (t) {
-        const [h, m] = t.split(':').map(Number);
+        const [h, m] = t.split(":").map(Number);
         const eventEnd = new Date(now);
         eventEnd.setHours(h, m, 0, 0);
         if (endCrossesMidnight) {
@@ -1033,7 +1291,16 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const g = dailyGoals[dayKey(i)];
     if (!g) return [];
     if (Array.isArray(g)) return g;
-    return g.text ? [{ id: "legacy", text: g.text, done: g.done ?? false, linkedEventId: g.linkedEventId ?? null }] : [];
+    return g.text
+      ? [
+          {
+            id: "legacy",
+            text: g.text,
+            done: g.done ?? false,
+            linkedEventId: g.linkedEventId ?? null,
+          },
+        ]
+      : [];
   };
 
   const setGoalsForDay = (i, goals) =>
@@ -1042,13 +1309,29 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const saveGoal = (i, goalId, text, linkedEventId) => {
     const hasContent = text.trim() || linkedEventId;
     if (!hasContent) {
-      setGoalsForDay(i, getGoalsForDay(i).filter((g) => g.id !== goalId));
+      setGoalsForDay(
+        i,
+        getGoalsForDay(i).filter((g) => g.id !== goalId),
+      );
     } else if (goalId) {
-      setGoalsForDay(i, getGoalsForDay(i).map((g) =>
-        g.id === goalId ? { ...g, text: text.trim(), linkedEventId: linkedEventId || null } : g,
-      ));
+      setGoalsForDay(
+        i,
+        getGoalsForDay(i).map((g) =>
+          g.id === goalId
+            ? { ...g, text: text.trim(), linkedEventId: linkedEventId || null }
+            : g,
+        ),
+      );
     } else {
-      setGoalsForDay(i, [...getGoalsForDay(i), { id: Date.now() + 1, text: text.trim(), done: false, linkedEventId: linkedEventId || null }]);
+      setGoalsForDay(i, [
+        ...getGoalsForDay(i),
+        {
+          id: Date.now() + 1,
+          text: text.trim(),
+          done: false,
+          linkedEventId: linkedEventId || null,
+        },
+      ]);
     }
     setEditingGoal(null);
   };
@@ -1058,29 +1341,42 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const goal = goals.find((g) => g.id === goalId);
     if (!goal) return;
     const newDone = !goal.done;
-    const updatedGoals = goals.map((g) => g.id === goalId ? { ...g, done: newDone } : g);
+    const updatedGoals = goals.map((g) =>
+      g.id === goalId ? { ...g, done: newDone } : g,
+    );
     setGoalsForDay(i, updatedGoals);
 
     if (!goal.linkedEventId) return;
-    const linked = getActivitiesForDay(i).find((a) => String(a.id) === String(goal.linkedEventId));
+    const linked = getActivitiesForDay(i).find(
+      (a) => String(a.id) === String(goal.linkedEventId),
+    );
     if (!linked) return;
 
     // Event is done only when ALL goals across all days linked to it are done
     const allLinkedGoals = days.flatMap((_, di) => {
       const dGoals = di === i ? updatedGoals : getGoalsForDay(di);
-      return dGoals.filter((g) => String(g.linkedEventId) === String(goal.linkedEventId));
+      return dGoals.filter(
+        (g) => String(g.linkedEventId) === String(goal.linkedEventId),
+      );
     });
-    const allDone = allLinkedGoals.length > 0 && allLinkedGoals.every((g) => g.done);
+    const allDone =
+      allLinkedGoals.length > 0 && allLinkedGoals.every((g) => g.done);
 
     const storedDay = linked._storedDayIndex;
     if (linked._recurring) {
       const key = `${linked.id}|${weekKey}|${storedDay}`;
-      setRecurringDone((prev) => allDone ? [...prev.filter((k) => k !== key), key] : prev.filter((k) => k !== key));
+      setRecurringDone((prev) =>
+        allDone
+          ? [...prev.filter((k) => k !== key), key]
+          : prev.filter((k) => k !== key),
+      );
     } else {
       setWeekData((prev) => {
         const updated = [...prev];
         updated[storedDay] = updated[storedDay].map((a) =>
-          String(a.id) === String(goal.linkedEventId) ? { ...a, done: allDone } : a,
+          String(a.id) === String(goal.linkedEventId)
+            ? { ...a, done: allDone }
+            : a,
         );
         return updated;
       });
@@ -1088,12 +1384,18 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   const deleteGoal = (i, goalId) =>
-    setGoalsForDay(i, getGoalsForDay(i).filter((g) => g.id !== goalId));
+    setGoalsForDay(
+      i,
+      getGoalsForDay(i).filter((g) => g.id !== goalId),
+    );
 
   const moveGoalToDay = (fromDay, goalId, toDay) => {
     const goal = getGoalsForDay(fromDay).find((g) => g.id === goalId);
     if (!goal) return;
-    setGoalsForDay(fromDay, getGoalsForDay(fromDay).filter((g) => g.id !== goalId));
+    setGoalsForDay(
+      fromDay,
+      getGoalsForDay(fromDay).filter((g) => g.id !== goalId),
+    );
     setGoalsForDay(toDay, [...getGoalsForDay(toDay), goal]);
   };
 
@@ -1102,11 +1404,19 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     if (!goal) return;
     const nextWeekDate = new Date(days[fromDayIndex]);
     nextWeekDate.setDate(nextWeekDate.getDate() + 7);
-    const nextWeekKey = nextWeekDate.toISOString().split('T')[0];
-    setGoalsForDay(fromDayIndex, getGoalsForDay(fromDayIndex).filter((g) => g.id !== goalId));
+    const nextWeekKey = nextWeekDate.toISOString().split("T")[0];
+    setGoalsForDay(
+      fromDayIndex,
+      getGoalsForDay(fromDayIndex).filter((g) => g.id !== goalId),
+    );
     setDailyGoals((prev) => {
-      const existing = Array.isArray(prev[nextWeekKey]) ? prev[nextWeekKey] : [];
-      return { ...prev, [nextWeekKey]: [...existing, { ...goal, done: false }] };
+      const existing = Array.isArray(prev[nextWeekKey])
+        ? prev[nextWeekKey]
+        : [];
+      return {
+        ...prev,
+        [nextWeekKey]: [...existing, { ...goal, done: false }],
+      };
     });
   };
 
@@ -1119,10 +1429,15 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       if (!goal) return;
       const nextMonday = new Date(days[fromDayIndex]);
       nextMonday.setDate(nextMonday.getDate() + 1);
-      const nextMondayKey = nextMonday.toISOString().split('T')[0];
-      setGoalsForDay(fromDayIndex, getGoalsForDay(fromDayIndex).filter((g) => g.id !== goalId));
+      const nextMondayKey = nextMonday.toISOString().split("T")[0];
+      setGoalsForDay(
+        fromDayIndex,
+        getGoalsForDay(fromDayIndex).filter((g) => g.id !== goalId),
+      );
       setDailyGoals((prev) => {
-        const existing = Array.isArray(prev[nextMondayKey]) ? prev[nextMondayKey] : [];
+        const existing = Array.isArray(prev[nextMondayKey])
+          ? prev[nextMondayKey]
+          : [];
         return { ...prev, [nextMondayKey]: [...existing, { ...goal }] };
       });
     }
@@ -1140,8 +1455,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   // ── À confirmer ────────────────────────────────────────────────
   const isPastDay = (date) => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const d = new Date(date); d.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
     return d < today;
   };
 
@@ -1162,11 +1479,25 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       setWeekData((prev) => {
         const updated = [...prev];
         // Remove from original day
-        updated[storedDay] = updated[storedDay].filter((a) => a.id !== activity.id);
+        updated[storedDay] = updated[storedDay].filter(
+          (a) => a.id !== activity.id,
+        );
         // Add to new day (strip computed fields)
-        const { _storedDayIndex, _recurring, _colIndex, _totalCols,
-                _isContinuation, _isLastDay, _displayTime, _displayEndTime, ...clean } = activity;
-        updated[dayIndex] = [...updated[dayIndex], { ...clean, time: newTime, endTime: newEndTime }];
+        const {
+          _storedDayIndex,
+          _recurring,
+          _colIndex,
+          _totalCols,
+          _isContinuation,
+          _isLastDay,
+          _displayTime,
+          _displayEndTime,
+          ...clean
+        } = activity;
+        updated[dayIndex] = [
+          ...updated[dayIndex],
+          { ...clean, time: newTime, endTime: newEndTime },
+        ];
         return updated;
       });
     }
@@ -1189,14 +1520,19 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       .filter((a) => a.time && !isDoneActivity(a) && !a._isContinuation)
       .forEach((a) => {
         const offset = a.endDayOffset ?? 0;
-        const endDate = offset > 0 ? (days[a._storedDayIndex + offset] ?? date) : (days[a._storedDayIndex] ?? date);
-        if (isPastEvent(endDate, a.endTime, a.time))
+        const endDate =
+          offset > 0
+            ? (days[a._storedDayIndex + offset] ?? date)
+            : (days[a._storedDayIndex] ?? date);
+        if (isPastEvent(endDate, a.endTime, offset > 0 ? null : a.time))
           confirmItems.push({ type: "event", activity: a, dayIndex: i });
       });
     if (isPastDay(date)) {
       getGoalsForDay(i)
         .filter((g) => !g.done)
-        .forEach((g) => confirmItems.push({ type: "goal", goal: g, dayIndex: i }));
+        .forEach((g) =>
+          confirmItems.push({ type: "goal", goal: g, dayIndex: i }),
+        );
     }
   });
 
@@ -1222,7 +1558,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       onClick={(e) => {
         e.stopPropagation();
         if (activity._recurring) {
-          setDeletingRecurring({ activity, dayIndex: activity._storedDayIndex });
+          setDeletingRecurring({
+            activity,
+            dayIndex: activity._storedDayIndex,
+          });
         } else {
           handleDelete(activity, e);
         }
@@ -1239,7 +1578,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     if (event.days !== undefined) {
       const key = `${event.id}|${wk}|${dayIndex}`;
       setRecurringDone((prev) =>
-        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
       );
     } else {
       try {
@@ -1247,7 +1586,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         if (stored) {
           const data = JSON.parse(stored);
           data[dayIndex] = (data[dayIndex] || []).map((e) =>
-            e.id === event.id ? { ...e, done: !e.done } : e
+            e.id === event.id ? { ...e, done: !e.done } : e,
           );
           localStorage.setItem(wk, JSON.stringify(data));
           setPreviewRefreshKey((k) => k + 1);
@@ -1260,20 +1599,25 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const handleGoToDayView = (date) => {
     const targetMonday = new Date(date);
-    targetMonday.setDate(date.getDate() - (date.getDay() + 6) % 7);
+    targetMonday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
     targetMonday.setHours(0, 0, 0, 0);
     const todayMonday = getMondayOfWeek(0);
     const diffWeeks = Math.round((targetMonday - todayMonday) / (7 * 86400000));
     setWeekOffset(diffWeeks);
     setMobileDay((date.getDay() + 6) % 7);
-    setMobileView('day');
+    setMobileView("day");
   };
 
   return (
-    <div className={`week-planner${mobileView === 'month' ? ' month-view' : ''}`}>
+    <div
+      className={`week-planner${mobileView === "month" ? " month-view" : ""}`}
+    >
       <div className="week-nav">
         <div className="week-nav-controls">
-          <button onClick={() => setWeekOffset((o) => o - 1)} disabled={weekOffset <= minWeekOffset}>
+          <button
+            onClick={() => setWeekOffset((o) => o - 1)}
+            disabled={weekOffset <= minWeekOffset}
+          >
             ← Précédente
           </button>
           <span className="week-label">{formatWeekLabel(weekOffset)}</span>
@@ -1281,7 +1625,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             Suivante →
           </button>
           <div className="mini-cal-wrapper">
-            <button className="mini-cal-toggle" onClick={(e) => { e.stopPropagation(); setShowMiniCal((v) => !v); }} title="Aller à une date">
+            <button
+              className="mini-cal-toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMiniCal((v) => !v);
+              }}
+              title="Aller à une date"
+            >
               📅
             </button>
             {showMiniCal && (
@@ -1295,55 +1646,67 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           <button
             className="week-nav-today"
             onClick={() => setWeekOffset(0)}
-            style={{ visibility: weekOffset !== 0 ? 'visible' : 'hidden' }}
+            style={{ visibility: weekOffset !== 0 ? "visible" : "hidden" }}
           >
             Aujourd'hui
           </button>
         </div>
-        <button
-          className="week-nav-find-slot"
-          onClick={() => setShowSlotFinder(true)}
-        >
-          Créneau libre
-        </button>
       </div>
 
       {/* Header iOS mobile */}
       <div className="mobile-week-header">
         <button
           className="mobile-week-arrow"
-          onClick={() => mobileView === 'day'
-            ? setWeekOffset((o) => o - 1)
-            : setMobileMonthDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+          onClick={() =>
+            mobileView === "day"
+              ? setWeekOffset((o) => o - 1)
+              : setMobileMonthDate(
+                  (d) => new Date(d.getFullYear(), d.getMonth() - 1, 1),
+                )
           }
-          disabled={mobileView === 'day' && weekOffset <= minWeekOffset}
-        >‹</button>
+          disabled={mobileView === "day" && weekOffset <= minWeekOffset}
+        >
+          ‹
+        </button>
         <div className="mobile-header-center">
           <span className="mobile-month-label">
-            {mobileView === 'day' ? getMobileMonthLabel(weekOffset) : formatMonthYear(mobileMonthDate)}
+            {mobileView === "day"
+              ? getMobileMonthLabel(weekOffset)
+              : formatMonthYear(mobileMonthDate)}
           </span>
           <div className="mobile-view-toggle">
             <button
-              className={`mobile-view-btn${mobileView === 'day' ? ' active' : ''}`}
-              onClick={() => setMobileView('day')}
-            >Jour</button>
+              className={`mobile-view-btn${mobileView === "day" ? " active" : ""}`}
+              onClick={() => setMobileView("day")}
+            >
+              Jour
+            </button>
             <button
-              className={`mobile-view-btn${mobileView === 'month' ? ' active' : ''}`}
+              className={`mobile-view-btn${mobileView === "month" ? " active" : ""}`}
               onClick={() => {
                 const monday = getMondayOfWeek(weekOffset);
-                setMobileMonthDate(new Date(monday.getFullYear(), monday.getMonth(), 1));
-                setMobileView('month');
+                setMobileMonthDate(
+                  new Date(monday.getFullYear(), monday.getMonth(), 1),
+                );
+                setMobileView("month");
               }}
-            >Mois</button>
+            >
+              Mois
+            </button>
           </div>
         </div>
         <button
           className="mobile-week-arrow"
-          onClick={() => mobileView === 'day'
-            ? setWeekOffset((o) => o + 1)
-            : setMobileMonthDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+          onClick={() =>
+            mobileView === "day"
+              ? setWeekOffset((o) => o + 1)
+              : setMobileMonthDate(
+                  (d) => new Date(d.getFullYear(), d.getMonth() + 1, 1),
+                )
           }
-        >›</button>
+        >
+          ›
+        </button>
       </div>
 
       {/* Vue mois iOS — mobile uniquement */}
@@ -1361,7 +1724,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       />
 
       {/* Onglets de navigation jour — mobile uniquement */}
-      <div className="mobile-day-tabs">
+      <div
+        className="mobile-day-tabs"
+        onTouchStart={handleTabsSwipeStart}
+        onTouchEnd={handleTabsSwipeEnd}
+      >
         {days.map((date, i) => (
           <button
             key={i}
@@ -1374,7 +1741,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         ))}
       </div>
 
-      <div className="calendar-wrapper">
+      <div className="calendar-wrapper" ref={calWrapperRef}>
         <div className="calendar-header">
           <div className="time-gutter-header" />
           {days.map((date, i) => {
@@ -1387,7 +1754,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 <span className="day-name">{DAY_NAMES[i]}</span>
                 <span className="day-date">{formatDate(date)}</span>
                 {hasOverlap && (
-                  <span className="overlap-badge" title="Des événements se superposent sur ce jour">⚠</span>
+                  <span
+                    className="overlap-badge"
+                    title="Des événements se superposent sur ce jour"
+                  >
+                    ⚠
+                  </span>
                 )}
                 <button
                   className="add-activity-btn"
@@ -1413,8 +1785,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
           {days.map((date, i) => {
             const timedWithLayout = dayLayouts[i];
-            const timedFull = timedWithLayout.filter((a) => a.endTime || a._isContinuation || (a.endDayOffset ?? 0) > 0 || a.allDay);
-            const timedStart = timedWithLayout.filter((a) => !a.endTime && !a._isContinuation && !(a.endDayOffset ?? 0) && !a.allDay);
+            const timedFull = timedWithLayout.filter(
+              (a) =>
+                a.endTime ||
+                a._isContinuation ||
+                (a.endDayOffset ?? 0) > 0 ||
+                a.allDay,
+            );
+            const timedStart = timedWithLayout.filter(
+              (a) =>
+                !a.endTime &&
+                !a._isContinuation &&
+                !(a.endDayOffset ?? 0) &&
+                !a.allDay,
+            );
             const isGhostCol = isDragging && preview?.targetDayIndex === i;
 
             const overlapStyle = (a) => {
@@ -1428,7 +1812,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 width: `calc(${widthPct}% - 4px)`,
                 right: "auto",
                 zIndex: a._colIndex + 1,
-                boxShadow: a._colIndex > 0 ? '-2px 0 6px rgba(0,0,0,0.15)' : 'none',
+                boxShadow:
+                  a._colIndex > 0 ? "-2px 0 6px rgba(0,0,0,0.15)" : "none",
               };
             };
 
@@ -1473,26 +1858,47 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 )}
 
                 {timedFull.map((activity) => {
-                  const displayTime    = activity._displayTime    ?? activity.time;
-                  const displayEndTime = activity._displayEndTime ?? activity.endTime;
+                  const displayTime = activity._displayTime ?? activity.time;
+                  const displayEndTime =
+                    activity._displayEndTime ?? activity.endTime;
                   const beingDragged =
                     isDragging && dragRef.current?.activity.id === activity.id;
-                  const durationMin = timeToCalMin(displayEndTime) - timeToCalMin(displayTime);
+                  const durationMin =
+                    timeToCalMin(displayEndTime) - timeToCalMin(displayTime);
                   const isCompact = durationMin < 75;
                   const done = isDoneActivity(activity);
-                  const isMultiDayStart = (activity.endDayOffset ?? 0) > 0 && !activity._isContinuation;
-                  const missed = !done && !activity._isContinuation && (() => {
-                    const offset = activity.endDayOffset ?? 0;
-                    const endDate = offset > 0 ? (days[activity._storedDayIndex + offset] ?? date) : (days[activity._storedDayIndex] ?? date);
-                    return isPastEvent(endDate, activity.endTime, activity.time);
-                  })();
-                  const multidayClass = isMultiDayStart ? ' block-multiday-start'
-                    : activity._isContinuation && !activity._isLastDay ? ' block-multiday-cont'
-                    : activity._isContinuation && activity._isLastDay ? ' block-multiday-end'
-                    : '';
+                  const isMultiDayStart =
+                    (activity.endDayOffset ?? 0) > 0 &&
+                    !activity._isContinuation;
+                  const missed =
+                    !done &&
+                    !activity._isContinuation &&
+                    (() => {
+                      const offset = activity.endDayOffset ?? 0;
+                      const endDate =
+                        offset > 0
+                          ? (days[activity._storedDayIndex + offset] ?? date)
+                          : (days[activity._storedDayIndex] ?? date);
+                      return isPastEvent(
+                        endDate,
+                        activity.endTime,
+                        activity.time,
+                      );
+                    })();
+                  const multidayClass = isMultiDayStart
+                    ? " block-multiday-start"
+                    : activity._isContinuation && !activity._isLastDay
+                      ? " block-multiday-cont"
+                      : activity._isContinuation && activity._isLastDay
+                        ? " block-multiday-end"
+                        : "";
                   return (
                     <div
-                      key={activity._isContinuation ? `${activity.id}_cont_${i}` : activity.id}
+                      key={
+                        activity._isContinuation
+                          ? `${activity.id}_cont_${i}`
+                          : activity.id
+                      }
                       className={`cal-activity-block${isCompact ? " block-compact" : ""}${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}${multidayClass}`}
                       style={{
                         top: toTopPct(displayTime),
@@ -1502,7 +1908,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         ...overlapStyle(activity),
                       }}
                       onMouseDown={(e) => handleBlockMouseDown(activity, i, e)}
-                      onTouchStart={(e) => handleBlockTouchStart(activity, i, e)}
+                      onTouchStart={(e) =>
+                        handleBlockTouchStart(activity, i, e)
+                      }
                     >
                       {isCompact ? (
                         <div
@@ -1515,11 +1923,22 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           <span className="cal-activity-title">
                             {activity.title}
                           </span>
-                          {missed && <span className="missed-badge" title="Non effectué">!</span>}
+                          {missed && (
+                            <span className="missed-badge" title="Non effectué">
+                              !
+                            </span>
+                          )}
                           <span className="cal-compact-time">
-                            {activity._isContinuation ? (activity._isLastDay ? `→${activity.endTime}` : '↕') : activity.time}
+                            {activity._isContinuation
+                              ? activity._isLastDay
+                                ? `→${activity.endTime}`
+                                : "↕"
+                              : activity.time}
                           </span>
-                          {!activity._isContinuation && renderDoneBtn(activity, i)}
+                          {(activity._isLastDay ||
+                            (!(activity.endDayOffset ?? 0) &&
+                              !activity._isContinuation)) &&
+                            renderDoneBtn(activity, i)}
                           {renderDeleteBtn(activity, i)}
                         </div>
                       ) : (
@@ -1529,25 +1948,59 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                               {activity._recurring && (
                                 <span className="recur-icon">↻ </span>
                               )}
-                              {activity._isContinuation
-                                ? (activity._isLastDay
-                                    ? <span className="multiday-cont-label">← jusqu'à {activity.endTime}</span>
-                                    : <span className="multiday-cont-label">↕ suite</span>)
-                                : isMultiDayStart
-                                  ? <>{activity.time} – {activity.endTime} <span className="multiday-cont-label">→</span></>
-                                  : <>{activity.time} – {activity.endTime}</>
-                              }
+                              {activity._isContinuation ? (
+                                activity._isLastDay ? (
+                                  <span className="multiday-cont-label">
+                                    ← jusqu'à {activity.endTime}
+                                  </span>
+                                ) : (
+                                  <span className="multiday-cont-label">
+                                    ↕ suite
+                                  </span>
+                                )
+                              ) : isMultiDayStart ? (
+                                <>
+                                  {activity.time} – {activity.endTime}{" "}
+                                  <span className="multiday-cont-label">→</span>
+                                </>
+                              ) : (
+                                <>
+                                  {activity.time} – {activity.endTime}
+                                </>
+                              )}
                             </span>
                             <div className="cal-block-actions">
-                              {missed && <span className="missed-badge" title="Non effectué">!</span>}
-                              {!activity._isContinuation && renderDoneBtn(activity, i)}
+                              {missed && (
+                                <span
+                                  className="missed-badge"
+                                  title="Non effectué"
+                                >
+                                  !
+                                </span>
+                              )}
+                              {(activity._isLastDay ||
+                                (!(activity.endDayOffset ?? 0) &&
+                                  !activity._isContinuation)) &&
+                                renderDoneBtn(activity, i)}
                               {renderDeleteBtn(activity, i)}
                             </div>
                           </div>
                           <span
                             className="cal-activity-title"
-                            style={activity._totalCols > 1 ? { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } : {}}
-                            title={activity._totalCols > 1 ? activity.title : undefined}
+                            style={
+                              activity._totalCols > 1
+                                ? {
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }
+                                : {}
+                            }
+                            title={
+                              activity._totalCols > 1
+                                ? activity.title
+                                : undefined
+                            }
                           >
                             {activity.title}
                           </span>
@@ -1562,7 +2015,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     isDragging && dragRef.current?.activity.id === activity.id;
                   const done = isDoneActivity(activity);
                   const actualDate = days[activity._storedDayIndex] ?? date;
-                  const missed = !done && isPastEvent(actualDate, null, activity.time);
+                  const missed =
+                    !done && isPastEvent(actualDate, null, activity.time);
                   return (
                     <div
                       key={activity.id}
@@ -1574,7 +2028,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         ...overlapStyle(activity),
                       }}
                       onMouseDown={(e) => handleBlockMouseDown(activity, i, e)}
-                      onTouchStart={(e) => handleBlockTouchStart(activity, i, e)}
+                      onTouchStart={(e) =>
+                        handleBlockTouchStart(activity, i, e)
+                      }
                     >
                       <span className="cal-activity-time">
                         {activity._recurring && (
@@ -1603,7 +2059,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 className="confirm-validate-all-btn"
                 onClick={() => {
                   confirmItems.forEach((item) => {
-                    if (item.type === 'event') handleToggleDone(item.activity, item.dayIndex, { stopPropagation: () => {} });
+                    if (item.type === "event")
+                      handleToggleDone(item.activity, item.dayIndex, {
+                        stopPropagation: () => {},
+                      });
                     else toggleGoalDone(item.dayIndex, item.goal.id);
                   });
                 }}
@@ -1615,15 +2074,22 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               {confirmItems.map((item, idx) =>
                 item.type === "event" ? (
                   <div key={idx} className="confirm-item">
-                    <span className="confirm-dot" style={{ backgroundColor: item.activity.color }} />
-                    <span className="confirm-day">{DAY_NAMES[item.dayIndex]}</span>
+                    <span
+                      className="confirm-dot"
+                      style={{ backgroundColor: item.activity.color }}
+                    />
+                    <span className="confirm-day">
+                      {DAY_NAMES[item.dayIndex]}
+                    </span>
                     <span className="confirm-title">{item.activity.title}</span>
                     {item.activity.time && (
                       <span className="confirm-time">{item.activity.time}</span>
                     )}
                     <button
                       className="confirm-validate-btn"
-                      onClick={(e) => handleToggleDone(item.activity, item.dayIndex, e)}
+                      onClick={(e) =>
+                        handleToggleDone(item.activity, item.dayIndex, e)
+                      }
                     >
                       Valider
                     </button>
@@ -1636,13 +2102,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   </div>
                 ) : (
                   <div key={idx} className="confirm-item">
-                    <span className="confirm-dot" style={{ backgroundColor: "#9b59b6" }} />
-                    <span className="confirm-day">{DAY_NAMES[item.dayIndex]}</span>
+                    <span
+                      className="confirm-dot"
+                      style={{ backgroundColor: "#9b59b6" }}
+                    />
+                    <span className="confirm-day">
+                      {DAY_NAMES[item.dayIndex]}
+                    </span>
                     <span className="confirm-title">{item.goal.text}</span>
                     <span className="confirm-badge">Objectif</span>
                     <button
                       className="confirm-validate-btn"
-                      onClick={() => toggleGoalDone(item.dayIndex, item.goal.id)}
+                      onClick={() =>
+                        toggleGoalDone(item.dayIndex, item.goal.id)
+                      }
                     >
                       Valider
                     </button>
@@ -1653,7 +2126,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       Reporter
                     </button>
                   </div>
-                )
+                ),
               )}
             </div>
           </div>
@@ -1663,7 +2136,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           <div className="unscheduled-row">
             <div className="unscheduled-label">Sans horaire</div>
             {days.map((_, i) => (
-              <div key={i} className={`unscheduled-day${mobileDay === i ? " mobile-active" : ""}`}>
+              <div
+                key={i}
+                className={`unscheduled-day${mobileDay === i ? " mobile-active" : ""}`}
+              >
                 {getActivitiesForDay(i)
                   .filter((a) => !a.time && !a.allDay)
                   .map((activity) => {
@@ -1699,100 +2175,178 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           <div className="goals-gutter" />
           {days.map((_, i) => {
             const goals = getGoalsForDay(i);
-            const sortedGoals = [...goals.filter((g) => !g.done), ...goals.filter((g) => g.done)];
-            const timedActivities = getActivitiesForDay(i).filter((a) => a.time).sort((a, b) => a.time.localeCompare(b.time));
+            const sortedGoals = [
+              ...goals.filter((g) => !g.done),
+              ...goals.filter((g) => g.done),
+            ];
+            const timedActivities = getActivitiesForDay(i)
+              .filter((a) => a.time)
+              .sort((a, b) => a.time.localeCompare(b.time));
             return (
-              <div key={i} className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}>
+              <div
+                key={i}
+                className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}
+              >
                 <button
                   className="goal-add-btn"
-                  onClick={() => setEditingGoal({ dayIndex: i, goalId: null, text: "", linkedEventId: null })}
+                  onClick={() =>
+                    setEditingGoal({
+                      dayIndex: i,
+                      goalId: null,
+                      text: "",
+                      linkedEventId: null,
+                    })
+                  }
                 >
                   + Objectif
                 </button>
-                {editingGoal?.dayIndex === i && editingGoal?.goalId === null && (
-                  <div className="goal-edit-form">
-                    <div className="goal-edit-top">
-                      <input
-                        className="goal-input"
-                        autoFocus
-                        value={editingGoal.text}
-                        onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
-                          if (e.key === "Escape") setEditingGoal(null);
-                        }}
-                        placeholder="Objectif…"
-                      />
-                      <button className="goal-save-btn" onMouseDown={() => saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
-                      <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
-                    </div>
-                    {timedActivities.length > 0 && (
-                      <select
-                        className="goal-link-select"
-                        value={editingGoal.linkedEventId || ""}
-                        onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveGoal(i, null, editingGoal.text, editingGoal.linkedEventId, null);
-                          if (e.key === "Escape") setEditingGoal(null);
-                        }}
-                      >
-                        <option value="">— Lier à un événement —</option>
-                        {timedActivities.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                )}
+                {editingGoal?.dayIndex === i &&
+                  editingGoal?.goalId === null && (
+                    <form
+                      className="goal-edit-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        saveGoal(
+                          i,
+                          null,
+                          editingGoal.text,
+                          editingGoal.linkedEventId,
+                          null,
+                        );
+                      }}
+                    >
+                      <div className="goal-edit-top">
+                        <input
+                          className="goal-input"
+                          autoFocus
+                          value={editingGoal.text}
+                          enterKeyHint="done"
+                          onChange={(e) =>
+                            setEditingGoal((g) => ({
+                              ...g,
+                              text: e.target.value,
+                            }))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") setEditingGoal(null);
+                          }}
+                          placeholder="Objectif…"
+                        />
+                        <button type="submit" className="goal-save-btn">
+                          ✓
+                        </button>
+                        <button
+                          type="button"
+                          className="goal-cancel-btn"
+                          onMouseDown={() => setEditingGoal(null)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      {timedActivities.length > 0 && (
+                        <select
+                          className="goal-link-select"
+                          value={editingGoal.linkedEventId || ""}
+                          onChange={(e) =>
+                            setEditingGoal((g) => ({
+                              ...g,
+                              linkedEventId: e.target.value || null,
+                            }))
+                          }
+                        >
+                          <option value="">— Lier à un événement —</option>
+                          {timedActivities.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.title} ({a.time}
+                              {a.endTime ? `–${a.endTime}` : ""})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </form>
+                  )}
                 {sortedGoals.map((goal) => {
                   const idx = goals.findIndex((g) => g.id === goal.id);
-                  const isEditing = editingGoal?.dayIndex === i && editingGoal?.goalId === goal.id;
+                  const isEditing =
+                    editingGoal?.dayIndex === i &&
+                    editingGoal?.goalId === goal.id;
                   const linked = goal.linkedEventId
-                    ? timedActivities.find((a) => String(a.id) === String(goal.linkedEventId))
+                    ? timedActivities.find(
+                        (a) => String(a.id) === String(goal.linkedEventId),
+                      )
                     : null;
                   if (isEditing) {
                     return (
-                      <div key={goal.id} className="goal-edit-form">
+                      <form
+                        key={goal.id}
+                        className="goal-edit-form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          saveGoal(
+                            i,
+                            goal.id,
+                            editingGoal.text,
+                            editingGoal.linkedEventId,
+                            null,
+                          );
+                        }}
+                      >
                         <div className="goal-edit-top">
                           <input
                             className="goal-input"
                             autoFocus
                             value={editingGoal.text}
-                            onChange={(e) => setEditingGoal((g) => ({ ...g, text: e.target.value }))}
+                            enterKeyHint="done"
+                            onChange={(e) =>
+                              setEditingGoal((g) => ({
+                                ...g,
+                                text: e.target.value,
+                              }))
+                            }
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
                               if (e.key === "Escape") setEditingGoal(null);
                             }}
                             placeholder={goal.text}
                           />
-                          <button className="goal-save-btn" onMouseDown={() => saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null)}>✓</button>
-                          <button className="goal-cancel-btn" onMouseDown={() => setEditingGoal(null)}>✕</button>
+                          <button type="submit" className="goal-save-btn">
+                            ✓
+                          </button>
+                          <button
+                            type="button"
+                            className="goal-cancel-btn"
+                            onMouseDown={() => setEditingGoal(null)}
+                          >
+                            ✕
+                          </button>
                         </div>
                         {timedActivities.length > 0 && (
                           <select
                             className="goal-link-select"
                             value={editingGoal.linkedEventId || ""}
-                            onChange={(e) => setEditingGoal((g) => ({ ...g, linkedEventId: e.target.value || null }))}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") saveGoal(i, goal.id, editingGoal.text, editingGoal.linkedEventId, null);
-                              if (e.key === "Escape") setEditingGoal(null);
-                            }}
+                            onChange={(e) =>
+                              setEditingGoal((g) => ({
+                                ...g,
+                                linkedEventId: e.target.value || null,
+                              }))
+                            }
                           >
                             <option value="">— Lier à un événement —</option>
                             {timedActivities.map((a) => (
                               <option key={a.id} value={a.id}>
-                                {a.title} ({a.time}{a.endTime ? `–${a.endTime}` : ""})
+                                {a.title} ({a.time}
+                                {a.endTime ? `–${a.endTime}` : ""})
                               </option>
                             ))}
                           </select>
                         )}
-                      </div>
+                      </form>
                     );
                   }
                   return (
-                    <div key={goal.id} className={`goal-item${goal.done ? " goal-done" : ""}`}>
+                    <div
+                      key={goal.id}
+                      className={`goal-item${goal.done ? " goal-done" : ""}`}
+                    >
                       <span className="goal-priority">{idx + 1}</span>
                       <input
                         type="checkbox"
@@ -1803,9 +2357,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       {linked && !goal.text.trim() ? (
                         <span
                           className="goal-link-badge goal-link-primary"
-                          style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
+                          style={{
+                            borderColor: linked.color,
+                            color: linked.color,
+                            backgroundColor: linked.color + "18",
+                          }}
                           title={`Lié à : ${linked.title} (${linked.time})\nCliquer pour modifier`}
-                          onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
+                          onClick={() =>
+                            setEditingGoal({
+                              dayIndex: i,
+                              goalId: goal.id,
+                              text: goal.text,
+                              linkedEventId: goal.linkedEventId || null,
+                            })
+                          }
                         >
                           {linked.title}
                         </span>
@@ -1814,7 +2379,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           {linked && (
                             <span
                               className="goal-link-badge"
-                              style={{ borderColor: linked.color, color: linked.color, backgroundColor: linked.color + "18" }}
+                              style={{
+                                borderColor: linked.color,
+                                color: linked.color,
+                                backgroundColor: linked.color + "18",
+                              }}
                               title={`Lié à : ${linked.title} (${linked.time})`}
                             >
                               {linked.title}
@@ -1822,7 +2391,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           )}
                           <span
                             className="goal-text"
-                            onClick={() => setEditingGoal({ dayIndex: i, goalId: goal.id, text: goal.text, linkedEventId: goal.linkedEventId || null })}
+                            onClick={() =>
+                              setEditingGoal({
+                                dayIndex: i,
+                                goalId: goal.id,
+                                text: goal.text,
+                                linkedEventId: goal.linkedEventId || null,
+                              })
+                            }
                             title="Cliquer pour modifier"
                           >
                             {goal.text}
@@ -1831,19 +2407,61 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       )}
                       <div className="goal-actions">
                         {i > 0 && (
-                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToDay(i, goal.id, i - 1)} title="Jour précédent">←</button>
+                          <button
+                            className="goal-move-btn"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={() => moveGoalToDay(i, goal.id, i - 1)}
+                            title="Jour précédent"
+                          >
+                            ←
+                          </button>
                         )}
-                        <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalForward(i, goal.id)} title={i < 6 ? 'Jour suivant' : 'Lundi prochain'}>→</button>
+                        <button
+                          className="goal-move-btn"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={() => moveGoalForward(i, goal.id)}
+                          title={i < 6 ? "Jour suivant" : "Lundi prochain"}
+                        >
+                          →
+                        </button>
                         {idx > 0 && (
-                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, -1)} title="Monter">↑</button>
+                          <button
+                            className="goal-move-btn"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={() => moveGoal(i, goal.id, -1)}
+                            title="Monter"
+                          >
+                            ↑
+                          </button>
                         )}
                         {idx < goals.length - 1 && (
-                          <button className="goal-move-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoal(i, goal.id, 1)} title="Descendre">↓</button>
+                          <button
+                            className="goal-move-btn"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={() => moveGoal(i, goal.id, 1)}
+                            title="Descendre"
+                          >
+                            ↓
+                          </button>
                         )}
                         {!goal.done && (
-                          <button className="goal-move-btn goal-next-week-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => moveGoalToNextWeek(i, goal.id)} title="Reporter à la semaine prochaine">↗</button>
+                          <button
+                            className="goal-move-btn goal-next-week-btn"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={() => moveGoalToNextWeek(i, goal.id)}
+                            title="Reporter à la semaine prochaine"
+                          >
+                            ↗
+                          </button>
                         )}
-                        <button className="goal-delete-btn" onMouseDown={(e) => e.stopPropagation()} onClick={() => deleteGoal(i, goal.id)} title="Supprimer">×</button>
+                        <button
+                          className="goal-delete-btn"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={() => deleteGoal(i, goal.id)}
+                          title="Supprimer"
+                        >
+                          ×
+                        </button>
                       </div>
                     </div>
                   );
@@ -1858,7 +2476,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         <ActivityForm
           dayIndex={activeFormDay}
           days={days}
-          existingActivities={getActivitiesForDay(activeFormDay).filter((a) => a.time)}
+          existingActivities={getActivitiesForDay(activeFormDay).filter(
+            (a) => a.time,
+          )}
           onAdd={(activity) => handleAdd(activeFormDay, activity)}
           onAddRecurring={handleAddRecurring}
           onClose={() => setActiveFormDay(null)}
@@ -1867,41 +2487,42 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
       {editingActivity !== null && (
         <ActivityForm
-          dayIndex={editingActivity.activity._isContinuation ? editingActivity.activity._storedDayIndex : editingActivity.dayIndex}
+          dayIndex={
+            editingActivity.activity._isContinuation
+              ? editingActivity.activity._storedDayIndex
+              : editingActivity.dayIndex
+          }
           days={days}
           activity={editingActivity.activity}
-          existingActivities={getActivitiesForDay(editingActivity.dayIndex).filter(
-            (a) => a.time && a.id !== editingActivity.activity.id,
-          )}
+          existingActivities={getActivitiesForDay(
+            editingActivity.dayIndex,
+          ).filter((a) => a.time && a.id !== editingActivity.activity.id)}
           onEdit={handleEdit}
           onClose={() => setEditingActivity(null)}
         />
       )}
 
-{reportingActivity && (
+      {reportingActivity && (
         <RescheduleModal
           activity={reportingActivity}
           days={days}
-          findSlots={(durationMin) => findFreeSlots(weekData, recurring, durationMin, days)}
+          findSlots={(durationMin) =>
+            findFreeSlots(weekData, recurring, durationMin, days)
+          }
           onConfirm={handleReschedule}
           onClose={() => setReportingActivity(null)}
         />
       )}
 
-{showSlotFinder && (
-        <SlotFinderModal
-          days={days}
-          existingColors={days.flatMap((_, i) => getActivitiesForDay(i).map((a) => a.color))}
-          findSlots={(durationMin) => findFreeSlots(weekData, recurring, durationMin, days)}
-          onConfirm={(dayIndex, activity) => handleAdd(dayIndex, activity)}
-          onClose={() => setShowSlotFinder(false)}
-        />
-      )}
-
-
       {pendingRecurringEdit !== null && (
-        <div className="activity-form-overlay" onClick={() => setPendingRecurringEdit(null)}>
-          <div className="confirm-recur-dialog" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="activity-form-overlay"
+          onClick={() => setPendingRecurringEdit(null)}
+        >
+          <div
+            className="confirm-recur-dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
             <p className="confirm-recur-title">
               Modifier <strong>"{pendingRecurringEdit.original.title}"</strong>
             </p>
@@ -1909,7 +2530,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               Modifier uniquement cette occurrence ou toute la série ?
             </p>
             <div className="form-actions">
-              <button className="btn-secondary" onClick={() => setPendingRecurringEdit(null)}>
+              <button
+                className="btn-secondary"
+                onClick={() => setPendingRecurringEdit(null)}
+              >
                 Annuler
               </button>
               <button className="btn-secondary" onClick={applyRecurringEditOne}>
@@ -1936,9 +2560,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               Supprimer <strong>"{deletingRecurring.activity.title}"</strong>
             </p>
             <p className="confirm-recur-sub">
-              Supprimer uniquement cette occurrence, à partir de cette date, ou toute la série ?
+              Supprimer uniquement cette occurrence, à partir de cette date, ou
+              toute la série ?
             </p>
-            <div className="form-actions" style={{ flexWrap: 'wrap' }}>
+            <div className="form-actions" style={{ flexWrap: "wrap" }}>
               <button
                 className="btn-secondary"
                 onClick={() => setDeletingRecurring(null)}
