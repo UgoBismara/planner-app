@@ -1,0 +1,441 @@
+.nutrition-goal {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Formulaire ── */
+.ng-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ng-form-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ng-field { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.ng-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ng-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.ng-field input[type="number"] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ng-field input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ng-toggle-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ng-toggle-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.ng-toggle-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(79, 142, 247, 0.1);
+  font-weight: 700;
+}
+
+.ng-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ng-activity-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.ng-activity-btn.active {
+  border-color: var(--accent);
+  background: rgba(79, 142, 247, 0.08);
+}
+
+.ng-activity-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ng-activity-btn.active .ng-activity-label { color: var(--accent); }
+
+.ng-activity-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.ng-diet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ng-diet-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.ng-diet-btn.active {
+  border-color: var(--accent);
+  background: rgba(79, 142, 247, 0.08);
+}
+
+.ng-diet-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ng-diet-btn.active .ng-diet-name { color: var(--accent); }
+
+.ng-diet-macros {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.ng-save-btn {
+  padding: 0.7rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: opacity 0.15s;
+  align-self: flex-start;
+}
+
+.ng-save-btn:hover { opacity: 0.88; }
+
+/* ── Dashboard ── */
+.ng-dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ng-goal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.2rem;
+}
+
+.ng-goal-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.ng-edit-btn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.ng-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.ng-metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.ng-metric {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.ng-metric-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.ng-metric-target {
+  color: var(--mc, var(--accent));
+}
+
+.ng-metric-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.ng-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  margin: 0 0 0.6rem;
+}
+
+.ng-macro-targets {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.ng-macro-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ng-chip {
+  padding: 0.3rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.ng-chip-carbs   { color: #e09a3a; border-color: #e09a3a; background: rgba(224,154,58,0.1); }
+.ng-chip-fat     { color: #e05a7a; border-color: #e05a7a; background: rgba(224,90,122,0.1); }
+.ng-chip-protein { color: #4fbf8a; border-color: #4fbf8a; background: rgba(79,191,138,0.1); }
+
+/* ── Suivi du jour ── */
+.ng-today-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ng-progress-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ng-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.ng-progress-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ng-progress-values {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.ng-progress-values strong {
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
+.ng-remain { color: #4fbf8a; }
+.ng-over   { color: var(--danger); }
+
+.ng-bar-track {
+  height: 8px;
+  background: var(--bg-hover);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.ng-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+
+.ng-macros-today {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* ── Résumé profil ── */
+.ng-profile-summary {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ng-profile-summary span {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 0.15rem 0.6rem;
+}
+
+/* ── Eau ── */
+.ng-over-water { color: #4abde8; }
+
+.ng-water-btns {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+
+.ng-water-btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.ng-water-btn:hover:not(:disabled) { border-color: #4abde8; color: #4abde8; }
+.ng-water-sub:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+.ng-water-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* ── Récap hebdomadaire ── */
+.ng-weekly-recap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.ng-weekly-grid {
+  display: grid;
+  grid-template-columns: 3.5rem repeat(7, 1fr);
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.ng-weekly-col-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.ng-weekly-col-header.ng-today-col {
+  color: var(--accent);
+}
+
+.ng-weekly-row-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-right: 0.25rem;
+}
+
+.ng-weekly-cell {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0;
+  border-radius: 5px;
+}
+
+.ng-weekly-cell.ng-today-col {
+  background: rgba(79, 142, 247, 0.08);
+}
+
+.ng-check-ok   { color: #4fbf8a; }
+.ng-check-low  { color: #e09a3a; }
+.ng-check-high { color: #e05a7a; }
+.ng-check-none { color: var(--text-secondary); opacity: 0.4; }
+
+.ng-weekly-legend {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin: 0.6rem 0 0;
+  text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 540px) {
+  .ng-fields-row,
+  .ng-metrics-row,
+  .ng-macros-today {
+    grid-template-columns: 1fr;
+  }
+}

@@ -30,6 +30,12 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const [foodLog, setFoodLog] = useLocalStorage(`planner_food_log_${mealsKey}`, {});
   const [skippedMeals, setSkippedMeals] = useLocalStorage(`planner_skipped_${mealsKey}`, {});
   const [foodModal, setFoodModal] = useState(null); // { dayIndex, mealType }
+  const [waterLog, setWaterLog] = useLocalStorage(`planner_water_${mealsKey}`, {});
+
+  const WATER_GOAL = 2000;
+  const getWater = (dayIndex) => waterLog[dayIndex] || 0;
+  const addWater = (dayIndex, ml) =>
+    setWaterLog((prev) => ({ ...prev, [dayIndex]: Math.max(0, (prev[dayIndex] || 0) + ml) }));
 
   const toggleSkip = (dayIndex, mealType) => {
     const key = mk(dayIndex, mealType);
@@ -78,14 +84,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
     return { proteines: Math.round(proteines), lipides: Math.round(lipides), glucides: Math.round(glucides) };
   }, [foodLog]);
 
-  const uniqueFoodsCount = useMemo(() => {
-    const foods = new Set();
-    Object.values(foodLog).forEach((entries) => {
-      (entries || []).forEach((e) => foods.add(e.name));
-    });
-    return foods.size;
-  }, [foodLog]);
-
   return (
     <div className="meal-planner">
       <div className="week-nav">
@@ -101,21 +99,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
           <span className="week-macro week-macro-g">G {weekMacros.glucides}g</span>
           <span className="week-macro week-macro-l">L {weekMacros.lipides}g</span>
           <span className="week-macro week-macro-p">P {weekMacros.proteines}g</span>
-        </div>
-      )}
-
-      {uniqueFoodsCount > 0 && (
-        <div className="diversity-bar">
-          <span className="diversity-label">Diversité alimentaire</span>
-          <div className="diversity-track">
-            <div
-              className="diversity-fill"
-              style={{ width: `${Math.min(uniqueFoodsCount / 30 * 100, 100)}%` }}
-            />
-          </div>
-          <span className={`diversity-count ${uniqueFoodsCount >= 30 ? 'reached' : ''}`}>
-            {uniqueFoodsCount}/30 aliments
-          </span>
         </div>
       )}
 
@@ -173,6 +156,37 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
               {dayKcal > 0 && (
                 <div className="day-calories">{dayKcal} kcal</div>
               )}
+              <div className={`water-tracker${getWater(i) >= WATER_GOAL ? ' water-tracker-done' : ''}`}>
+                <div className="water-header">
+                  <span className="water-icon">💧</span>
+                  <span className="water-amount">
+                    {getWater(i) >= 1000
+                      ? `${(getWater(i) / 1000).toFixed(getWater(i) % 1000 === 0 ? 0 : 1)} L`
+                      : `${getWater(i)} mL`}
+                    {getWater(i) >= WATER_GOAL && <span className="water-check"> ✓</span>}
+                  </span>
+                </div>
+                <div className="water-bar-track">
+                  <div
+                    className="water-bar-fill"
+                    style={{ width: `${Math.min(getWater(i) / WATER_GOAL * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="water-btns">
+                  {[150, 250, 500].map((ml) => (
+                    <button key={ml} className="water-add-btn" onClick={() => addWater(i, ml)}>
+                      +{ml < 1000 ? `${ml}` : `${ml / 1000}L`}
+                    </button>
+                  ))}
+                  <button
+                    className="water-sub-btn"
+                    onClick={() => addWater(i, -250)}
+                    disabled={getWater(i) === 0}
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
             </div>
           );
         })}

@@ -205,52 +205,80 @@
   background: rgba(79, 191, 138, 0.1);
 }
 
-/* ── Diversité alimentaire ── */
-.diversity-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+/* ── Tracker eau ── */
+.water-tracker {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.6rem 1rem;
-  font-size: 0.82rem;
+  padding: 0.45rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
-.diversity-label {
-  white-space: nowrap;
+.water-tracker-done {
+  border-color: #4abde8;
+}
+
+.water-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.water-icon { font-size: 0.78rem; }
+
+.water-amount {
+  font-size: 0.68rem;
   font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.82rem;
+  color: var(--text-secondary);
 }
 
-.diversity-track {
-  flex: 1;
-  height: 6px;
-  background: var(--border);
+.water-tracker-done .water-amount { color: #4abde8; }
+
+.water-check {
+  color: #4abde8;
+  font-size: 0.7rem;
+}
+
+.water-bar-track {
+  height: 4px;
+  background: var(--bg-hover);
   border-radius: 99px;
   overflow: hidden;
 }
 
-.diversity-fill {
+.water-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), #4fbf8a);
+  background: #4abde8;
   border-radius: 99px;
-  transition: width 0.4s ease;
+  transition: width 0.35s ease;
+  min-width: 2px;
 }
 
-.diversity-count {
-  white-space: nowrap;
+.water-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.2rem;
+}
+
+.water-add-btn,
+.water-sub-btn {
+  font-size: 0.62rem;
   font-weight: 600;
-  font-size: 0.82rem;
+  padding: 0.18rem 0;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.12s;
+  background: var(--bg-main);
   color: var(--text-secondary);
-  min-width: 80px;
-  text-align: right;
 }
 
-.diversity-count.reached {
-  color: #4fbf8a;
-}
+.water-add-btn:hover { border-color: #4abde8; color: #4abde8; }
+.water-sub-btn:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+.water-sub-btn:disabled { opacity: 0.3; cursor: default; }
 
 .meal-add-hint {
   font-size: 0.8rem;
