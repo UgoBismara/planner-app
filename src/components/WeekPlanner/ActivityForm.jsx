@@ -2,18 +2,6 @@ import { useState } from 'react';
 
 const COLORS = ['#E53935', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA', '#00897B', '#D81B60', '#F9A825', '#00ACC1', '#7CB342', '#3949AB', '#6D4C41'];
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-const MINUTES = ['00', '15', '30', '45'];
-
-function splitTime(t) {
-  if (!t) return { h: '', m: '' };
-  const [h, m] = t.split(':');
-  return { h, m };
-}
-function joinTime(h, m) {
-  if (!h && !m) return '';
-  return `${h || '00'}:${m || '00'}`;
-}
 
 function toMin(t) {
   const [h, m] = t.split(':').map(Number);
@@ -129,32 +117,23 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
 
           {!isAllDay && (
             <>
-              <div className="form-group form-group-inline">
-                <div>
-                  <label>Début (optionnel)</label>
-                  <div className="time-picker-inline">
-                    <select value={splitTime(time).h} onChange={(e) => setTime(joinTime(e.target.value, splitTime(time).m || '00'))}>
-                      <option value="">—</option>
-                      {HOURS.map((h) => <option key={h} value={h}>{h}</option>)}
-                    </select>
-                    <span>:</span>
-                    <select value={splitTime(time).m} onChange={(e) => setTime(joinTime(splitTime(time).h || '00', e.target.value))} disabled={!time}>
-                      {MINUTES.map((m) => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label>Fin (optionnel)</label>
-                  <div className="time-picker-inline">
-                    <select value={splitTime(endTime).h} onChange={(e) => setEndTime(joinTime(e.target.value, splitTime(endTime).m || '00'))}>
-                      <option value="">—</option>
-                      {HOURS.map((h) => <option key={h} value={h}>{h}</option>)}
-                    </select>
-                    <span>:</span>
-                    <select value={splitTime(endTime).m} onChange={(e) => setEndTime(joinTime(splitTime(endTime).h || '00', e.target.value))} disabled={!endTime}>
-                      {MINUTES.map((m) => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </div>
+              <div className="form-group">
+                <label>Horaire <span className="field-hint">(optionnel)</span></label>
+                <div className="time-range-row">
+                  <input
+                    type="time"
+                    className="time-input"
+                    value={time}
+                    onChange={(e) => { setTime(e.target.value); if (!e.target.value) { setEndTime(''); setEndDayOffset(0); } }}
+                  />
+                  <span className="time-range-sep">→</span>
+                  <input
+                    type="time"
+                    className="time-input"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    disabled={!time}
+                  />
                 </div>
               </div>
               {endDayOffset === 0 && hasTimeOverlap(time, endTime, existingActivities) && (
