@@ -1,9 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
-import { RECIPES } from '../../data/recipes';
-import { RECIPE_MACROS, extractFoodName } from '../../data/macros';
-import MealCell from './MealCell';
-import RecipeModal from './RecipeModal';
+import FoodLogModal from './FoodLogModal';
 import './MealPlanner.css';
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -30,29 +27,13 @@ function getWeekNumber(date) {
 
 export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const mealsKey = getMealsKey(weekOffset);
-  const [weekMeals, setWeekMeals] = useLocalStorage(mealsKey, {});
-  const [customRecipes, setCustomRecipes] = useLocalStorage('planner_custom_recipes', []);
-  const [checkedItems, setCheckedItems] = useLocalStorage(`planner_shopping_${mealsKey}`, {});
-  const [modal, setModal] = useState(null);
-  const [showShopping, setShowShopping] = useState(true);
-  const [openSections, setOpenSections] = useState({ breakfast: true, lunch: true, snack: true, dinner: true });
-  const toggleSection = (type) => setOpenSections((prev) => ({ ...prev, [type]: !prev[type] }));
+  const [foodLog, setFoodLog] = useLocalStorage(`planner_food_log_${mealsKey}`, {});
+  const [skippedMeals, setSkippedMeals] = useLocalStorage(`planner_skipped_${mealsKey}`, {});
+  const [foodModal, setFoodModal] = useState(null); // { dayIndex, mealType }
 
-  const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
-
-  const getRecipe = (dayIndex, mealType) => {
-    const id = weekMeals[`${dayIndex}_${mealType}`];
-    if (!id) return null;
-    return allRecipes.find((r) => r.id === id || r.id === parseInt(id)) || null;
-  };
-
-  const handleSelect = (recipe, isNew = false) => {
-    if (isNew) {
-      setCustomRecipes((prev) => [...prev, recipe]);
-    }
-    const key = `${modal.dayIndex}_${modal.mealType}`;
-    setWeekMeals((prev) => ({ ...prev, [key]: recipe ? recipe.id : null }));
-    setModal(null);
+  const toggleSkip = (dayIndex, mealType) => {
+    const key = mk(dayIndex, mealType);
+    setSkippedMeals((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const formatWeekLabel = () => {
@@ -62,82 +43,48 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
     return `Semaine ${weekOffset > 0 ? '+' : ''}${weekOffset}`;
   };
 
-  // ── Liste de courses ──────────────────────────────────────────────────────
-  const shoppingList = useMemo(() => {
-    const items = [];
-    Object.entries(weekMeals)
-      .sort(([a], [b]) => {
-        const [dayA, mealA] = a.split('_');
-        const [dayB, mealB] = b.split('_');
-        return MEAL_ORDER.indexOf(mealA) - MEAL_ORDER.indexOf(mealB) || parseInt(dayA) - parseInt(dayB);
-      })
-      .forEach(([key, recipeId]) => {
-        if (!recipeId) return;
-        const recipe = allRecipes.find((r) => r.id === recipeId || r.id === parseInt(recipeId));
-        if (!recipe) return;
-        const [dayIndex, mealType] = key.split('_');
-        items.push({ key, dayIndex: parseInt(dayIndex), mealType, recipe });
-      });
-    return items;
-  }, [weekMeals, allRecipes]);
+  const mk = (dayIndex, mealType) => `${dayIndex}_${mealType}`;
 
-  const toggleItem = (itemKey) => {
-    setCheckedItems((prev) => ({ ...prev, [itemKey]: !prev[itemKey] }));
+  const getMealEntries = (dayIndex, mealType) => foodLog[mk(dayIndex, mealType)] || [];
+
+  const getMealKcal = (dayIndex, mealType) =>
+    getMealEntries(dayIndex, mealType).reduce((s, e) => s + (Number(e.kcal) || 0), 0);
+
+  const getDayKcal = (dayIndex) =>
+    MEAL_ORDER.reduce((s, mt) => s + getMealKcal(dayIndex, mt), 0);
+
+  const addFoodEntry = (entry) => {
+    const key = mk(foodModal.dayIndex, foodModal.mealType);
+    setFoodLog((prev) => ({ ...prev, [key]: [...(prev[key] || []), entry] }));
+    setFoodModal(null);
   };
 
-  const totalIngredients = shoppingList.reduce((sum, e) => sum + e.recipe.ingredients.length, 0);
-  const checkedCount = Object.values(checkedItems).filter(Boolean).length;
-
-  // ── Calories & Macros ─────────────────────────────────────────────────────
-  const getMacros = (recipe) => RECIPE_MACROS[recipe?.id] ?? { glucides: 0, lipides: 0, proteines: 0 };
-
-  // Calories calculées depuis les macros (source unique de vérité)
-  const getCalories = (recipe) => {
-    if (!recipe) return 0;
-    const m = getMacros(recipe);
-    const fromMacros = m.glucides * 4 + m.lipides * 9 + m.proteines * 4;
-    return fromMacros > 0 ? fromMacros : (recipe.calories ?? 0);
+  const removeFoodEntry = (dayIndex, mealType, id) => {
+    const key = mk(dayIndex, mealType);
+    setFoodLog((prev) => ({ ...prev, [key]: (prev[key] || []).filter((e) => e.id !== id) }));
   };
 
-  const getDayCalories = (dayIndex) => {
-    let total = 0;
-    MEAL_ORDER.forEach((mealType) => {
-      total += getCalories(getRecipe(dayIndex, mealType));
-    });
-    return total;
-  };
-
-  const weekCalories = Array.from({ length: 7 }, (_, i) => getDayCalories(i)).reduce((s, c) => s + c, 0);
+  const weekCalories = Array.from({ length: 7 }, (_, i) => getDayKcal(i)).reduce((s, c) => s + c, 0);
 
   const weekMacros = useMemo(() => {
-    let glucides = 0, lipides = 0, proteines = 0;
-    Object.values(weekMeals).forEach((id) => {
-      if (!id) return;
-      const recipe = allRecipes.find((r) => r.id === id || r.id === parseInt(id));
-      if (!recipe) return;
-      const m = getMacros(recipe);
-      glucides  += m.glucides;
-      lipides   += m.lipides;
-      proteines += m.proteines;
+    let proteines = 0, lipides = 0, glucides = 0;
+    Object.values(foodLog).forEach((entries) => {
+      (entries || []).forEach((e) => {
+        proteines += Number(e.proteines) || 0;
+        lipides   += Number(e.lipides)   || 0;
+        glucides  += Number(e.glucides)  || 0;
+      });
     });
-    return { glucides, lipides, proteines };
-  }, [weekMeals, allRecipes]);
-
-  // ── Diversité alimentaire ──────────────────────────────────────────────────
+    return { proteines: Math.round(proteines), lipides: Math.round(lipides), glucides: Math.round(glucides) };
+  }, [foodLog]);
 
   const uniqueFoodsCount = useMemo(() => {
     const foods = new Set();
-    Object.values(weekMeals).forEach((id) => {
-      if (!id) return;
-      const recipe = allRecipes.find((r) => r.id === id || r.id === parseInt(id));
-      if (!recipe) return;
-      recipe.ingredients.forEach((ing) => {
-        const name = extractFoodName(ing);
-        if (name) foods.add(name);
-      });
+    Object.values(foodLog).forEach((entries) => {
+      (entries || []).forEach((e) => foods.add(e.name));
     });
     return foods.size;
-  }, [weekMeals, allRecipes]);
+  }, [foodLog]);
 
   return (
     <div className="meal-planner">
@@ -174,101 +121,68 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
 
       <div className="meals-grid">
         {DAY_NAMES.map((dayName, i) => {
-          const dayCalories = getDayCalories(i);
+          const dayKcal = getDayKcal(i);
           return (
             <div key={i} className="meal-day">
               <div className="meal-day-name">{dayName}</div>
               {MEAL_ORDER.map((mealType) => {
-                const recipe = getRecipe(i, mealType);
+                const entries = getMealEntries(i, mealType);
+                const mealKcal = getMealKcal(i, mealType);
+                const skipped = !!skippedMeals[mk(i, mealType)];
                 return (
-                  <MealCell
-                    key={mealType}
-                    recipe={recipe}
-                    calories={getCalories(recipe)}
-                    mealType={mealType}
-                    onClick={() => setModal({ dayIndex: i, mealType })}
-                  />
+                  <div key={mealType} className={`meal-slot${skipped ? ' meal-slot-skipped' : ''}`}>
+                    <div className="meal-slot-header">
+                      <span className="meal-slot-label">{MEAL_LABELS_FR[mealType]}</span>
+                      <div className="meal-slot-actions">
+                        {!skipped && mealKcal > 0 && <span className="meal-slot-kcal">{mealKcal} kcal</span>}
+                        {skipped && <span className="meal-slot-skipped-badge">Sauté</span>}
+                        <button
+                          className={`meal-slot-skip-btn${skipped ? ' active' : ''}`}
+                          onClick={() => toggleSkip(i, mealType)}
+                          title={skipped ? 'Reprendre ce repas' : 'Sauter ce repas'}
+                        >
+                          {skipped ? '↩' : '⊘'}
+                        </button>
+                      </div>
+                    </div>
+                    {!skipped && (
+                      <>
+                        {entries.length > 0 && (
+                          <div className="food-log-entries">
+                            {entries.map((entry) => (
+                              <div key={entry.id} className="food-log-entry">
+                                <span className="food-log-name">{entry.name}</span>
+                                {entry.grams && <span className="food-log-grams">{entry.grams}{entry.unit || 'g'}</span>}
+                                <span className="food-log-kcal">{entry.kcal} kcal</span>
+                                <button className="food-log-del" onClick={() => removeFoodEntry(i, mealType, entry.id)}>×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          className="food-log-add"
+                          onClick={() => setFoodModal({ dayIndex: i, mealType })}
+                        >
+                          + Aliment
+                        </button>
+                      </>
+                    )}
+                  </div>
                 );
               })}
-              {dayCalories > 0 && (
-                <div className="day-calories">{dayCalories} kcal</div>
+              {dayKcal > 0 && (
+                <div className="day-calories">{dayKcal} kcal</div>
               )}
             </div>
           );
         })}
       </div>
 
-      {/* ── Listes de courses par repas ── */}
-      {shoppingList.length > 0 && (
-        <div className="shopping-section">
-          <button className="shopping-toggle" onClick={() => setShowShopping((v) => !v)}>
-            <span>Listes de courses</span>
-            <span className="shopping-progress">{checkedCount}/{totalIngredients} cochés</span>
-            <span className="shopping-chevron">{showShopping ? '▲' : '▼'}</span>
-          </button>
-
-          {showShopping && (
-            <div className="shopping-body">
-              {MEAL_ORDER.map((mealType) => {
-                const items = shoppingList.filter((e) => e.mealType === mealType);
-                if (items.length === 0) return null;
-                const isOpen = openSections[mealType];
-                const sectionTotal = items.reduce((s, e) => s + e.recipe.ingredients.length, 0);
-                const sectionChecked = items.reduce((s, { key: mk, recipe }) =>
-                  s + recipe.ingredients.filter((_, idx) => !!checkedItems[`${mk}_${idx}`]).length, 0);
-                return (
-                  <div key={mealType} className="shopping-meal-section">
-                    <button className="shopping-meal-header" onClick={() => toggleSection(mealType)}>
-                      <span className="shopping-meal-label">{MEAL_LABELS_FR[mealType]}</span>
-                      <span className="shopping-meal-progress">{sectionChecked}/{sectionTotal}</span>
-                      <span className="shopping-chevron">{isOpen ? '▲' : '▼'}</span>
-                    </button>
-                    {isOpen && (
-                      <div className="shopping-meal-body">
-                        {items.map(({ key: mealKey, dayIndex, recipe }) => (
-                          <div key={mealKey} className="shopping-group">
-                            <div className="shopping-group-header">
-                              <span className="shopping-recipe-name">{recipe.title}</span>
-                              <span className="shopping-group-meta">{DAY_NAMES[dayIndex]}</span>
-                            </div>
-                            <ul className="shopping-items">
-                              {recipe.ingredients.map((ing, idx) => {
-                                const itemKey = `${mealKey}_${idx}`;
-                                const checked = !!checkedItems[itemKey];
-                                return (
-                                  <li key={itemKey} className={`shopping-item ${checked ? 'checked' : ''}`}>
-                                    <label>
-                                      <input type="checkbox" checked={checked} onChange={() => toggleItem(itemKey)} />
-                                      <span>{ing}</span>
-                                    </label>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {checkedCount > 0 && (
-                <button className="shopping-reset" onClick={() => setCheckedItems({})}>Tout décocher</button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {modal && (
-        <RecipeModal
-          dayIndex={modal.dayIndex}
-          mealType={modal.mealType}
-          currentRecipe={getRecipe(modal.dayIndex, modal.mealType)}
-          weekMeals={weekMeals}
-          customRecipes={customRecipes}
-          onSelect={handleSelect}
-          onClose={() => setModal(null)}
+      {foodModal && (
+        <FoodLogModal
+          mealType={foodModal.mealType}
+          onAdd={addFoodEntry}
+          onClose={() => setFoodModal(null)}
         />
       )}
     </div>

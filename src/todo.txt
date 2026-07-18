@@ -1,13 +1,7 @@
 Planning : 
 - Pouvoir classer rapidement les objectifs
+- Rajouter la date modiafiable dans la popup d'ajout d'événement
 - Créer un widget sur téléphone (impossible en l'état)
 - Pouvoir swiper aussi dans la partie "Mois"
-2 options :
-    1. React Native + widget natif — vrai widget, mais ça implique de réécrire l'app en React Native et d'ajouter des modules natifs spécifiques iOS/Android. Énorme chantier.
-    2. Android uniquement via Tasker/KWGT — possible mais demande à l'utilisateur de configurer des outils tiers.
+
 Recettes :
-- Faire en sorte que ce soit des vrais recettes complètes pas uniquement une viande, un légume etc...
-- Ajouter plus de recettes
-- Faire un tri de recettes par aliments
-- Ajouter à part des éléments de recette (pâte à tarte, béchamel etc..)
-- Ajouter tracker de calories

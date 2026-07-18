@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import WeekPlanner from './components/WeekPlanner/WeekPlanner';
 import MealPlanner from './components/MealPlanner/MealPlanner';
+import RecipesLibrary from './components/Recipes/RecipesLibrary';
 import './App.css';
 
 const TABS = [
   { id: 'week', label: '📅 Semaine' },
   { id: 'meals', label: '🍽️ Repas' },
+  { id: 'recipes', label: '📖 Recettes' },
 ];
 
 export default function App() {
@@ -42,6 +44,7 @@ export default function App() {
         {activeTab === 'meals' && (
           <MealPlanner weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
         )}
+        {activeTab === 'recipes' && <RecipesLibrary />}
       </main>
     </div>
   );

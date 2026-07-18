@@ -25,6 +25,69 @@
   border-bottom: 1px solid var(--border);
 }
 
+.meal-slot {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.meal-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.meal-slot-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.meal-slot-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.meal-slot-kcal {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.meal-slot-skipped-badge {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.meal-slot-skip-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.meal-slot-skip-btn:hover { opacity: 1; color: var(--danger); }
+.meal-slot-skip-btn.active { opacity: 1; color: var(--accent); }
+
+.meal-slot-skipped {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
 .meal-cell {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -676,4 +739,348 @@
 .add-recipe-form textarea:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+/* ── Journal alimentaire par repas ── */
+.meal-slot-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.food-log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.2rem 0.4rem;
+  background: var(--bg-hover);
+  border-radius: 6px;
+}
+
+.food-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+}
+
+.food-log-name {
+  flex: 1;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-log-grams {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-size: 0.68rem;
+}
+
+.food-log-kcal {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.68rem;
+}
+
+.food-log-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.food-log-del:hover { color: var(--danger); }
+
+.food-log-add {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  padding: 0.18rem 0.4rem;
+  text-align: center;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.food-log-add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Modal recherche aliments ── */
+.food-log-modal {
+  background: var(--bg-card);
+  border-radius: 16px;
+  width: 480px;
+  max-width: 96vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.food-search-row {
+  padding: 0.75rem 1.5rem 0.5rem;
+}
+
+.food-search-row input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.food-search-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.food-results {
+  list-style: none;
+  padding: 0 1rem;
+  margin: 0 0 0.5rem;
+  overflow-y: auto;
+  flex: 1;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.food-result-item {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.food-result-item:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.food-result-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.food-result-meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.food-result-cat {
+  font-size: 0.68rem;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 0.05rem 0.4rem;
+  color: var(--text-secondary);
+}
+
+.food-result-kcal {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.food-result-macros {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.food-result-per {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.food-modal-footer-actions {
+  padding: 0.5rem 1.5rem 1rem;
+  text-align: center;
+}
+
+.btn-manual-entry {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 0.4rem 1rem;
+  transition: all 0.15s;
+}
+
+.btn-manual-entry:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.food-selected-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem 0.5rem;
+}
+
+.food-selected-name {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.food-selected-ref {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0 1.5rem 0.75rem;
+  background: var(--bg-hover);
+  margin: 0 1rem 0.75rem;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+}
+
+.food-qty-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1.5rem;
+}
+
+.food-qty-row label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.food-qty-input {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.food-qty-input input {
+  width: 80px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.food-qty-input input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.food-qty-input span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.food-computed-summary {
+  display: flex;
+  gap: 1rem;
+  padding: 0.4rem 1.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.food-computed-kcal {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.food-result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.food-result-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 3px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.food-result-del:hover { color: var(--danger); }
+
+.food-result-custom { border-color: rgba(79, 191, 138, 0.3); }
+.food-result-custom:hover { border-color: #4fbf8a; }
+
+.food-result-cat-custom {
+  color: #4fbf8a;
+  border-color: #4fbf8a;
+  background: rgba(79, 191, 138, 0.1);
+}
+
+.manual-form-body {
+  padding: 0 1.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.manual-macros-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.manual-save-hint {
+  font-size: 0.75rem;
+  color: #4fbf8a;
+  margin: 0.25rem 0 0;
+}
+
+.manual-type-toggle,
+.manual-unit-toggle {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.manual-type-btn {
+  flex: 1;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+
+.manual-type-btn.active {
+  background: rgba(79, 142, 247, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
 }

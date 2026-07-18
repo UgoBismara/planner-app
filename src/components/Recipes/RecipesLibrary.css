@@ -1,0 +1,359 @@
+.recipes-library {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.recipes-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.recipes-search {
+  flex: 1;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.recipes-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn-add-recipe {
+  padding: 0.55rem 1.1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.btn-add-recipe:hover { opacity: 0.88; }
+
+.recipes-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.recipes-no-results {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  padding: 1.5rem 0;
+}
+
+.recipes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Recipe card ── */
+.recipe-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.recipe-card.expanded { border-color: var(--accent); }
+
+.recipe-card-header {
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  user-select: none;
+}
+
+.recipe-card-header:hover { background: var(--bg-hover); }
+
+.recipe-card-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.recipe-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.recipe-card-meta {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.recipe-card-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.recipe-card-chevron {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.recipe-tag {
+  font-size: 0.68rem;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 0.1rem 0.5rem;
+  color: var(--text-secondary);
+}
+
+.recipe-tag-removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(79, 142, 247, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.recipe-tag-removable button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.recipe-card-body {
+  border-top: 1px solid var(--border);
+  padding: 0.85rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.recipe-section strong {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.recipe-ing-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.recipe-ing-list li {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.recipe-instructions {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.recipe-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.btn-edit-recipe {
+  padding: 0.35rem 0.85rem;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+
+.btn-edit-recipe:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-delete-recipe {
+  padding: 0.35rem 0.85rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.btn-delete-recipe:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ── Recipe form modal ── */
+.recipe-form-modal {
+  background: var(--bg-card);
+  border-radius: 16px;
+  width: 560px;
+  max-width: 96vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.recipe-form-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 1rem 1.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.form-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-left: 0.35rem;
+}
+
+.ing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ing-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.ing-row input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.ing-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ing-del {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.ing-del:hover { border-color: var(--danger); color: var(--danger); }
+
+.ing-add {
+  align-self: flex-start;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0.3rem 0.7rem;
+  transition: all 0.15s;
+}
+
+.ing-add:hover { border-color: var(--accent); color: var(--accent); }
+
+.tags-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-main);
+  min-height: 38px;
+}
+
+.tags-input-row:focus-within { border-color: var(--accent); }
+
+.tags-input-row input {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+}
+
+.recipe-form-body textarea {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.55;
+  box-sizing: border-box;
+}
+
+.recipe-form-body textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+mark {
+  background: rgba(251, 191, 36, 0.35);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
