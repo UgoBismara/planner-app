@@ -23,6 +23,26 @@
   text-align: center;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.meal-day-date {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.meal-day-today .meal-day-name {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.meal-day-today .meal-day-date {
+  color: var(--accent);
+  opacity: 0.8;
 }
 
 .meal-slot {
@@ -826,6 +846,20 @@
 }
 
 .food-log-del:hover { color: var(--danger); }
+
+.food-log-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.15s, color 0.15s;
+}
+.food-log-edit:hover { opacity: 1; color: var(--accent); }
 
 .food-log-add {
   background: none;

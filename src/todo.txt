@@ -5,3 +5,4 @@ Planning :
 - Pouvoir swiper aussi dans la partie "Mois"
 
 Recettes :
+- (Téléphone) Affichages des repas jour par jour

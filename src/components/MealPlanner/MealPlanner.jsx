@@ -43,10 +43,17 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   };
 
   const formatWeekLabel = () => {
-    if (weekOffset === 0) return 'Cette semaine';
-    if (weekOffset === -1) return 'Semaine dernière';
-    if (weekOffset === 1) return 'Semaine prochaine';
-    return `Semaine ${weekOffset > 0 ? '+' : ''}${weekOffset}`;
+    const now = new Date();
+    const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - dow + weekOffset * 7);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'];
+    const d1 = monday.getDate(), m1 = months[monday.getMonth()];
+    const d2 = sunday.getDate(), m2 = months[sunday.getMonth()];
+    const range = m1 === m2 ? `${d1}–${d2} ${m1}` : `${d1} ${m1} – ${d2} ${m2}`;
+    return `Semaine du ${range}`;
   };
 
   const mk = (dayIndex, mealType) => `${dayIndex}_${mealType}`;
@@ -61,7 +68,14 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
 
   const addFoodEntry = (entry) => {
     const key = mk(foodModal.dayIndex, foodModal.mealType);
-    setFoodLog((prev) => ({ ...prev, [key]: [...(prev[key] || []), entry] }));
+    if (foodModal.editEntry) {
+      setFoodLog((prev) => ({
+        ...prev,
+        [key]: (prev[key] || []).map((e) => e.id === foodModal.editEntry.id ? { ...entry, id: foodModal.editEntry.id } : e),
+      }));
+    } else {
+      setFoodLog((prev) => ({ ...prev, [key]: [...(prev[key] || []), entry] }));
+    }
     setFoodModal(null);
   };
 
@@ -104,10 +118,20 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
 
       <div className="meals-grid">
         {DAY_NAMES.map((dayName, i) => {
+          const now = new Date();
+          const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
+          const monday = new Date(now);
+          monday.setDate(now.getDate() - dow + weekOffset * 7);
+          const colDate = new Date(monday);
+          colDate.setDate(monday.getDate() + i);
+          const isToday = weekOffset === 0 && i === (now.getDay() + 6) % 7;
           const dayKcal = getDayKcal(i);
           return (
-            <div key={i} className="meal-day">
-              <div className="meal-day-name">{dayName}</div>
+            <div key={i} className={`meal-day${isToday ? ' meal-day-today' : ''}`}>
+              <div className="meal-day-name">
+                {dayName}
+                <span className="meal-day-date">{colDate.getDate()}</span>
+              </div>
               {MEAL_ORDER.map((mealType) => {
                 const entries = getMealEntries(i, mealType);
                 const mealKcal = getMealKcal(i, mealType);
@@ -137,6 +161,9 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                                 <span className="food-log-name">{entry.name}</span>
                                 {entry.grams && <span className="food-log-grams">{entry.grams}{entry.unit || 'g'}</span>}
                                 <span className="food-log-kcal">{entry.kcal} kcal</span>
+                                {entry.grams && (
+                                  <button className="food-log-edit" onClick={() => setFoodModal({ dayIndex: i, mealType, editEntry: entry })} title="Modifier">✎</button>
+                                )}
                                 <button className="food-log-del" onClick={() => removeFoodEntry(i, mealType, entry.id)}>×</button>
                               </div>
                             ))}
@@ -195,6 +222,7 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
       {foodModal && (
         <FoodLogModal
           mealType={foodModal.mealType}
+          editEntry={foodModal.editEntry}
           onAdd={addFoodEntry}
           onClose={() => setFoodModal(null)}
         />

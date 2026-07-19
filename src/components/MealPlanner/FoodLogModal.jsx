@@ -4,12 +4,25 @@ import { useLocalStorage } from '../../hooks/useLocalStorage';
 
 const MEAL_LABELS = { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', snack: 'Goûter', dinner: 'Dîner' };
 
-export default function FoodLogModal({ mealType, onAdd, onClose }) {
+export default function FoodLogModal({ mealType, editEntry, onAdd, onClose }) {
   const [customFoods, setCustomFoods] = useLocalStorage('planner_custom_foods', []);
 
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState(null);   // food from DB (or custom per-100)
-  const [qty, setQty] = useState('');
+
+  // En mode édition, reconstruire les valeurs pour 100g à partir de l'entrée existante
+  const [selected, setSelected] = useState(() => {
+    if (!editEntry?.grams) return null;
+    const f = editEntry.grams;
+    return {
+      name: editEntry.name,
+      kcal:      Math.round(editEntry.kcal      / f * 100),
+      proteines: Math.round((editEntry.proteines || 0) / f * 100 * 10) / 10,
+      lipides:   Math.round((editEntry.lipides   || 0) / f * 100 * 10) / 10,
+      glucides:  Math.round((editEntry.glucides  || 0) / f * 100 * 10) / 10,
+      unit: editEntry.unit || 'g',
+    };
+  });
+  const [qty, setQty] = useState(editEntry?.grams ? String(editEntry.grams) : '');
 
   const [isManual, setIsManual] = useState(false);
   const [manualName, setManualName] = useState('');
@@ -93,7 +106,7 @@ export default function FoodLogModal({ mealType, onAdd, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="food-log-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Ajouter un aliment · {MEAL_LABELS[mealType]}</h3>
+          <h3>{editEntry ? 'Modifier' : 'Ajouter'} · {MEAL_LABELS[mealType]}</h3>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
@@ -182,7 +195,7 @@ export default function FoodLogModal({ mealType, onAdd, onClose }) {
               </div>
             )}
             <div className="modal-footer">
-              <button type="submit" className="btn-primary" disabled={!qty}>Ajouter</button>
+              <button type="submit" className="btn-primary" disabled={!qty}>{editEntry ? 'Enregistrer' : 'Ajouter'}</button>
             </div>
           </form>
         )}
