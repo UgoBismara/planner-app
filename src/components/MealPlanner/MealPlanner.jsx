@@ -31,6 +31,7 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const [skippedMeals, setSkippedMeals] = useLocalStorage(`planner_skipped_${mealsKey}`, {});
   const [foodModal, setFoodModal] = useState(null); // { dayIndex, mealType }
   const [waterLog, setWaterLog] = useLocalStorage(`planner_water_${mealsKey}`, {});
+  const [clipboard, setClipboard] = useState(null); // { entries, label }
 
   const WATER_GOAL = 2000;
   const getWater = (dayIndex) => waterLog[dayIndex] || 0;
@@ -66,6 +67,18 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const getDayKcal = (dayIndex) =>
     MEAL_ORDER.reduce((s, mt) => s + getMealKcal(dayIndex, mt), 0);
 
+  const getDayMacros = (dayIndex) => {
+    let p = 0, l = 0, g = 0;
+    MEAL_ORDER.forEach((mt) => {
+      getMealEntries(dayIndex, mt).forEach((e) => {
+        p += Number(e.proteines) || 0;
+        l += Number(e.lipides)   || 0;
+        g += Number(e.glucides)  || 0;
+      });
+    });
+    return { p: Math.round(p), l: Math.round(l), g: Math.round(g) };
+  };
+
   const addFoodEntry = (entry) => {
     const key = mk(foodModal.dayIndex, foodModal.mealType);
     if (foodModal.editEntry) {
@@ -77,6 +90,20 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
       setFoodLog((prev) => ({ ...prev, [key]: [...(prev[key] || []), entry] }));
     }
     setFoodModal(null);
+  };
+
+  const copyMeal = (dayIndex, mealType) => {
+    const entries = getMealEntries(dayIndex, mealType);
+    if (entries.length === 0) return;
+    setClipboard({ entries, label: `${DAY_NAMES[dayIndex]} · ${MEAL_LABELS_FR[mealType]}` });
+  };
+
+  const pasteMeal = (dayIndex, mealType) => {
+    if (!clipboard) return;
+    const key = mk(dayIndex, mealType);
+    const newEntries = clipboard.entries.map((e) => ({ ...e, id: Date.now() + Math.random() }));
+    setFoodLog((prev) => ({ ...prev, [key]: [...(prev[key] || []), ...newEntries] }));
+    setClipboard(null);
   };
 
   const removeFoodEntry = (dayIndex, mealType, id) => {
@@ -116,6 +143,13 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
         </div>
       )}
 
+      {clipboard && (
+        <div className="meal-clipboard-bar">
+          <span>📋 Copié : <strong>{clipboard.label}</strong> — clique sur un repas pour coller</span>
+          <button className="meal-clipboard-cancel" onClick={() => setClipboard(null)}>✕ Annuler</button>
+        </div>
+      )}
+
       <div className="meals-grid">
         {DAY_NAMES.map((dayName, i) => {
           const now = new Date();
@@ -137,12 +171,21 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                 const mealKcal = getMealKcal(i, mealType);
                 const skipped = !!skippedMeals[mk(i, mealType)];
                 return (
-                  <div key={mealType} className={`meal-slot${skipped ? ' meal-slot-skipped' : ''}`}>
+                  <div key={mealType} className={`meal-slot${skipped ? ' meal-slot-skipped' : ''}${clipboard ? ' meal-slot-pasteable' : ''}`}>
                     <div className="meal-slot-header">
                       <span className="meal-slot-label">{MEAL_LABELS_FR[mealType]}</span>
                       <div className="meal-slot-actions">
                         {!skipped && mealKcal > 0 && <span className="meal-slot-kcal">{mealKcal} kcal</span>}
                         {skipped && <span className="meal-slot-skipped-badge">Sauté</span>}
+                        {!skipped && entries.length > 0 && !clipboard && (
+                          <button
+                            className="meal-slot-copy-btn"
+                            onClick={() => copyMeal(i, mealType)}
+                            title="Copier ce repas"
+                          >
+                            📋
+                          </button>
+                        )}
                         <button
                           className={`meal-slot-skip-btn${skipped ? ' active' : ''}`}
                           onClick={() => toggleSkip(i, mealType)}
@@ -159,7 +202,10 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                             {entries.map((entry) => (
                               <div key={entry.id} className="food-log-entry">
                                 <span className="food-log-name">{entry.name}</span>
-                                {entry.grams && <span className="food-log-grams">{entry.grams}{entry.unit || 'g'}</span>}
+                                {entry.portions
+                                  ? <span className="food-log-grams">×{entry.portions} {entry.portionLabel}</span>
+                                  : entry.grams && <span className="food-log-grams">{entry.grams}{entry.unit || 'g'}</span>
+                                }
                                 <span className="food-log-kcal">{entry.kcal} kcal</span>
                                 {entry.grams && (
                                   <button className="food-log-edit" onClick={() => setFoodModal({ dayIndex: i, mealType, editEntry: entry })} title="Modifier">✎</button>
@@ -169,20 +215,35 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                             ))}
                           </div>
                         )}
-                        <button
-                          className="food-log-add"
-                          onClick={() => setFoodModal({ dayIndex: i, mealType })}
-                        >
-                          + Aliment
-                        </button>
+                        {clipboard
+                          ? (
+                            <button className="meal-slot-paste-btn" onClick={() => pasteMeal(i, mealType)}>
+                              Coller ici
+                            </button>
+                          ) : (
+                            <button className="food-log-add" onClick={() => setFoodModal({ dayIndex: i, mealType })}>
+                              + Aliment
+                            </button>
+                          )
+                        }
                       </>
                     )}
                   </div>
                 );
               })}
-              {dayKcal > 0 && (
-                <div className="day-calories">{dayKcal} kcal</div>
-              )}
+              {dayKcal > 0 && (() => {
+                const m = getDayMacros(i);
+                return (
+                  <div className="day-summary">
+                    <span className="day-summary-kcal">{dayKcal} kcal</span>
+                    <div className="day-summary-macros">
+                      <span className="dsm-g">G {m.g}g</span>
+                      <span className="dsm-l">L {m.l}g</span>
+                      <span className="dsm-p">P {m.p}g</span>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className={`water-tracker${getWater(i) >= WATER_GOAL ? ' water-tracker-done' : ''}`}>
                 <div className="water-header">
                   <span className="water-icon">💧</span>

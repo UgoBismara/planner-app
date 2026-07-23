@@ -17,7 +17,7 @@ const GOALS = [
 ];
 
 const DIETS = [
-  { id: 'balanced_lose', label: 'Équilibré – perte de poids', carbs: 0.35, fat: 0.30, protein: 0.35, goals: ['lose'] },
+  { id: 'balanced_lose', label: 'Équilibré – perte de poids', carbs: 0.40, fat: 0.35, protein: 0.25, goals: ['lose'] },
   { id: 'keto',          label: 'Cétogène',                   carbs: 0.10, fat: 0.50, protein: 0.40, goals: ['lose', 'maintain'] },
   { id: 'hyperprotein',  label: 'Hyperprotéiné',              carbs: 0.10, fat: 0.25, protein: 0.65, goals: ['lose', 'gain'] },
   { id: 'balanced',      label: 'Équilibré – maintien',       carbs: 0.50, fat: 0.25, protein: 0.25, goals: ['maintain'] },

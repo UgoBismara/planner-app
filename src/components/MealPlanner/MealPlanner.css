@@ -103,6 +103,65 @@
 .meal-slot-skip-btn:hover { opacity: 1; color: var(--danger); }
 .meal-slot-skip-btn.active { opacity: 1; color: var(--accent); }
 
+.meal-slot-copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+.meal-slot-copy-btn:hover { opacity: 1; }
+
+.meal-clipboard-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.meal-clipboard-cancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding: 0;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.meal-clipboard-cancel:hover { color: var(--danger); }
+
+.meal-slot-pasteable {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.meal-slot-paste-btn {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.3rem;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 50%, transparent);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.meal-slot-paste-btn:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
 .meal-slot-skipped {
   opacity: 0.45;
   border-style: dashed;
@@ -176,6 +235,32 @@
   padding-top: 0.25rem;
   border-top: 1px solid var(--border);
 }
+
+.day-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.day-summary-kcal {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.day-summary-macros {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.dsm-g { font-size: 0.62rem; font-weight: 600; color: #e09a3a; }
+.dsm-l { font-size: 0.62rem; font-weight: 600; color: #e05a7a; }
+.dsm-p { font-size: 0.62rem; font-weight: 600; color: #4fbf8a; }
 
 .week-calories-bar {
   background: var(--bg-card);
@@ -912,6 +997,101 @@
   border-color: var(--accent);
 }
 
+/* ── Barre de vérification ─────────────────────────────────────── */
+.food-verify-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 1rem 0.5rem;
+}
+
+.food-verify-progress {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.food-verify-fill {
+  height: 100%;
+  background: #4fbf8a;
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+
+.food-verify-count {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.food-verify-filter {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.food-verify-filter:hover { border-color: var(--accent); color: var(--accent); }
+.food-verify-filter.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── Badge de vérification par aliment ─────────────────────────── */
+.food-result-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.food-verify-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  line-height: 1;
+  padding: 0;
+}
+
+.food-verify-btn:hover {
+  border-color: #4fbf8a;
+  color: #4fbf8a;
+}
+
+.food-verify-btn.verified {
+  background: #4fbf8a;
+  border-color: #4fbf8a;
+  color: #fff;
+}
+
+.food-verify-btn.inline {
+  margin-left: auto;
+}
+
+.food-result-verified {
+  border-color: rgba(79, 191, 138, 0.2);
+}
+
+.search-hint {
+  font-style: italic;
+  opacity: 0.7;
+}
+
 .food-results {
   list-style: none;
   padding: 0 1rem;
@@ -981,6 +1161,38 @@
   text-align: center;
 }
 
+.scan-btn-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.btn-scan-label {
+  flex: 1;
+  padding: 0.5rem 0.5rem;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-scan-label:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.btn-scan-label:disabled { opacity: 0.6; cursor: default; }
+.btn-scan-gallery { opacity: 0.85; }
+
+.scan-error {
+  font-size: 0.78rem;
+  color: var(--danger, #e05);
+  margin: 0.25rem 0 0;
+  text-align: center;
+}
+
 .btn-manual-entry {
   background: none;
   border: 1px solid var(--border);
@@ -1007,6 +1219,42 @@
 .food-selected-name {
   font-size: 0.95rem;
   color: var(--text-primary);
+}
+
+.food-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.5rem 0.75rem;
+}
+
+.food-mode-btn {
+  flex: 1;
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.food-mode-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.food-result-portion-hint {
+  font-size: 0.7rem;
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+.food-computed-grams {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .food-selected-ref {
@@ -1080,6 +1328,20 @@
   justify-content: space-between;
   gap: 0.5rem;
 }
+
+.food-result-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0 3px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  opacity: 0.6;
+}
+.food-result-edit-btn:hover { color: var(--accent); opacity: 1; }
 
 .food-result-del {
   background: none;

@@ -6,3 +6,4 @@ Planning :
 
 Recettes :
 - (Téléphone) Affichages des repas jour par jour
+- Modifier le tri

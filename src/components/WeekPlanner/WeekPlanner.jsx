@@ -154,7 +154,7 @@ function findFreeSlots(
 }
 
 const DAY_NAMES = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-const START_HOUR = 9;
+const START_HOUR = 7;
 const END_HOUR = 26;
 const HOURS = Array.from(
   { length: END_HOUR - START_HOUR },
@@ -614,14 +614,21 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const weekOffsetRef = useRef(weekOffset);
   const minWeekOffsetRef = useRef(minWeekOffset);
   const swipeWeekChangeRef = useRef(false); // empêche le reset de mobileDay après un swipe
-  useEffect(() => { mobileDayRef.current = mobileDay; }, [mobileDay]);
-  useEffect(() => { weekOffsetRef.current = weekOffset; }, [weekOffset]);
-  useEffect(() => { minWeekOffsetRef.current = minWeekOffset; }, [minWeekOffset]);
+  useEffect(() => {
+    mobileDayRef.current = mobileDay;
+  }, [mobileDay]);
+  useEffect(() => {
+    weekOffsetRef.current = weekOffset;
+  }, [weekOffset]);
+  useEffect(() => {
+    minWeekOffsetRef.current = minWeekOffset;
+  }, [minWeekOffset]);
 
   useEffect(() => {
     const el = calWrapperRef.current;
     if (!el) return;
-    let startX = 0, startY = 0;
+    let startX = 0,
+      startY = 0;
     const onStart = (e) => {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
@@ -635,12 +642,22 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       const minWo = minWeekOffsetRef.current;
       if (dx < 0) {
         // Swipe gauche = jour précédent
-        if (d > 0) { setMobileDay(d - 1); }
-        else if (wo > minWo) { swipeWeekChangeRef.current = true; setWeekOffset(wo - 1); setMobileDay(6); }
+        if (d > 0) {
+          setMobileDay(d - 1);
+        } else if (wo > minWo) {
+          swipeWeekChangeRef.current = true;
+          setWeekOffset(wo - 1);
+          setMobileDay(6);
+        }
       } else {
         // Swipe droit = jour suivant
-        if (d < 6) { setMobileDay(d + 1); }
-        else { swipeWeekChangeRef.current = true; setWeekOffset(wo + 1); setMobileDay(0); }
+        if (d < 6) {
+          setMobileDay(d + 1);
+        } else {
+          swipeWeekChangeRef.current = true;
+          setWeekOffset(wo + 1);
+          setMobileDay(0);
+        }
       }
     };
     el.addEventListener("touchstart", onStart, { passive: true });
@@ -660,7 +677,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   // Reset mobileDay to today (or 0) when the week changes (sauf si c'est un swipe)
   useEffect(() => {
-    if (swipeWeekChangeRef.current) { swipeWeekChangeRef.current = false; return; }
+    if (swipeWeekChangeRef.current) {
+      swipeWeekChangeRef.current = false;
+      return;
+    }
     const d = getDaysOfWeek(weekOffset);
     const todayIdx = d.findIndex(
       (day) => day.toDateString() === new Date().toDateString(),
