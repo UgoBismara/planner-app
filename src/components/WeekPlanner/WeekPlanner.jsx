@@ -571,6 +571,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState(null); // { targetDayIndex, newTime, newEndTime }
   const dragRef = useRef(null); // { activity, dayIndex, offsetY, startX, startY, isDragging, currentPreview }
+  const longPressTimerRef = useRef(null); // arme le drag tactile sur mobile après un appui long
   const dayColRefs = useRef([]); // refs to each .cal-day-col element
   const applyDropRef = useRef(null);
   const swipeWeekRef = useRef(null);
@@ -976,13 +977,24 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       if (!ds.isDragging) {
         const dx = Math.abs(touch.clientX - ds.startX);
         const dy = Math.abs(touch.clientY - ds.startY);
+        if (!ds.longPressArmed) {
+          // Mobile : tant que l'appui long n'a pas armé le drag, un vrai
+          // mouvement de doigt = scroll normal (on n'annule que le drag,
+          // sans preventDefault, pour laisser le défilement natif agir).
+          if (dx > 8 || dy > 8) {
+            clearTimeout(longPressTimerRef.current);
+            dragRef.current = null;
+          }
+          return;
+        }
         if (dx < 6 && dy < 6) return;
-        if (dx > dy) {
+        if (window.innerWidth > 640 && dx > dy) {
           dragRef.current = null;
           return;
-        } // horizontal → scroll
+        } // horizontal → scroll (heuristique desktop uniquement)
         ds.isDragging = true;
         setIsDragging(true);
+        navigator.vibrate?.(10);
       }
       e.preventDefault();
       const p = computePreview(touch.clientX, touch.clientY);
@@ -991,12 +1003,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     };
 
     const onTouchEnd = () => {
+      clearTimeout(longPressTimerRef.current);
       const ds = dragRef.current;
       if (ds) {
         if (ds.isDragging) {
           applyDropRef.current(ds, ds.currentPreview);
           setIsDragging(false);
           setPreview(null);
+          navigator.vibrate?.(15);
         } else {
           setEditingActivity({ activity: ds.activity, dayIndex: ds.dayIndex });
         }
@@ -1013,6 +1027,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       window.removeEventListener("mouseup", onMouseUp);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
+      clearTimeout(longPressTimerRef.current);
     };
   }, []);
 
@@ -1042,11 +1057,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   const handleBlockTouchStart = (activity, visualDayIndex, e) => {
-    if (window.innerWidth <= 640) return; // Pas de drag sur mobile
     if ((activity.endDayOffset ?? 0) > 0 || activity._isContinuation) return;
     const touch = e.touches[0];
     const blockRect = e.currentTarget.getBoundingClientRect();
-    dragRef.current = {
+    const isMobile = window.innerWidth <= 640;
+    clearTimeout(longPressTimerRef.current);
+    const ds = {
       activity,
       dayIndex: activity._storedDayIndex,
       visualDayIndex,
@@ -1055,7 +1071,20 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       offsetY: touch.clientY - blockRect.top,
       isDragging: false,
       currentPreview: null,
+      // Sur desktop/tablette, le drag démarre dès qu'on bouge (pas de conflit
+      // avec le scroll de page). Sur mobile, un appui long l'arme d'abord pour
+      // laisser le défilement vertical normal se produire sur un tap/swipe rapide.
+      longPressArmed: !isMobile,
     };
+    dragRef.current = ds;
+    if (isMobile) {
+      longPressTimerRef.current = setTimeout(() => {
+        if (dragRef.current === ds && !ds.isDragging) {
+          ds.longPressArmed = true;
+          navigator.vibrate?.(10);
+        }
+      }, 220);
+    }
   };
 
   // ── CRUD handlers ──────────────────────────────────────────────

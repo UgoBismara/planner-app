@@ -73,7 +73,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--bg-card);
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* ── En-têtes des jours ── */
@@ -196,7 +196,22 @@
   flex-direction: column;
   gap: 2px;
   cursor: default;
-  transition: filter 0.15s;
+  transition: filter 0.15s, transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+/* ── Bloc en cours de déplacement (drag) ── */
+.cal-activity-block.is-dragging,
+.cal-activity-pill.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.97);
+}
+
+/* ── Aperçu de la nouvelle position pendant le drag ── */
+.cal-activity-block.drag-ghost {
+  border-left-style: dashed;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transform: scale(1.03);
+  z-index: 5;
 }
 
 .cal-activity-block:hover {

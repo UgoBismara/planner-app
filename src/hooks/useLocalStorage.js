@@ -26,6 +26,9 @@ export function useLocalStorage(key, initialValue) {
   const debounceRef = useRef(null);
   // Tracks writes we initiated so we ignore our own Firestore snapshots
   const localWriteRef = useRef(null);
+  // True while a local write hasn't been confirmed by Firestore yet —
+  // guards against an in-flight/stale snapshot overwriting newer local data
+  const pendingWriteRef = useRef(false);
 
   // Re-read from localStorage when key changes (e.g. week navigation)
   const prevKeyRef = useRef(key);
@@ -50,6 +53,9 @@ export function useLocalStorage(key, initialValue) {
       (snap) => {
         // Ignore snapshots caused by our own pending writes
         if (snap.metadata.hasPendingWrites) return;
+        // We have a local write not yet confirmed by Firestore — this snapshot
+        // predates it, so applying it would revert/lose the newer local data
+        if (pendingWriteRef.current) return;
 
         if (!snap.exists()) {
           // Firestore has no data for this key — push localStorage if we have it
@@ -90,12 +96,20 @@ export function useLocalStorage(key, initialValue) {
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, serialized);
       localWriteRef.current = serialized;
+      pendingWriteRef.current = true;
 
       // Debounced write to Firestore
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        if (!isFirebaseReady()) return;
-        setDoc(doc(db, 'planner', key), { v: serialized }).catch(() => {});
+        if (!isFirebaseReady()) {
+          pendingWriteRef.current = false;
+          return;
+        }
+        setDoc(doc(db, 'planner', key), { v: serialized })
+          .catch(() => {})
+          .finally(() => {
+            pendingWriteRef.current = false;
+          });
       }, DEBOUNCE_MS);
     } catch (error) {
       console.error('useLocalStorage error:', error);
