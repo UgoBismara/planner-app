@@ -24,7 +24,7 @@ function pickDistinctColor(usedColors) {
   return COLORS.find((c) => !usedColors.includes(c)) ?? COLORS[0];
 }
 
-export default function ActivityForm({ dayIndex, days, activity, existingActivities, onAdd, onAddRecurring, onEdit, onClose }) {
+export default function ActivityForm({ dayIndex, days, activity, existingActivities, onAdd, onAddRecurring, onEdit, onDelete, onClose }) {
   const isEditMode = !!activity;
   const effectiveDayIndex = activity?._isContinuation ? activity._storedDayIndex : (dayIndex ?? 0);
 
@@ -38,6 +38,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
   const [isRecurring, setIsRecurring] = useState(activity?._recurring ?? false);
   const [recurDays, setRecurDays] = useState(activity?.days ?? [effectiveDayIndex]);
   const [endDayOffset, setEndDayOffset] = useState(activity?.endDayOffset ?? 0);
+  const [targetDay, setTargetDay] = useState(effectiveDayIndex);
 
   const toggleDay = (d) => {
     setRecurDays((prev) =>
@@ -56,6 +57,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
       id: activity?.id ?? Date.now(),
       ...(isAllDay ? { allDay: true } : {}),
       ...(endDayOffset > 0 && !isRecurring && !isAllDay ? { endDayOffset } : {}),
+      ...(isEditMode && !isRecurring ? { targetDay } : {}),
     };
 
     if (isEditMode) {
@@ -68,28 +70,14 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
     onClose();
   };
 
-  const maxOffset = 30; // max 31 days span
-
-  // Day name labels for the end-day select
-  const endDayOptions = days
-    ? [
-        { value: 0, label: 'Même jour' },
-        ...Array.from({ length: maxOffset }, (_, k) => {
-          const offset = k + 1;
-          const d = days[effectiveDayIndex + offset];
-          const label = d
-            ? d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-            : `J+${offset}`;
-          return { value: offset, label: label.charAt(0).toUpperCase() + label.slice(1) };
-        }),
-      ]
-    : [{ value: 0, label: 'Même jour' }];
+  const maxOffset = 30;
 
   return (
     <div className="activity-form-overlay" onClick={onClose}>
       <div className="activity-form" onClick={(e) => e.stopPropagation()}>
         <h3>{isEditMode ? 'Modifier l\'activité' : 'Nouvelle activité'}</h3>
         <form onSubmit={handleSubmit}>
+
           <div className="form-group">
             <label>Titre *</label>
             <input
@@ -100,6 +88,29 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
               placeholder="Ex: Réunion, Sport, Cours..."
             />
           </div>
+
+          {/* Sélecteur de jour (édition uniquement, hors récurrent) */}
+          {isEditMode && !isRecurring && (
+            <div className="form-group">
+              <label>Jour</label>
+              <div className="day-picker-row">
+                {DAY_LABELS.map((name, idx) => {
+                  const d = days?.[idx];
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`day-picker-btn${targetDay === idx ? ' active' : ''}`}
+                      onClick={() => setTargetDay(idx)}
+                    >
+                      <span className="dpb-name">{name}</span>
+                      {d && <span className="dpb-date">{d.getDate()}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="form-group recur-toggle">
             <label>
@@ -172,6 +183,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
               ))}
             </div>
           </div>
+
           <div className="form-group recur-toggle">
             <label>
               <input
@@ -184,26 +196,35 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
               {isEditMode && isRecurring && <span className="recur-edit-note"> (récurrence)</span>}
             </label>
           </div>
+
           {isRecurring && (
-            <>
-              <div className="form-group">
-                <label>Jours</label>
-                <div className="recur-days-picker">
-                  {DAY_LABELS.map((name, d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      className={`recur-day-btn ${recurDays.includes(d) ? 'active' : ''}`}
-                      onClick={() => toggleDay(d)}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
+            <div className="form-group">
+              <label>Jours</label>
+              <div className="recur-days-picker">
+                {DAY_LABELS.map((name, d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    className={`recur-day-btn ${recurDays.includes(d) ? 'active' : ''}`}
+                    onClick={() => toggleDay(d)}
+                  >
+                    {name}
+                  </button>
+                ))}
               </div>
-            </>
+            </div>
           )}
+
           <div className="form-actions">
+            {isEditMode && onDelete && (
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => { onDelete(); onClose(); }}
+              >
+                Supprimer
+              </button>
+            )}
             <button type="button" className="btn-secondary" onClick={onClose}>Annuler</button>
             <button type="submit" className="btn-primary">
               {isEditMode ? 'Enregistrer' : 'Ajouter'}

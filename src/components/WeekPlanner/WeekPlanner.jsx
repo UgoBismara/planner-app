@@ -1095,21 +1095,26 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const handleEdit = (updatedActivity) => {
     const { activity } = editingActivity;
     if (activity._recurring) {
-      // Show choice dialog before saving
       setPendingRecurringEdit({ original: activity, updated: updatedActivity });
       setEditingActivity(null);
     } else {
       const oldStoredDay = activity._storedDayIndex;
-      // The visual day is the day BEFORE stored day for post-midnight events
-      const visualDay =
-        isPostMidnight(activity.time) && oldStoredDay > 0
-          ? oldStoredDay - 1
-          : oldStoredDay;
-      // Recompute storage day based on new time
-      const newStoredDay =
-        isPostMidnight(updatedActivity.time) && visualDay < 6
+      let newStoredDay;
+      if (updatedActivity.targetDay !== undefined) {
+        // Explicit day change from the day picker
+        const visualDay = updatedActivity.targetDay;
+        newStoredDay = isPostMidnight(updatedActivity.time) && visualDay < 6
           ? visualDay + 1
           : visualDay;
+      } else {
+        // Derive from post-midnight logic only
+        const visualDay = isPostMidnight(activity.time) && oldStoredDay > 0
+          ? oldStoredDay - 1
+          : oldStoredDay;
+        newStoredDay = isPostMidnight(updatedActivity.time) && visualDay < 6
+          ? visualDay + 1
+          : visualDay;
+      }
       setWeekData((prev) => {
         const next = [...prev];
         if (newStoredDay !== oldStoredDay) {
@@ -1525,13 +1530,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   const reportGoal = (fromDayIdx, goal) => {
-    const todayIdx = days.findIndex((d) => isToday(d));
-    if (todayIdx >= 0 && todayIdx !== fromDayIdx) {
-      setGoalsForDay(todayIdx, [
-        ...getGoalsForDay(todayIdx),
-        { id: Date.now(), text: goal.text, done: false, linkedEventId: null },
-      ]);
-    }
+    moveGoalForward(fromDayIdx, goal.id);
   };
 
   const confirmItems = [];
@@ -2518,6 +2517,15 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             editingActivity.dayIndex,
           ).filter((a) => a.time && a.id !== editingActivity.activity.id)}
           onEdit={handleEdit}
+          onDelete={() => {
+            const act = editingActivity.activity;
+            if (act._recurring) {
+              setDeletingRecurring({ activity: act, dayIndex: editingActivity.dayIndex });
+            } else {
+              handleDelete(act, { stopPropagation: () => {} });
+            }
+            setEditingActivity(null);
+          }}
           onClose={() => setEditingActivity(null)}
         />
       )}
