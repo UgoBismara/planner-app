@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { FOODS, PORTIONS } from '../../data/foods';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 
-const MEAL_LABELS = { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', snack: 'Goûter', dinner: 'Dîner' };
+const MEAL_LABELS = { lunch: 'Déjeuner', dinner: 'Dîner' };
 
 export default function FoodLogModal({ mealType, editEntry, onAdd, onClose }) {
   const [customFoods, setCustomFoods] = useLocalStorage('planner_custom_foods', []);

@@ -76,12 +76,6 @@
   gap: 0.3rem;
 }
 
-.meal-slot-kcal {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
 .meal-slot-skipped-badge {
   font-size: 0.65rem;
   color: var(--text-secondary);
@@ -234,80 +228,6 @@
   color: var(--text-secondary);
   padding-top: 0.25rem;
   border-top: 1px solid var(--border);
-}
-
-.day-summary {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  padding-top: 0.25rem;
-  border-top: 1px solid var(--border);
-}
-
-.day-summary-kcal {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.day-summary-macros {
-  display: flex;
-  gap: 0.25rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.dsm-g { font-size: 0.62rem; font-weight: 600; color: #e09a3a; }
-.dsm-l { font-size: 0.62rem; font-weight: 600; color: #e05a7a; }
-.dsm-p { font-size: 0.62rem; font-weight: 600; color: #4fbf8a; }
-
-.week-calories-bar {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
-  font-size: 0.85rem;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.week-calories-avg {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-.week-macro {
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 99px;
-  border: 1px solid;
-  margin-left: auto;
-}
-
-.week-macro + .week-macro {
-  margin-left: 0.35rem;
-}
-
-.week-macro-g {
-  color: #e09a3a;
-  border-color: #e09a3a;
-  background: rgba(224, 154, 58, 0.1);
-}
-
-.week-macro-l {
-  color: #e05a7a;
-  border-color: #e05a7a;
-  background: rgba(224, 90, 122, 0.1);
-}
-
-.week-macro-p {
-  color: #4fbf8a;
-  border-color: #4fbf8a;
-  background: rgba(79, 191, 138, 0.1);
 }
 
 /* ── Tracker eau ── */
@@ -907,13 +827,6 @@
 
 .food-log-grams {
   color: var(--text-secondary);
-  white-space: nowrap;
-  font-size: 0.68rem;
-}
-
-.food-log-kcal {
-  color: var(--accent);
-  font-weight: 600;
   white-space: nowrap;
   font-size: 0.68rem;
 }

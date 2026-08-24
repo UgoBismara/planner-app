@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import FoodLogModal from './FoodLogModal';
 import './MealPlanner.css';
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const MEAL_ORDER = ['breakfast', 'lunch', 'snack', 'dinner'];
-const MEAL_LABELS_FR = { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', snack: 'Goûter', dinner: 'Dîner' };
+const MEAL_ORDER = ['lunch', 'dinner'];
+const MEAL_LABELS_FR = { lunch: 'Déjeuner', dinner: 'Dîner' };
 
 function getMealsKey(weekOffset) {
   const now = new Date();
@@ -61,24 +61,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
 
   const getMealEntries = (dayIndex, mealType) => foodLog[mk(dayIndex, mealType)] || [];
 
-  const getMealKcal = (dayIndex, mealType) =>
-    getMealEntries(dayIndex, mealType).reduce((s, e) => s + (Number(e.kcal) || 0), 0);
-
-  const getDayKcal = (dayIndex) =>
-    MEAL_ORDER.reduce((s, mt) => s + getMealKcal(dayIndex, mt), 0);
-
-  const getDayMacros = (dayIndex) => {
-    let p = 0, l = 0, g = 0;
-    MEAL_ORDER.forEach((mt) => {
-      getMealEntries(dayIndex, mt).forEach((e) => {
-        p += Number(e.proteines) || 0;
-        l += Number(e.lipides)   || 0;
-        g += Number(e.glucides)  || 0;
-      });
-    });
-    return { p: Math.round(p), l: Math.round(l), g: Math.round(g) };
-  };
-
   const addFoodEntry = (entry) => {
     const key = mk(foodModal.dayIndex, foodModal.mealType);
     if (foodModal.editEntry) {
@@ -111,20 +93,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
     setFoodLog((prev) => ({ ...prev, [key]: (prev[key] || []).filter((e) => e.id !== id) }));
   };
 
-  const weekCalories = Array.from({ length: 7 }, (_, i) => getDayKcal(i)).reduce((s, c) => s + c, 0);
-
-  const weekMacros = useMemo(() => {
-    let proteines = 0, lipides = 0, glucides = 0;
-    Object.values(foodLog).forEach((entries) => {
-      (entries || []).forEach((e) => {
-        proteines += Number(e.proteines) || 0;
-        lipides   += Number(e.lipides)   || 0;
-        glucides  += Number(e.glucides)  || 0;
-      });
-    });
-    return { proteines: Math.round(proteines), lipides: Math.round(lipides), glucides: Math.round(glucides) };
-  }, [foodLog]);
-
   return (
     <div className="meal-planner">
       <div className="week-nav">
@@ -132,16 +100,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
         <span className="week-label">{formatWeekLabel()}</span>
         <button onClick={() => setWeekOffset((o) => o + 1)}>Suivante →</button>
       </div>
-
-      {weekCalories > 0 && (
-        <div className="week-calories-bar">
-          <span>Total semaine : <strong>{weekCalories.toLocaleString('fr-FR')} kcal</strong></span>
-          <span className="week-calories-avg">· {Math.round(weekCalories / 7)} kcal/jour</span>
-          <span className="week-macro week-macro-g">G {weekMacros.glucides}g</span>
-          <span className="week-macro week-macro-l">L {weekMacros.lipides}g</span>
-          <span className="week-macro week-macro-p">P {weekMacros.proteines}g</span>
-        </div>
-      )}
 
       {clipboard && (
         <div className="meal-clipboard-bar">
@@ -159,7 +117,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
           const colDate = new Date(monday);
           colDate.setDate(monday.getDate() + i);
           const isToday = weekOffset === 0 && i === (now.getDay() + 6) % 7;
-          const dayKcal = getDayKcal(i);
           return (
             <div key={i} className={`meal-day${isToday ? ' meal-day-today' : ''}`}>
               <div className="meal-day-name">
@@ -168,14 +125,12 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
               </div>
               {MEAL_ORDER.map((mealType) => {
                 const entries = getMealEntries(i, mealType);
-                const mealKcal = getMealKcal(i, mealType);
                 const skipped = !!skippedMeals[mk(i, mealType)];
                 return (
                   <div key={mealType} className={`meal-slot${skipped ? ' meal-slot-skipped' : ''}${clipboard ? ' meal-slot-pasteable' : ''}`}>
                     <div className="meal-slot-header">
                       <span className="meal-slot-label">{MEAL_LABELS_FR[mealType]}</span>
                       <div className="meal-slot-actions">
-                        {!skipped && mealKcal > 0 && <span className="meal-slot-kcal">{mealKcal} kcal</span>}
                         {skipped && <span className="meal-slot-skipped-badge">Sauté</span>}
                         {!skipped && entries.length > 0 && !clipboard && (
                           <button
@@ -206,7 +161,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                                   ? <span className="food-log-grams">×{entry.portions} {entry.portionLabel}</span>
                                   : entry.grams && <span className="food-log-grams">{entry.grams}{entry.unit || 'g'}</span>
                                 }
-                                <span className="food-log-kcal">{entry.kcal} kcal</span>
                                 {entry.grams && (
                                   <button className="food-log-edit" onClick={() => setFoodModal({ dayIndex: i, mealType, editEntry: entry })} title="Modifier">✎</button>
                                 )}
@@ -231,19 +185,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                   </div>
                 );
               })}
-              {dayKcal > 0 && (() => {
-                const m = getDayMacros(i);
-                return (
-                  <div className="day-summary">
-                    <span className="day-summary-kcal">{dayKcal} kcal</span>
-                    <div className="day-summary-macros">
-                      <span className="dsm-g">G {m.g}g</span>
-                      <span className="dsm-l">L {m.l}g</span>
-                      <span className="dsm-p">P {m.p}g</span>
-                    </div>
-                  </div>
-                );
-              })()}
               <div className={`water-tracker${getWater(i) >= WATER_GOAL ? ' water-tracker-done' : ''}`}>
                 <div className="water-header">
                   <span className="water-icon">💧</span>
