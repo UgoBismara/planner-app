@@ -1591,6 +1591,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       <button
         className={`done-toggle-btn${done ? " done-active" : ""}`}
         onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
         onClick={(e) => handleToggleDone(activity, i, e)}
         title={done ? "Marquer comme non effectué" : "Marquer comme effectué"}
       >
@@ -1603,6 +1604,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     <button
       className="activity-delete"
       onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
         if (activity._recurring) {
@@ -1913,7 +1915,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     isDragging && dragRef.current?.activity.id === activity.id;
                   const durationMin =
                     timeToCalMin(displayEndTime) - timeToCalMin(displayTime);
-                  const isCompact = durationMin < 75;
+                  const isCompact = durationMin < 110;
                   const done = isDoneActivity(activity);
                   const isMultiDayStart =
                     (activity.endDayOffset ?? 0) > 0 &&

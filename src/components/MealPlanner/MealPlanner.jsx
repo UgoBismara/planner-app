@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
-import FoodLogModal from './FoodLogModal';
 import './MealPlanner.css';
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const MEAL_ORDER = ['lunch', 'dinner'];
 const MEAL_LABELS_FR = { lunch: 'Déjeuner', dinner: 'Dîner' };
+const TOTAL_SLOTS = DAY_NAMES.length * MEAL_ORDER.length;
 
 function getMealsKey(weekOffset) {
   const now = new Date();
@@ -27,11 +27,10 @@ function getWeekNumber(date) {
 
 export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const mealsKey = getMealsKey(weekOffset);
-  const [foodLog, setFoodLog] = useLocalStorage(`planner_food_log_${mealsKey}`, {});
+  const [mealPlan, setMealPlan] = useLocalStorage(`planner_mealplan_${mealsKey}`, {});
   const [skippedMeals, setSkippedMeals] = useLocalStorage(`planner_skipped_${mealsKey}`, {});
-  const [foodModal, setFoodModal] = useState(null); // { dayIndex, mealType }
   const [waterLog, setWaterLog] = useLocalStorage(`planner_water_${mealsKey}`, {});
-  const [clipboard, setClipboard] = useState(null); // { entries, label }
+  const [clipboard, setClipboard] = useState(null); // { text, label }
 
   const WATER_GOAL = 2000;
   const getWater = (dayIndex) => waterLog[dayIndex] || 0;
@@ -59,39 +58,28 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
 
   const mk = (dayIndex, mealType) => `${dayIndex}_${mealType}`;
 
-  const getMealEntries = (dayIndex, mealType) => foodLog[mk(dayIndex, mealType)] || [];
+  const getMealText = (dayIndex, mealType) => mealPlan[mk(dayIndex, mealType)] || '';
 
-  const addFoodEntry = (entry) => {
-    const key = mk(foodModal.dayIndex, foodModal.mealType);
-    if (foodModal.editEntry) {
-      setFoodLog((prev) => ({
-        ...prev,
-        [key]: (prev[key] || []).map((e) => e.id === foodModal.editEntry.id ? { ...entry, id: foodModal.editEntry.id } : e),
-      }));
-    } else {
-      setFoodLog((prev) => ({ ...prev, [key]: [...(prev[key] || []), entry] }));
-    }
-    setFoodModal(null);
+  const setMealText = (dayIndex, mealType, text) => {
+    const key = mk(dayIndex, mealType);
+    setMealPlan((prev) => ({ ...prev, [key]: text }));
   };
 
   const copyMeal = (dayIndex, mealType) => {
-    const entries = getMealEntries(dayIndex, mealType);
-    if (entries.length === 0) return;
-    setClipboard({ entries, label: `${DAY_NAMES[dayIndex]} · ${MEAL_LABELS_FR[mealType]}` });
+    const text = getMealText(dayIndex, mealType);
+    if (!text) return;
+    setClipboard({ text, label: `${DAY_NAMES[dayIndex]} · ${MEAL_LABELS_FR[mealType]}` });
   };
 
   const pasteMeal = (dayIndex, mealType) => {
     if (!clipboard) return;
-    const key = mk(dayIndex, mealType);
-    const newEntries = clipboard.entries.map((e) => ({ ...e, id: Date.now() + Math.random() }));
-    setFoodLog((prev) => ({ ...prev, [key]: [...(prev[key] || []), ...newEntries] }));
+    setMealText(dayIndex, mealType, clipboard.text);
     setClipboard(null);
   };
 
-  const removeFoodEntry = (dayIndex, mealType, id) => {
-    const key = mk(dayIndex, mealType);
-    setFoodLog((prev) => ({ ...prev, [key]: (prev[key] || []).filter((e) => e.id !== id) }));
-  };
+  const plannedCount = DAY_NAMES.reduce((sum, _, i) => (
+    sum + MEAL_ORDER.filter((mt) => !!skippedMeals[mk(i, mt)] || !!getMealText(i, mt)).length
+  ), 0);
 
   return (
     <div className="meal-planner">
@@ -99,6 +87,16 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
         <button onClick={() => setWeekOffset((o) => o - 1)}>← Précédente</button>
         <span className="week-label">{formatWeekLabel()}</span>
         <button onClick={() => setWeekOffset((o) => o + 1)}>Suivante →</button>
+      </div>
+
+      <div className="week-progress-bar">
+        <span>Repas programmés : <strong>{plannedCount}/{TOTAL_SLOTS}</strong></span>
+        <div className="week-progress-track">
+          <div
+            className="week-progress-fill"
+            style={{ width: `${(plannedCount / TOTAL_SLOTS) * 100}%` }}
+          />
+        </div>
       </div>
 
       {clipboard && (
@@ -124,7 +122,7 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                 <span className="meal-day-date">{colDate.getDate()}</span>
               </div>
               {MEAL_ORDER.map((mealType) => {
-                const entries = getMealEntries(i, mealType);
+                const text = getMealText(i, mealType);
                 const skipped = !!skippedMeals[mk(i, mealType)];
                 return (
                   <div key={mealType} className={`meal-slot${skipped ? ' meal-slot-skipped' : ''}${clipboard ? ' meal-slot-pasteable' : ''}`}>
@@ -132,7 +130,7 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                       <span className="meal-slot-label">{MEAL_LABELS_FR[mealType]}</span>
                       <div className="meal-slot-actions">
                         {skipped && <span className="meal-slot-skipped-badge">Sauté</span>}
-                        {!skipped && entries.length > 0 && !clipboard && (
+                        {!skipped && text && !clipboard && (
                           <button
                             className="meal-slot-copy-btn"
                             onClick={() => copyMeal(i, mealType)}
@@ -151,36 +149,19 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                       </div>
                     </div>
                     {!skipped && (
-                      <>
-                        {entries.length > 0 && (
-                          <div className="food-log-entries">
-                            {entries.map((entry) => (
-                              <div key={entry.id} className="food-log-entry">
-                                <span className="food-log-name">{entry.name}</span>
-                                {entry.portions
-                                  ? <span className="food-log-grams">×{entry.portions} {entry.portionLabel}</span>
-                                  : entry.grams && <span className="food-log-grams">{entry.grams}{entry.unit || 'g'}</span>
-                                }
-                                {entry.grams && (
-                                  <button className="food-log-edit" onClick={() => setFoodModal({ dayIndex: i, mealType, editEntry: entry })} title="Modifier">✎</button>
-                                )}
-                                <button className="food-log-del" onClick={() => removeFoodEntry(i, mealType, entry.id)}>×</button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {clipboard
-                          ? (
-                            <button className="meal-slot-paste-btn" onClick={() => pasteMeal(i, mealType)}>
-                              Coller ici
-                            </button>
-                          ) : (
-                            <button className="food-log-add" onClick={() => setFoodModal({ dayIndex: i, mealType })}>
-                              + Aliment
-                            </button>
-                          )
-                        }
-                      </>
+                      clipboard ? (
+                        <button className="meal-slot-paste-btn" onClick={() => pasteMeal(i, mealType)}>
+                          Coller ici
+                        </button>
+                      ) : (
+                        <input
+                          type="text"
+                          className="meal-plan-input"
+                          placeholder="À décider"
+                          value={text}
+                          onChange={(e) => setMealText(i, mealType, e.target.value)}
+                        />
+                      )
                     )}
                   </div>
                 );
@@ -220,15 +201,6 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
           );
         })}
       </div>
-
-      {foodModal && (
-        <FoodLogModal
-          mealType={foodModal.mealType}
-          editEntry={foodModal.editEntry}
-          onAdd={addFoodEntry}
-          onClose={() => setFoodModal(null)}
-        />
-      )}
     </div>
   );
 }
