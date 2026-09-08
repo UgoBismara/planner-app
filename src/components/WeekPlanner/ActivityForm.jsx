@@ -20,6 +20,13 @@ function hasTimeOverlap(time, endTime, existing) {
   });
 }
 
+// Quarter-hour picker. Legacy times that are off-grid keep a 1-min step, otherwise
+// the browser would mark them invalid and block the form on edit.
+const QUARTER_STEP = 900;
+function timeStep(value) {
+  return !value || toMin(value) % 15 === 0 ? QUARTER_STEP : 60;
+}
+
 function pickDistinctColor(usedColors) {
   return COLORS.find((c) => !usedColors.includes(c)) ?? COLORS[0];
 }
@@ -134,6 +141,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
                   <input
                     type="time"
                     className="time-input"
+                    step={timeStep(time)}
                     value={time}
                     onChange={(e) => { setTime(e.target.value); if (!e.target.value) { setEndTime(''); setEndDayOffset(0); } }}
                   />
@@ -141,6 +149,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
                   <input
                     type="time"
                     className="time-input"
+                    step={timeStep(endTime)}
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
                     disabled={!time}

@@ -41,6 +41,14 @@ function getMondayOfWeek(weekOffset) {
   return monday;
 }
 
+// Same key convention as days[i].toISOString().split("T")[0]: the date is first
+// normalised to local midnight so the UTC shift is identical for every day key.
+function toDayKey(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().split("T")[0];
+}
+
 function getDaysOfWeek(weekOffset) {
   const monday = getMondayOfWeek(weekOffset);
   return Array.from({ length: 7 }, (_, i) => {
@@ -154,18 +162,14 @@ function findFreeSlots(
 }
 
 const DAY_NAMES = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-const START_HOUR = 7;
+const DEFAULT_START_HOUR = 7;
 const END_HOUR = 26;
-const HOURS = Array.from(
-  { length: END_HOUR - START_HOUR },
-  (_, i) => START_HOUR + i,
-);
-const TOTAL_MINS = (END_HOUR - START_HOUR) * 60;
-const START_MIN = START_HOUR * 60;
-const MULTIDAY_DISPLAY_START = `${String(START_HOUR).padStart(2, "0")}:00`;
 const MULTIDAY_DISPLAY_END = `${String(END_HOUR % 24).padStart(2, "0")}:00`;
 // Hours 00:xx … (END_HOUR%24 - 1):xx belong to the next calendar day
 const POST_MIDNIGHT_MAX_HOUR = END_HOUR % 24; // = 2
+// Times before this belong to the previous visual day; it is also the earliest
+// hour the grid can start at, so [DAY_WRAP_MIN, END_HOUR] covers a full 24h.
+const DAY_WRAP_MIN = POST_MIDNIGHT_MAX_HOUR * 60;
 
 function isPostMidnight(time) {
   if (!time) return false;
@@ -180,22 +184,33 @@ function timeToMinutes(timeStr) {
 // Handles post-midnight times: "00:30" → 1470 instead of 30, so they position correctly after 24h
 function timeToCalMin(timeStr) {
   const min = timeToMinutes(timeStr);
-  return min < START_MIN ? min + 24 * 60 : min;
+  return min < DAY_WRAP_MIN ? min + 24 * 60 : min;
 }
 
-function minutesToTime(min) {
-  const clamped = Math.max(START_MIN, Math.min(END_HOUR * 60 - 1, min));
-  const h = Math.floor(clamped / 60) % 24;
-  const m = clamped % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-function toTopPct(timeStr) {
-  return `${((timeToCalMin(timeStr) - START_MIN) / TOTAL_MINS) * 100}%`;
-}
-
-function toHeightPct(startStr, endStr) {
-  return `${((timeToCalMin(endStr) - timeToCalMin(startStr)) / TOTAL_MINS) * 100}%`;
+// The grid opens at 07:00 but stretches upward when the week holds earlier events,
+// so a 06:00 workout is visible instead of falling outside the rendered window.
+function computeGridStartHour(days, weekKey, weekData, recurring, exceptions, recurringOverrides) {
+  let earliest = DEFAULT_START_HOUR;
+  const consider = (time) => {
+    if (!time || isPostMidnight(time)) return;
+    const h = Math.floor(timeToMinutes(time) / 60);
+    if (h < earliest) earliest = h;
+  };
+  for (let i = 0; i < 7; i++) {
+    const dateStr = days[i].toISOString().split("T")[0];
+    for (const r of recurring) {
+      if (!r.days?.includes(i)) continue;
+      if (r.startDate && dateStr < r.startDate) continue;
+      if (r.endDate && dateStr > r.endDate) continue;
+      const key = `${r.id}|${weekKey}|${i}`;
+      if (exceptions.includes(key)) continue;
+      consider(recurringOverrides[key]?.time ?? r.time);
+    }
+    for (const a of weekData[i] || []) {
+      if (!a.allDay) consider(a.time);
+    }
+  }
+  return Math.max(POST_MIDNIGHT_MAX_HOUR, earliest);
 }
 
 // Assigns each timed event a column index so that overlapping events share space side by side.
@@ -542,6 +557,41 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   );
   const [pendingRecurringEdit, setPendingRecurringEdit] = useState(null); // { original, updated, storedDay }
   const days = getDaysOfWeek(weekOffset);
+
+  // ── Fenêtre horaire affichée (07:00 par défaut, étendue vers le haut si besoin) ──
+  const START_HOUR = computeGridStartHour(
+    days,
+    weekKey,
+    weekData,
+    recurring,
+    exceptions,
+    recurringOverrides,
+  );
+  const START_MIN = START_HOUR * 60;
+  const TOTAL_MINS = END_HOUR * 60 - START_MIN;
+  const HOURS = Array.from(
+    { length: END_HOUR - START_HOUR },
+    (_, i) => START_HOUR + i,
+  );
+  const MULTIDAY_DISPLAY_START = `${String(START_HOUR).padStart(2, "0")}:00`;
+
+  const minutesToTime = (min) => {
+    const clamped = Math.max(START_MIN, Math.min(END_HOUR * 60 - 1, min));
+    const h = Math.floor(clamped / 60) % 24;
+    const m = clamped % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+  // Clamped to the window so a block spanning past its edges (multi-day carryover
+  // ending before START_HOUR, say) stays visible instead of rendering off-grid.
+  const clampToWindow = (calMin) =>
+    Math.max(START_MIN, Math.min(END_HOUR * 60, calMin));
+  const toTopPct = (timeStr) =>
+    `${((clampToWindow(timeToCalMin(timeStr)) - START_MIN) / TOTAL_MINS) * 100}%`;
+  const toHeightPct = (startStr, endStr) => {
+    const height =
+      clampToWindow(timeToCalMin(endStr)) - clampToWindow(timeToCalMin(startStr));
+    return `${(Math.max(height, 0) / TOTAL_MINS) * 100}%`;
+  };
   const [dailyGoals, setDailyGoals] = useLocalStorage(
     "planner_daily_goals",
     {},
@@ -574,6 +624,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const longPressTimerRef = useRef(null); // arme le drag tactile sur mobile après un appui long
   const dayColRefs = useRef([]); // refs to each .cal-day-col element
   const applyDropRef = useRef(null);
+  const computePreviewRef = useRef(null);
   const swipeWeekRef = useRef(null);
   const calWrapperRef = useRef(null);
 
@@ -699,6 +750,26 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       setRecurring((prev) => [...prev, ...missing]);
     }
     localStorage.setItem("planner_migration_v1", "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Migration: recurring entries created before startDate existed (or whose startDate
+  // was dropped by an "edit all") spilled onto every past week. Backfill it from the
+  // creation timestamp encoded in the id so earlier dates are left alone.
+  useEffect(() => {
+    if (localStorage.getItem("planner_migration_recur_start")) return;
+    let changed = false;
+    const patched = recurring.map((r) => {
+      if (r.startDate) return r;
+      const m = /^recur_(\d{10,})$/.exec(String(r.id));
+      if (!m) return r;
+      const created = new Date(Number(m[1]));
+      if (Number.isNaN(created.getTime())) return r;
+      changed = true;
+      return { ...r, startDate: toDayKey(created) };
+    });
+    if (changed) setRecurring(patched);
+    localStorage.setItem("planner_migration_recur_start", "1");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -935,6 +1006,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   applyDropRef.current = applyDrop;
+  computePreviewRef.current = computePreview;
 
   // ── Global mouse events ────────────────────────────────────────
   useEffect(() => {
@@ -950,7 +1022,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           setIsDragging(true);
         } else return;
       }
-      const p = computePreview(e.clientX, e.clientY);
+      const p = computePreviewRef.current(e.clientX, e.clientY);
       ds.currentPreview = p;
       setPreview(p);
     };
@@ -997,7 +1069,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         navigator.vibrate?.(10);
       }
       e.preventDefault();
-      const p = computePreview(touch.clientX, touch.clientY);
+      const p = computePreviewRef.current(touch.clientX, touch.clientY);
       ds.currentPreview = p;
       setPreview(p);
     };
@@ -1171,7 +1243,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       prev.map((r) =>
         r.id === original.id
           ? {
-              id: r.id,
+              ...r,
               title: updated.title,
               time: updated.time,
               endTime: updated.endTime,
