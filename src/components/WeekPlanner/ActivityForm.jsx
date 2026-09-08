@@ -20,11 +20,48 @@ function hasTimeOverlap(time, endTime, existing) {
   });
 }
 
-// Quarter-hour picker. Legacy times that are off-grid keep a 1-min step, otherwise
-// the browser would mark them invalid and block the form on edit.
-const QUARTER_STEP = 900;
-function timeStep(value) {
-  return !value || toMin(value) % 15 === 0 ? QUARTER_STEP : 60;
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+const MINUTE_OPTIONS = ['00', '15', '30', '45'];
+
+// Two selects rather than <input type="time">: mobile pickers ignore `step`, so the
+// native minute wheel kept offering all 60 values.
+function TimePicker({ value, onChange, disabled }) {
+  const [hour, minute] = value ? value.split(':') : ['', ''];
+  // A legacy off-grid minute stays selectable so editing an old event never moves it silently.
+  const minutes =
+    minute && !MINUTE_OPTIONS.includes(minute)
+      ? [...MINUTE_OPTIONS, minute].sort()
+      : MINUTE_OPTIONS;
+
+  return (
+    <span className={`time-picker${disabled ? ' disabled' : ''}`}>
+      <select
+        className="time-select"
+        value={hour}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value ? `${e.target.value}:${minute || '00'}` : '')}
+        aria-label="Heure"
+      >
+        <option value="">--</option>
+        {HOUR_OPTIONS.map((h) => (
+          <option key={h} value={h}>{h}</option>
+        ))}
+      </select>
+      <span className="time-select-sep">:</span>
+      <select
+        className="time-select"
+        value={minute}
+        disabled={disabled || !hour}
+        onChange={(e) => onChange(`${hour}:${e.target.value}`)}
+        aria-label="Minutes"
+      >
+        {!hour && <option value="">--</option>}
+        {minutes.map((m) => (
+          <option key={m} value={m}>{m}</option>
+        ))}
+      </select>
+    </span>
+  );
 }
 
 function pickDistinctColor(usedColors) {
@@ -138,20 +175,14 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
               <div className="form-group">
                 <label>Horaire <span className="field-hint">(optionnel)</span></label>
                 <div className="time-range-row">
-                  <input
-                    type="time"
-                    className="time-input"
-                    step={timeStep(time)}
+                  <TimePicker
                     value={time}
-                    onChange={(e) => { setTime(e.target.value); if (!e.target.value) { setEndTime(''); setEndDayOffset(0); } }}
+                    onChange={(v) => { setTime(v); if (!v) { setEndTime(''); setEndDayOffset(0); } }}
                   />
                   <span className="time-range-sep">→</span>
-                  <input
-                    type="time"
-                    className="time-input"
-                    step={timeStep(endTime)}
+                  <TimePicker
                     value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
+                    onChange={setEndTime}
                     disabled={!time}
                   />
                 </div>

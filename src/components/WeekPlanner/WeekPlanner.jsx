@@ -187,6 +187,14 @@ function timeToCalMin(timeStr) {
   return min < DAY_WRAP_MIN ? min + 24 * 60 : min;
 }
 
+// An end time never precedes its start: "02:00" closing a block that opened at
+// 07:00 (multi-day carryover) or at 01:00 (post-midnight) means the next morning.
+function timeToCalEnd(startStr, endStr) {
+  const start = timeToCalMin(startStr);
+  const end = timeToCalMin(endStr);
+  return end <= start ? end + 24 * 60 : end;
+}
+
 // The grid opens at 07:00 but stretches upward when the week holds earlier events,
 // so a 06:00 workout is visible instead of falling outside the rendered window.
 function computeGridStartHour(days, weekKey, weekData, recurring, exceptions, recurringOverrides) {
@@ -219,9 +227,8 @@ function computeLayout(timedEvents) {
   const getStart = (e) => timeToCalMin(e._displayTime ?? e.time);
   const getEnd = (e) => {
     const end = e._displayEndTime ?? e.endTime;
-    return end
-      ? timeToCalMin(end)
-      : timeToCalMin(e._displayTime ?? e.time) + 30;
+    const start = e._displayTime ?? e.time;
+    return end ? timeToCalEnd(start, end) : timeToCalMin(start) + 30;
   };
   const overlaps = (a, b) => getStart(a) < getEnd(b) && getEnd(a) > getStart(b);
 
@@ -589,7 +596,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     `${((clampToWindow(timeToCalMin(timeStr)) - START_MIN) / TOTAL_MINS) * 100}%`;
   const toHeightPct = (startStr, endStr) => {
     const height =
-      clampToWindow(timeToCalMin(endStr)) - clampToWindow(timeToCalMin(startStr));
+      clampToWindow(timeToCalEnd(startStr, endStr)) -
+      clampToWindow(timeToCalMin(startStr));
     return `${(Math.max(height, 0) / TOTAL_MINS) * 100}%`;
   };
   const [dailyGoals, setDailyGoals] = useLocalStorage(
@@ -940,7 +948,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     let newEndTime = ds.activity.endTime || "";
     if (ds.activity.time && ds.activity.endTime) {
       const duration =
-        timeToCalMin(ds.activity.endTime) - timeToCalMin(ds.activity.time);
+        timeToCalEnd(ds.activity.time, ds.activity.endTime) -
+        timeToCalMin(ds.activity.time);
       newEndTime = minutesToTime(
         Math.min(END_HOUR * 60 - 1, absoluteStartMin + duration),
       );
@@ -1986,7 +1995,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   const beingDragged =
                     isDragging && dragRef.current?.activity.id === activity.id;
                   const durationMin =
-                    timeToCalMin(displayEndTime) - timeToCalMin(displayTime);
+                    timeToCalEnd(displayTime, displayEndTime) -
+                    timeToCalMin(displayTime);
                   const isCompact = durationMin < 110;
                   const done = isDoneActivity(activity);
                   const isMultiDayStart =

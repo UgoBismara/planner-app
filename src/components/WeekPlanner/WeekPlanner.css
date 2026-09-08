@@ -864,56 +864,61 @@
   user-select: none;
 }
 
-.time-input {
+.time-picker {
   flex: 1;
   min-width: 0;
-  padding: 0.55rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0.45rem 0.4rem;
   border: 1.5px solid var(--border);
   border-radius: 10px;
   background: var(--bg-main);
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-family: inherit;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  -webkit-appearance: none;
-  appearance: none;
+  transition: border-color 0.15s;
 }
 
-.time-input:hover:not(:disabled) {
+.time-picker:hover:not(.disabled) {
   border-color: var(--accent);
 }
 
-.time-input:focus {
-  outline: none;
+.time-picker:focus-within {
   border-color: var(--accent);
   background: var(--bg-hover);
 }
 
-.time-input:disabled {
+.time-picker.disabled {
   opacity: 0.3;
+}
+
+.time-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  text-align-last: center;
+  padding: 0 1px;
+  cursor: pointer;
+}
+
+.time-select:focus {
+  outline: none;
+}
+
+.time-select:disabled {
   cursor: not-allowed;
 }
 
-/* Webkit: style the inner segments */
-.time-input::-webkit-datetime-edit          { padding: 0; }
-.time-input::-webkit-datetime-edit-fields-wrapper { background: transparent; }
-.time-input::-webkit-datetime-edit-hour-field,
-.time-input::-webkit-datetime-edit-minute-field  {
-  color: var(--text-primary);
-  padding: 0 2px;
-  border-radius: 3px;
+.time-select-sep {
+  font-weight: 700;
+  color: var(--text-secondary);
+  user-select: none;
 }
-.time-input::-webkit-datetime-edit-hour-field:focus,
-.time-input::-webkit-datetime-edit-minute-field:focus {
-  background: var(--accent);
-  color: #fff;
-  outline: none;
-}
-.time-input::-webkit-datetime-edit-text    { color: var(--text-secondary); padding: 0 1px; }
-.time-input::-webkit-calendar-picker-indicator { display: none; }
 
 .color-picker {
   display: flex;
