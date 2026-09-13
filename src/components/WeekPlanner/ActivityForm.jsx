@@ -23,9 +23,77 @@ function hasTimeOverlap(time, endTime, existing) {
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
 const MINUTE_OPTIONS = ['00', '15', '30', '45'];
 
+// Mouse-driven devices get a typed field (numpad-friendly); touch devices keep the selects.
+const FINE_POINTER =
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
+
+// "7" → 07:00, "730" → 07:30, "0730" / "7h30" / "19.45" → HH:MM.
+// Returns '' for an empty field and null while the input is incomplete or invalid.
+function parseTypedTime(raw) {
+  const s = raw.trim();
+  if (!s) return '';
+  let h;
+  let m;
+  const withSep = /^(\d{1,2})\s*[:hH.,]\s*(\d{0,2})$/.exec(s);
+  if (withSep) {
+    if (withSep[2].length === 1) return null;
+    h = Number(withSep[1]);
+    m = withSep[2] ? Number(withSep[2]) : 0;
+  } else if (/^\d{1,4}$/.test(s)) {
+    if (s.length <= 2) [h, m] = [Number(s), 0];
+    else if (s.length === 3) [h, m] = [Number(s[0]), Number(s.slice(1))];
+    else [h, m] = [Number(s.slice(0, 2)), Number(s.slice(2))];
+  } else {
+    return null;
+  }
+  if (h > 23 || m > 59) return null;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+// Commits on every keystroke that parses, so pressing Enter submits the latest value;
+// the draft is tidied to HH:MM on blur.
+function TimeTextInput({ value, onChange, disabled }) {
+  const [draft, setDraft] = useState(value);
+  const [syncedValue, setSyncedValue] = useState(value);
+  // External change (all-day toggled, start cleared…): follow it unless the draft already says the same
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    if (parseTypedTime(draft) !== value) setDraft(value);
+  }
+
+  return (
+    <span className={`time-picker${disabled ? ' disabled' : ''}`}>
+      <input
+        type="text"
+        className="time-text"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="--:--"
+        maxLength={5}
+        value={draft}
+        disabled={disabled}
+        onFocus={(e) => e.target.select()}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^\d:hH.,]/g, '');
+          setDraft(raw);
+          const parsed = parseTypedTime(raw);
+          if (parsed !== null && parsed !== value) onChange(parsed);
+        }}
+        onBlur={() => setDraft(value)}
+        aria-label="Heure"
+      />
+    </span>
+  );
+}
+
+function TimePicker(props) {
+  return FINE_POINTER ? <TimeTextInput {...props} /> : <TimeSelects {...props} />;
+}
+
 // Two selects rather than <input type="time">: mobile pickers ignore `step`, so the
 // native minute wheel kept offering all 60 values.
-function TimePicker({ value, onChange, disabled }) {
+function TimeSelects({ value, onChange, disabled }) {
   const [hour, minute] = value ? value.split(':') : ['', ''];
   // A legacy off-grid minute stays selectable so editing an old event never moves it silently.
   const minutes =

@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { useLocalStorage, writeStoredValue } from "../../hooks/useLocalStorage";
+import {
+  PSG_UCL_FIXTURES,
+  PSG_UCL_COLOR,
+  PSG_UCL_TIME,
+  PSG_UCL_END_TIME,
+  PSG_UCL_SEED_KEY,
+} from "../../data/psgChampionsLeague";
 import ActivityForm from "./ActivityForm";
 import RescheduleModal from "./RescheduleModal";
 import "./WeekPlanner.css";
@@ -673,7 +680,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const mobileDayRef = useRef(mobileDay);
   const weekOffsetRef = useRef(weekOffset);
   const minWeekOffsetRef = useRef(minWeekOffset);
-  const swipeWeekChangeRef = useRef(false); // empêche le reset de mobileDay après un swipe
+  const psgSeedStartedRef = useRef(false); // le drapeau n'est posé qu'en fin de seeding, ce ref couvre l'intervalle
+  const swipeWeekChangeRef = useRef(false); // empêche le reset de mobileDay après un swipe ou « Voir » depuis le mois
   useEffect(() => {
     mobileDayRef.current = mobileDay;
   }, [mobileDay]);
@@ -778,6 +786,58 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     });
     if (changed) setRecurring(patched);
     localStorage.setItem("planner_migration_recur_start", "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Matchs du PSG en Ligue des champions, ajoutés une seule fois. Ensuite ce sont des
+  // événements ordinaires : déplaçables, modifiables, supprimables — et le drapeau les
+  // empêche de revenir après suppression. L'id stable évite tout doublon si le seeding
+  // est interrompu (hors ligne) et reprend au lancement suivant.
+  useEffect(() => {
+    if (localStorage.getItem(PSG_UCL_SEED_KEY) || psgSeedStartedRef.current) return;
+    psgSeedStartedRef.current = true;
+    let cancelled = false;
+
+    (async () => {
+      for (const fixture of PSG_UCL_FIXTURES) {
+        const [y, m, d] = fixture.date.split("-").map(Number);
+        const date = new Date(y, m - 1, d);
+        const dayIndex = (date.getDay() + 6) % 7;
+
+        const addFixture = (week) => {
+          const next = Array.isArray(week)
+            ? [...week]
+            : Array.from({ length: 7 }, () => []);
+          const day = next[dayIndex] || [];
+          if (day.some((e) => e.id === fixture.id)) return null; // déjà présent
+          next[dayIndex] = [
+            ...day,
+            {
+              id: fixture.id,
+              title: fixture.title,
+              time: PSG_UCL_TIME,
+              endTime: PSG_UCL_END_TIME,
+              color: PSG_UCL_COLOR,
+            },
+          ];
+          return next;
+        };
+
+        const fixtureWeekKey = getWeekKeyForDate(date);
+        if (fixtureWeekKey === weekKey) {
+          // Semaine affichée : passer par l'état React pour que le match apparaisse tout de suite
+          setWeekData((prev) => addFixture(prev) ?? prev);
+        } else {
+          await writeStoredValue(fixtureWeekKey, addFixture);
+        }
+        if (cancelled) return;
+      }
+      localStorage.setItem(PSG_UCL_SEED_KEY, "1");
+    })();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1734,6 +1794,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     targetMonday.setHours(0, 0, 0, 0);
     const todayMonday = getMondayOfWeek(0);
     const diffWeeks = Math.round((targetMonday - todayMonday) / (7 * 86400000));
+    // Keep the chosen day: without the flag the week-change effect resets it to today.
+    // Only armed when the week really changes, otherwise the effect never consumes it.
+    if (diffWeeks !== weekOffset) swipeWeekChangeRef.current = true;
     setWeekOffset(diffWeeks);
     setMobileDay((date.getDay() + 6) % 7);
     setMobileView("day");

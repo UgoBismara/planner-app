@@ -914,6 +914,32 @@
   cursor: not-allowed;
 }
 
+.time-text {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0;
+}
+
+.time-text:focus {
+  outline: none;
+}
+
+.time-text::placeholder {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.time-text:disabled {
+  cursor: not-allowed;
+}
+
 .time-select-sep {
   font-weight: 700;
   color: var(--text-secondary);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const DEBOUNCE_MS = 800;
@@ -10,6 +10,42 @@ function isFirebaseReady() {
     return db.app.options.projectId !== 'REMPLACE_MOI';
   } catch {
     return false;
+  }
+}
+
+// One-shot write to any key, for data seeded outside React state (a week the user
+// isn't viewing). Firestore is read first so a week another device has edited is
+// merged into rather than clobbered, and written back so the next snapshot for that
+// key doesn't revert the seed.
+export async function writeStoredValue(key, updater) {
+  try {
+    let base = null;
+    try {
+      const item = window.localStorage.getItem(key);
+      base = item !== null ? JSON.parse(item) : null;
+    } catch {
+      base = null;
+    }
+
+    if (isFirebaseReady()) {
+      try {
+        const snap = await getDoc(doc(db, 'planner', key));
+        if (snap.exists()) base = JSON.parse(snap.data().v);
+      } catch {
+        // offline or unreadable: fall back to the local copy
+      }
+    }
+
+    const next = updater(base);
+    if (next === null || next === undefined) return;
+
+    const serialized = JSON.stringify(next);
+    window.localStorage.setItem(key, serialized);
+    if (isFirebaseReady()) {
+      await setDoc(doc(db, 'planner', key), { v: serialized }).catch(() => {});
+    }
+  } catch (error) {
+    console.error('writeStoredValue error:', error);
   }
 }
 
