@@ -1,0 +1,230 @@
+.ideas-list {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem 0.75rem 3rem;
+}
+
+.ideas-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ideas-title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+}
+
+.ideas-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* ── Saisie ── */
+.ideas-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ideas-type-picker {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.ideas-type-btn {
+  flex: 1;
+  padding: 0.5rem 0.4rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.ideas-type-btn.active {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.ideas-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ideas-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.ideas-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ideas-add-btn {
+  flex-shrink: 0;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ideas-add-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Filtres ── */
+.ideas-filters {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.2rem;
+}
+
+.ideas-filter-btn {
+  flex-shrink: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.ideas-filter-btn.active {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── Liste ── */
+.ideas-empty {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.ideas-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ideas-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.7rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.ideas-item.done {
+  opacity: 0.55;
+}
+
+.ideas-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-main);
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ideas-item.done .ideas-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ideas-item-type {
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+
+.ideas-item-text {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  word-break: break-word;
+  cursor: text;
+}
+
+.ideas-item.done .ideas-item-text {
+  text-decoration: line-through;
+}
+
+.ideas-edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.ideas-edit-input:focus {
+  outline: none;
+}
+
+.ideas-delete {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ideas-delete:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+}

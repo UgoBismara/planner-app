@@ -8,6 +8,7 @@ import {
   PSG_UCL_SEED_KEY,
 } from "../../data/psgChampionsLeague";
 import ActivityForm from "./ActivityForm";
+import { IDEAS_KEY } from "../../data/ideas";
 import RescheduleModal from "./RescheduleModal";
 import "./WeekPlanner.css";
 
@@ -611,7 +612,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     "planner_daily_goals",
     {},
   );
-  const [editingGoal, setEditingGoal] = useState(null); // { dayIndex, text, linkedEventId }
+  // Lecture seule : sert à proposer les idées d'objectif dans le formulaire du jour
+  const [ideas] = useLocalStorage(IDEAS_KEY, []);
+  const [editingGoal, setEditingGoal] = useState(null); // { dayIndex, goalId, text }
   const [activeFormDay, setActiveFormDay] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [showMiniCal, setShowMiniCal] = useState(false);
@@ -1386,13 +1389,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   // ── Done / past helpers ─────────────────────────────────────────
   const isDoneActivity = (activity) => {
-    // If goals are linked to this activity, done = all linked goals are done
-    const linkedGoals = days.flatMap((_, di) =>
-      getGoalsForDay(di).filter(
-        (g) => String(g.linkedEventId) === String(activity.id),
-      ),
-    );
-    if (linkedGoals.length > 0) return linkedGoals.every((g) => g.done);
     const storedDay = activity._storedDayIndex;
     if (activity._recurring)
       return recurringDone.includes(`${activity.id}|${weekKey}|${storedDay}`);
@@ -1417,22 +1413,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         return updated;
       });
     }
-    // Sync ALL goals across all days linked to this activity
-    days.forEach((_, di) => {
-      const dGoals = getGoalsForDay(di);
-      const hasLinked = dGoals.some(
-        (g) => String(g.linkedEventId) === String(activity.id),
-      );
-      if (hasLinked)
-        setGoalsForDay(
-          di,
-          dGoals.map((g) =>
-            String(g.linkedEventId) === String(activity.id)
-              ? { ...g, done: newDone }
-              : g,
-          ),
-        );
-    });
   };
 
   const isPastEvent = (date, endTime, time) => {
@@ -1492,7 +1472,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             id: "legacy",
             text: g.text,
             done: g.done ?? false,
-            linkedEventId: g.linkedEventId ?? null,
           },
         ]
       : [];
@@ -1501,9 +1480,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const setGoalsForDay = (i, goals) =>
     setDailyGoals((prev) => ({ ...prev, [dayKey(i)]: goals }));
 
-  const saveGoal = (i, goalId, text, linkedEventId) => {
-    const hasContent = text.trim() || linkedEventId;
-    if (!hasContent) {
+  const saveGoal = (i, goalId, text) => {
+    if (!text.trim()) {
       setGoalsForDay(
         i,
         getGoalsForDay(i).filter((g) => g.id !== goalId),
@@ -1513,7 +1491,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         i,
         getGoalsForDay(i).map((g) =>
           g.id === goalId
-            ? { ...g, text: text.trim(), linkedEventId: linkedEventId || null }
+            ? { ...g, text: text.trim() }
             : g,
         ),
       );
@@ -1524,7 +1502,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           id: Date.now() + 1,
           text: text.trim(),
           done: false,
-          linkedEventId: linkedEventId || null,
         },
       ]);
     }
@@ -1540,43 +1517,30 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       g.id === goalId ? { ...g, done: newDone } : g,
     );
     setGoalsForDay(i, updatedGoals);
-
-    if (!goal.linkedEventId) return;
-    const linked = getActivitiesForDay(i).find(
-      (a) => String(a.id) === String(goal.linkedEventId),
-    );
-    if (!linked) return;
-
-    // Event is done only when ALL goals across all days linked to it are done
-    const allLinkedGoals = days.flatMap((_, di) => {
-      const dGoals = di === i ? updatedGoals : getGoalsForDay(di);
-      return dGoals.filter(
-        (g) => String(g.linkedEventId) === String(goal.linkedEventId),
-      );
-    });
-    const allDone =
-      allLinkedGoals.length > 0 && allLinkedGoals.every((g) => g.done);
-
-    const storedDay = linked._storedDayIndex;
-    if (linked._recurring) {
-      const key = `${linked.id}|${weekKey}|${storedDay}`;
-      setRecurringDone((prev) =>
-        allDone
-          ? [...prev.filter((k) => k !== key), key]
-          : prev.filter((k) => k !== key),
-      );
-    } else {
-      setWeekData((prev) => {
-        const updated = [...prev];
-        updated[storedDay] = updated[storedDay].map((a) =>
-          String(a.id) === String(goal.linkedEventId)
-            ? { ...a, done: allDone }
-            : a,
-        );
-        return updated;
-      });
-    }
   };
+
+  // Idees de type Objectif encore en attente : proposees au moment de creer ou de
+  // modifier un objectif du jour, pour le remplir en un clic.
+  const goalIdeas = ideas.filter((idea) => !idea.done && idea.type === "goal");
+
+  const renderGoalIdeaPicker = () =>
+    goalIdeas.length === 0 ? null : (
+      <div className="goal-idea-picker">
+        <span className="goal-idea-picker-label">Mes idées</span>
+        {goalIdeas.map((idea) => (
+          <button
+            key={idea.id}
+            type="button"
+            className="goal-idea-chip"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setEditingGoal((g) => ({ ...g, text: idea.text }))}
+            title="Reprendre cette idée"
+          >
+            {idea.text}
+          </button>
+        ))}
+      </div>
+    );
 
   const deleteGoal = (i, goalId) =>
     setGoalsForDay(
@@ -2374,9 +2338,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               ...goals.filter((g) => !g.done),
               ...goals.filter((g) => g.done),
             ];
-            const timedActivities = getActivitiesForDay(i)
-              .filter((a) => a.time)
-              .sort((a, b) => a.time.localeCompare(b.time));
             return (
               <div
                 key={i}
@@ -2389,7 +2350,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       dayIndex: i,
                       goalId: null,
                       text: "",
-                      linkedEventId: null,
                     })
                   }
                 >
@@ -2401,13 +2361,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       className="goal-edit-form"
                       onSubmit={(e) => {
                         e.preventDefault();
-                        saveGoal(
-                          i,
-                          null,
-                          editingGoal.text,
-                          editingGoal.linkedEventId,
-                          null,
-                        );
+                        saveGoal(i, null, editingGoal.text);
                       }}
                     >
                       <div className="goal-edit-top">
@@ -2438,26 +2392,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           ✕
                         </button>
                       </div>
-                      {timedActivities.length > 0 && (
-                        <select
-                          className="goal-link-select"
-                          value={editingGoal.linkedEventId || ""}
-                          onChange={(e) =>
-                            setEditingGoal((g) => ({
-                              ...g,
-                              linkedEventId: e.target.value || null,
-                            }))
-                          }
-                        >
-                          <option value="">— Lier à un événement —</option>
-                          {timedActivities.map((a) => (
-                            <option key={a.id} value={a.id}>
-                              {a.title} ({a.time}
-                              {a.endTime ? `–${a.endTime}` : ""})
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                      {renderGoalIdeaPicker()}
                     </form>
                   )}
                 {sortedGoals.map((goal) => {
@@ -2465,11 +2400,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   const isEditing =
                     editingGoal?.dayIndex === i &&
                     editingGoal?.goalId === goal.id;
-                  const linked = goal.linkedEventId
-                    ? timedActivities.find(
-                        (a) => String(a.id) === String(goal.linkedEventId),
-                      )
-                    : null;
                   if (isEditing) {
                     return (
                       <form
@@ -2477,13 +2407,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         className="goal-edit-form"
                         onSubmit={(e) => {
                           e.preventDefault();
-                          saveGoal(
-                            i,
-                            goal.id,
-                            editingGoal.text,
-                            editingGoal.linkedEventId,
-                            null,
-                          );
+                          saveGoal(i, goal.id, editingGoal.text);
                         }}
                       >
                         <div className="goal-edit-top">
@@ -2514,26 +2438,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                             ✕
                           </button>
                         </div>
-                        {timedActivities.length > 0 && (
-                          <select
-                            className="goal-link-select"
-                            value={editingGoal.linkedEventId || ""}
-                            onChange={(e) =>
-                              setEditingGoal((g) => ({
-                                ...g,
-                                linkedEventId: e.target.value || null,
-                              }))
-                            }
-                          >
-                            <option value="">— Lier à un événement —</option>
-                            {timedActivities.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.title} ({a.time}
-                                {a.endTime ? `–${a.endTime}` : ""})
-                              </option>
-                            ))}
-                          </select>
-                        )}
+                        {renderGoalIdeaPicker()}
                       </form>
                     );
                   }
@@ -2549,57 +2454,19 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         checked={goal.done}
                         onChange={() => toggleGoalDone(i, goal.id)}
                       />
-                      {linked && !goal.text.trim() ? (
-                        <span
-                          className="goal-link-badge goal-link-primary"
-                          style={{
-                            borderColor: linked.color,
-                            color: linked.color,
-                            backgroundColor: linked.color + "18",
-                          }}
-                          title={`Lié à : ${linked.title} (${linked.time})\nCliquer pour modifier`}
-                          onClick={() =>
-                            setEditingGoal({
-                              dayIndex: i,
-                              goalId: goal.id,
-                              text: goal.text,
-                              linkedEventId: goal.linkedEventId || null,
-                            })
-                          }
-                        >
-                          {linked.title}
-                        </span>
-                      ) : (
-                        <>
-                          {linked && (
-                            <span
-                              className="goal-link-badge"
-                              style={{
-                                borderColor: linked.color,
-                                color: linked.color,
-                                backgroundColor: linked.color + "18",
-                              }}
-                              title={`Lié à : ${linked.title} (${linked.time})`}
-                            >
-                              {linked.title}
-                            </span>
-                          )}
-                          <span
-                            className="goal-text"
-                            onClick={() =>
-                              setEditingGoal({
-                                dayIndex: i,
-                                goalId: goal.id,
-                                text: goal.text,
-                                linkedEventId: goal.linkedEventId || null,
-                              })
-                            }
-                            title="Cliquer pour modifier"
-                          >
-                            {goal.text}
-                          </span>
-                        </>
-                      )}
+                      <span
+                        className="goal-text"
+                        onClick={() =>
+                          setEditingGoal({
+                            dayIndex: i,
+                            goalId: goal.id,
+                            text: goal.text,
+                          })
+                        }
+                        title="Cliquer pour modifier"
+                      >
+                        {goal.text}
+                      </span>
                       <div className="goal-actions">
                         {i > 0 && (
                           <button

@@ -3,6 +3,7 @@ import WeekPlanner from './components/WeekPlanner/WeekPlanner';
 import MealPlanner from './components/MealPlanner/MealPlanner';
 import RecipesLibrary from './components/Recipes/RecipesLibrary';
 import NutritionGoal from './components/Nutrition/NutritionGoal';
+import IdeasList from './components/Ideas/IdeasList';
 import './App.css';
 
 const TABS = [
@@ -10,6 +11,7 @@ const TABS = [
   { id: 'meals', label: '🍽️ Repas' },
   { id: 'recipes', label: '📖 Recettes' },
   { id: 'nutrition', label: '🎯 Objectifs' },
+  { id: 'ideas', label: '💡 Idées' },
 ];
 
 export default function App() {
@@ -48,6 +50,7 @@ export default function App() {
         )}
         {activeTab === 'recipes' && <RecipesLibrary />}
         {activeTab === 'nutrition' && <NutritionGoal />}
+        {activeTab === 'ideas' && <IdeasList />}
       </main>
     </div>
   );
