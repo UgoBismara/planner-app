@@ -3,7 +3,22 @@ Planning :
 - Rajouter la date modiafiable dans la popup d'ajout d'événement
 - Créer un widget sur téléphone (impossible en l'état)
 - Pouvoir swiper aussi dans la partie "Mois"
+- [ ] Ajouter courbe poids
+- [ ] Rajouter fonctionnalités de recherche d’événements 
+- [ ] Ne pas superposer les événements qui se chevauchent
+- [ ] Lors d’un ajout d’une « idée » dans « Objectif » le faire directement au clic pas besoin de validation
+- [ ] Une fois l’objectif lié à l’idée effectué valider aussi l’idée 
+- [ ] Pouvoir ajouter des événements dans la partie Mois
 
 Recettes :
 - (Téléphone) Affichages des repas jour par jour
 - Modifier le tri
+
+Vinted :
+- Tester l'endpoint avec une vraie clé API (vercel dev, pas npm run dev)
+- Mode lot : enchaîner plusieurs pièces sans repasser par le formulaire
+- Export CSV des annonces (utile seulement si passage en compte Pro)
+
+Technique :
+- Proxy /api dans vite.config pour tester les endpoints sans vercel dev
+- Lint : refreshKey inutilisé dans WeekPlanner, blocs catch vides (useLocalStorage, MealPlanner)
