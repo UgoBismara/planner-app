@@ -15,11 +15,12 @@ Recettes :
 - Modifier le tri
 
 Vinted :
-- Tester l'endpoint avec une vraie clé API (vercel dev, pas npm run dev)
+- Ajouter GEMINI_API_KEY sur Vercel puis tester une vraie annonce
 - Mode lot : enchaîner plusieurs pièces sans repasser par le formulaire
 - Export CSV des annonces (utile seulement si passage en compte Pro)
 
 Technique :
 - analyze-label : aucune gestion d'erreur, une panne API renvoie une 500 muette
+- analyze-label tourne encore sur Anthropic (crédit à sec) : même bascule Gemini possible
 - Proxy /api dans vite.config pour tester les endpoints sans vercel dev
 - Lint : refreshKey inutilisé dans WeekPlanner, blocs catch vides (useLocalStorage, MealPlanner)
