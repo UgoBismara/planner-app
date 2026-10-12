@@ -20,5 +20,6 @@ Vinted :
 - Export CSV des annonces (utile seulement si passage en compte Pro)
 
 Technique :
+- analyze-label : aucune gestion d'erreur, une panne API renvoie une 500 muette
 - Proxy /api dans vite.config pour tester les endpoints sans vercel dev
 - Lint : refreshKey inutilisé dans WeekPlanner, blocs catch vides (useLocalStorage, MealPlanner)

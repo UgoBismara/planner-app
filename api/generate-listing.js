@@ -146,6 +146,19 @@ export default async function handler(req, res) {
     if (error instanceof Anthropic.RateLimitError) {
       return res.status(429).json({ error: 'Trop de requêtes — attends quelques secondes' });
     }
+    if (error instanceof Anthropic.AuthenticationError) {
+      return res.status(401).json({ error: 'Clé API refusée — vérifie ANTHROPIC_API_KEY' });
+    }
+    // Un crédit épuisé revient en 400 : sans ce cas, le message générique
+    // ci-dessous envoie chercher une panne alors qu'il suffit de recharger.
+    if (
+      error instanceof Anthropic.BadRequestError &&
+      /credit balance/i.test(error.message)
+    ) {
+      return res.status(402).json({
+        error: 'Crédit API Anthropic épuisé — recharge sur console.anthropic.com',
+      });
+    }
     if (error instanceof Anthropic.APIError) {
       console.error('generate-listing API error:', error.status, error.message);
       return res.status(502).json({ error: "Le service d'analyse n'a pas répondu" });
