@@ -187,41 +187,6 @@
   color: var(--text-secondary);
 }
 
-.meal-cell.has-recipe .meal-type-label {
-  color: var(--accent);
-}
-
-.meal-recipe-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  flex: 1;
-}
-
-.meal-recipe-title {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.3;
-}
-
-.meal-recipe-meta {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.meal-recipe-time {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-}
-
-.meal-recipe-calories {
-  font-size: 0.7rem;
-  color: var(--accent);
-  font-weight: 600;
-}
-
 .day-calories {
   text-align: center;
   font-size: 0.72rem;
@@ -311,7 +276,6 @@
   margin-top: auto;
 }
 
-/* Recipe Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -320,18 +284,6 @@
   align-items: center;
   justify-content: center;
   z-index: 100;
-}
-
-.recipe-modal {
-  background: var(--bg-card);
-  border-radius: 16px;
-  width: 520px;
-  max-width: 96vw;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
 }
 
 .modal-header {
@@ -428,45 +380,6 @@
   border-color: #f0a500;
 }
 
-.recipe-list {
-  overflow-y: auto;
-  flex: 1;
-  padding: 0 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.recipe-item {
-  padding: 0.65rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.recipe-item:hover {
-  border-color: var(--accent);
-  background: var(--bg-hover);
-}
-
-.recipe-item.used {
-  opacity: 0.6;
-}
-
-.recipe-item-title {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.recipe-item-meta {
-  display: flex;
-  gap: 0.4rem;
-  margin-top: 0.3rem;
-  flex-wrap: wrap;
-}
-
 .tag {
   font-size: 0.7rem;
   background: var(--bg-main);
@@ -488,19 +401,6 @@
   padding: 1.5rem 0;
 }
 
-.recipe-detail {
-  overflow-y: auto;
-  flex: 1;
-  padding: 0 1.5rem 1rem;
-}
-
-.recipe-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
 .btn-back {
   background: none;
   border: none;
@@ -512,42 +412,6 @@
 
 .btn-back:hover {
   text-decoration: underline;
-}
-
-.recipe-detail h4 {
-  margin: 0 0 0.5rem;
-  font-size: 1.05rem;
-}
-
-.recipe-meta {
-  display: flex;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-}
-
-.recipe-section {
-  margin-bottom: 1rem;
-}
-
-.recipe-section strong {
-  display: block;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-  margin-bottom: 0.4rem;
-}
-
-.recipe-section ul,
-.recipe-section ol {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
-.recipe-section li {
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: var(--text-primary);
 }
 
 .modal-footer {
@@ -614,12 +478,6 @@
   align-items: baseline;
   gap: 0.5rem;
   margin-bottom: 0.4rem;
-}
-
-.shopping-recipe-name {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text-primary);
 }
 
 .shopping-group-meta {
@@ -722,13 +580,6 @@
   border-color: var(--accent);
 }
 
-.recipe-item-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
 .btn-like {
   background: none;
   border: none;
@@ -750,48 +601,9 @@
   color: #e05a7a;
 }
 
-.recipe-item.liked {
-  border-color: rgba(224, 90, 122, 0.3);
-}
-
-.recipe-detail-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .btn-like-detail {
   font-size: 1.3rem;
   padding: 0 4px;
-}
-
-/* Add custom recipe form */
-.add-recipe-form {
-  overflow-y: auto;
-  flex: 1;
-  padding: 1rem 1.5rem 1.5rem;
-}
-
-.add-recipe-form h4 {
-  margin: 0 0 1rem;
-}
-
-.add-recipe-form textarea {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-main);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  resize: vertical;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.add-recipe-form textarea:focus {
-  outline: none;
-  border-color: var(--accent);
 }
 
 /* ── Plan de repas (texte libre) ── */

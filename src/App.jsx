@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import WeekPlanner from './components/WeekPlanner/WeekPlanner';
 import MealPlanner from './components/MealPlanner/MealPlanner';
-import RecipesLibrary from './components/Recipes/RecipesLibrary';
 import NutritionGoal from './components/Nutrition/NutritionGoal';
 import IdeasList from './components/Ideas/IdeasList';
 import VintedWorkshop from './components/Vinted/VintedWorkshop';
@@ -10,7 +9,6 @@ import './App.css';
 const TABS = [
   { id: 'week', label: '📅 Semaine' },
   { id: 'meals', label: '🍽️ Repas' },
-  { id: 'recipes', label: '📖 Recettes' },
   { id: 'nutrition', label: '🎯 Objectifs' },
   { id: 'ideas', label: '💡 Idées' },
   { id: 'vinted', label: '🏷️ Vinted' },
@@ -50,7 +48,6 @@ export default function App() {
         {activeTab === 'meals' && (
           <MealPlanner weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
         )}
-        {activeTab === 'recipes' && <RecipesLibrary />}
         {activeTab === 'nutrition' && <NutritionGoal />}
         {activeTab === 'ideas' && <IdeasList />}
         {activeTab === 'vinted' && <VintedWorkshop />}
