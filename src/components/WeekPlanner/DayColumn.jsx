@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ActivityForm from './ActivityForm';
+import { eventColor } from '../../data/eventTypes';
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -31,7 +32,7 @@ export default function DayColumn({ dayIndex, date, activities, onAdd, onDelete 
           <div
             key={activity.id}
             className="activity-card"
-            style={{ borderLeftColor: activity.color }}
+            style={{ borderLeftColor: eventColor(activity) }}
           >
             {activity.time && (
               <span className="activity-time">

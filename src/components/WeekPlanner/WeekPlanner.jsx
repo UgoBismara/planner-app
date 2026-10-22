@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useLocalStorage, writeStoredValue } from "../../hooks/useLocalStorage";
 import {
   PSG_UCL_FIXTURES,
@@ -8,7 +8,30 @@ import {
   PSG_UCL_SEED_KEY,
 } from "../../data/psgChampionsLeague";
 import ActivityForm from "./ActivityForm";
+import EventSearchModal from "./EventSearchModal";
 import { IDEAS_KEY } from "../../data/ideas";
+import {
+  QUESTS_KEY,
+  QUEST_LOG_KEY,
+  WEEK_LOG_KEY,
+  MAX_WEEK_GOALS,
+  dateKey as questDateKey,
+  weekKeyOf,
+  emptyWeek,
+  weeklyQuestsOn,
+  computeWeekProgress,
+  adjustSuggestion,
+  dailyQuestsOn,
+  installedDays,
+  isInstalling,
+  computeProgress,
+  typeOf as questTypeOf,
+  isDailyQuest,
+} from "../../data/quests";
+import DayQuests from "../Quests/DayQuests";
+import EventTypeLegend from "./EventTypeLegend";
+import { eventColor, eventLabel, eventTypeId } from "../../data/eventTypes";
+import WeekQuests from "../Quests/WeekQuests";
 import RescheduleModal from "./RescheduleModal";
 import "./WeekPlanner.css";
 
@@ -38,6 +61,20 @@ function getWeekNumber(date) {
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
+
+// Inverse de getWeekNumber : (annee ISO, semaine, jour 0=lundi) -> date locale.
+// Le garde-fou recale d un cran si l arrondi ISO tombe sur la semaine voisine.
+function dateFromIsoWeek(year, week, dayIndex) {
+  const jan4 = new Date(year, 0, 4);
+  const monday = new Date(jan4);
+  monday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7) + (week - 1) * 7);
+  monday.setHours(0, 0, 0, 0);
+  const d = new Date(monday);
+  d.setDate(monday.getDate() + dayIndex);
+  const got = getWeekNumber(d);
+  if (got !== week) d.setDate(d.getDate() + (got > week ? -7 : 7));
+  return d;
 }
 
 function getMondayOfWeek(weekOffset) {
@@ -288,6 +325,7 @@ function MobileMonthView({
   selectedMonthDay,
   onDayTap,
   onGoToDay,
+  onAddEvent,
   onToggleDone,
   refreshKey,
 }) {
@@ -356,7 +394,7 @@ function MobileMonthView({
 
   const getDots = (date) => {
     return getEventsForDate(date)
-      .map((e) => e.color || "#4f8ef7")
+      .map((e) => eventColor(e))
       .filter((c, i, arr) => arr.indexOf(c) === i)
       .slice(0, 3);
   };
@@ -421,6 +459,12 @@ function MobileMonthView({
               {previewLabel.charAt(0).toUpperCase() + previewLabel.slice(1)}
             </span>
             <button
+              className="mobile-day-preview-add"
+              onClick={() => onAddEvent(selectedMonthDay)}
+            >
+              + Ajouter
+            </button>
+            <button
               className="mobile-day-preview-goto"
               onClick={() => onGoToDay(selectedMonthDay)}
             >
@@ -435,9 +479,9 @@ function MobileMonthView({
                 <li key={i} className="mobile-day-preview-item">
                   <span
                     className="mobile-day-preview-dot"
-                    style={{ background: event.color || "#4f8ef7" }}
+                    style={{ background: eventColor(event) }}
                   />
-                  <span className="mobile-day-preview-name">{event.title}</span>
+                  <span className="mobile-day-preview-name">{eventLabel(event)}</span>
                   {event.time && (
                     <span className="mobile-day-preview-time">
                       {event.time}
@@ -583,7 +627,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     recurringOverrides,
   );
   const START_MIN = START_HOUR * 60;
-  const TOTAL_MINS = END_HOUR * 60 - START_MIN;
   const HOURS = Array.from(
     { length: END_HOUR - START_HOUR },
     (_, i) => START_HOUR + i,
@@ -600,24 +643,29 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   // ending before START_HOUR, say) stays visible instead of rendering off-grid.
   const clampToWindow = (calMin) =>
     Math.max(START_MIN, Math.min(END_HOUR * 60, calMin));
-  const toTopPct = (timeStr) =>
-    `${((clampToWindow(timeToCalMin(timeStr)) - START_MIN) / TOTAL_MINS) * 100}%`;
+  // minToFrac / fracToMin : échelle non linéaire, définie plus bas (heures vides compressées)
+  const toTopPct = (timeStr) => `${minToFrac(timeToCalMin(timeStr)) * 100}%`;
   const toHeightPct = (startStr, endStr) => {
     const height =
-      clampToWindow(timeToCalEnd(startStr, endStr)) -
-      clampToWindow(timeToCalMin(startStr));
-    return `${(Math.max(height, 0) / TOTAL_MINS) * 100}%`;
+      minToFrac(timeToCalEnd(startStr, endStr)) - minToFrac(timeToCalMin(startStr));
+    return `${Math.max(height, 0) * 100}%`;
   };
   const [dailyGoals, setDailyGoals] = useLocalStorage(
     "planner_daily_goals",
     {},
   );
-  // Lecture seule : sert à proposer les idées d'objectif dans le formulaire du jour
-  const [ideas] = useLocalStorage(IDEAS_KEY, []);
+  // Sert a proposer les idees d objectif dans le formulaire du jour, et a cocher
+  // l idee quand l objectif qui en decoule est valide.
+  const [ideas, setIdeas] = useLocalStorage(IDEAS_KEY, []);
+  // Quêtes : définies dans l'onglet Quêtes, cochées ici jour par jour
+  const [quests, setQuests] = useLocalStorage(QUESTS_KEY, []);
+  const [questLog, setQuestLog] = useLocalStorage(QUEST_LOG_KEY, {});
+  const [weekQuestLog, setWeekQuestLog] = useLocalStorage(WEEK_LOG_KEY, {});
   const [editingGoal, setEditingGoal] = useState(null); // { dayIndex, goalId, text }
   const [activeFormDay, setActiveFormDay] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [showMiniCal, setShowMiniCal] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [reportingActivity, setReportingActivity] = useState(null);
   const [mobileDay, setMobileDay] = useState(() => {
     const d = getDaysOfWeek(0);
@@ -645,6 +693,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const computePreviewRef = useRef(null);
   const swipeWeekRef = useRef(null);
   const calWrapperRef = useRef(null);
+  const calBodyRef = useRef(null);
 
   // Swipe sur la barre des onglets → changer de semaine
   const handleTabsSwipeStart = (e) => {
@@ -694,6 +743,31 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   useEffect(() => {
     minWeekOffsetRef.current = minWeekOffset;
   }, [minWeekOffset]);
+
+  // La grille occupe toute la hauteur restante de l'écran, quelle que soit la taille du
+  // bandeau et de la légende au-dessus (recalculé à chaque rendu et redimensionnement).
+  // Style posé directement : pas d'état, donc pas de rendu supplémentaire.
+  useLayoutEffect(() => {
+    const fit = () => {
+      const el = calBodyRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      el.style.height = `${Math.max(360, Math.round(window.innerHeight - top - 12))}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  });
+
+  // Si la semaine est trop chargée pour tenir à l'écran, la grille défile : à l'ouverture,
+  // on la place une heure avant l'heure actuelle
+  useEffect(() => {
+    const el = calBodyRef.current;
+    if (!el || el.scrollHeight <= el.clientHeight) return;
+    const hourBefore = `${String(Math.max(0, new Date().getHours() - 1)).padStart(2, "0")}:00`;
+    el.scrollTop = minToFrac(timeToCalMin(hourBefore)) * el.scrollHeight;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const el = calWrapperRef.current;
@@ -1001,7 +1075,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
     const relY = clientY - colRect.top - ds.offsetY;
     const ratio = Math.max(0, Math.min(1, relY / colRect.height));
-    const snappedMin = Math.round((ratio * TOTAL_MINS) / 15) * 15;
+    const snappedMin = Math.round((fracToMin(ratio) - START_MIN) / 15) * 15;
     const absoluteStartMin = Math.max(
       START_MIN,
       Math.min(END_HOUR * 60 - 15, START_MIN + snappedMin),
@@ -1321,6 +1395,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               endTime: updated.endTime,
               color: updated.color,
               days: updated.days ?? r.days,
+              questIds: updated.questIds ?? r.questIds,
+              category: updated.category,
             }
           : r,
       ),
@@ -1338,6 +1414,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         time: updated.time,
         endTime: updated.endTime,
         color: updated.color,
+        category: updated.category,
       },
     }));
     setPendingRecurringEdit(null);
@@ -1387,7 +1464,90 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     return computeLayout(timedAll);
   });
 
+  // ── Échelle du temps ───────────────────────────────────────────
+  // Chaque heure a un poids : 1 si elle est vide, plus si un événement y commence, d'autant
+  // plus qu'il est court (un bloc de 30 min a besoin de place pour être lu, un bloc de 3 h
+  // non). Toute la journée tient ainsi à l'écran, et les événements restent lisibles.
+  // Sur mobile, seul le jour affiché compte.
+  const isNarrowScreen = window.matchMedia?.("(max-width: 640px)").matches ?? false;
+  const weightedEvents = (isNarrowScreen ? dayLayouts[mobileDay] ?? [] : dayLayouts.flat())
+    .filter((a) => a.time && !a.allDay);
+  const hourWeights = HOURS.map(() => 1);
+  weightedEvents.forEach((a) => {
+    const start = clampToWindow(timeToCalMin(a.time));
+    const end = clampToWindow(a.endTime ? timeToCalEnd(a.time, a.endTime) : start + 30);
+    const duration = Math.max(15, end - start);
+    const first = Math.min(HOURS.length - 1, Math.floor((start - START_MIN) / 60));
+    const last = Math.min(HOURS.length - 1, Math.max(first, Math.ceil((end - START_MIN) / 60) - 1));
+    // 30 min → 3, 45 min → 2, 1 h et plus → 1,5 ; les heures seulement traversées → 1,25
+    hourWeights[first] = Math.max(hourWeights[first], Math.min(3, Math.max(1.5, 90 / duration)));
+    for (let idx = first + 1; idx <= last; idx++) {
+      hourWeights[idx] = Math.max(hourWeights[idx], 1.25);
+    }
+  });
+  const hourOffsets = [];
+  let totalHourWeight = 0;
+  hourWeights.forEach((w) => {
+    hourOffsets.push(totalHourWeight);
+    totalHourWeight += w;
+  });
+
+  // Minutes du calendrier → fraction de la hauteur de la grille, et inversement
+  function minToFrac(calMin) {
+    const m = clampToWindow(calMin) - START_MIN;
+    const idx = Math.min(HOURS.length - 1, Math.floor(m / 60));
+    return (hourOffsets[idx] + hourWeights[idx] * ((m - idx * 60) / 60)) / totalHourWeight;
+  }
+  function fracToMin(frac) {
+    const target = frac * totalHourWeight;
+    let idx = HOURS.length - 1;
+    while (idx > 0 && hourOffsets[idx] > target) idx--;
+    return START_MIN + idx * 60 + ((target - hourOffsets[idx]) / hourWeights[idx]) * 60;
+  }
+
   // ── Done / past helpers ─────────────────────────────────────────
+  // Un événement relié à des quêtes (questIds) les compte quand on le coche ✓, et les
+  // décompte quand on le décoche. date = jour de l'occurrence.
+  const applyEventQuests = (questIds, date, done) => {
+    (questIds ?? []).forEach((questId) => {
+      const quest = quests.find((q) => q.id === questId);
+      if (!quest) return;
+      if (questTypeOf(quest) === "weekly") {
+        const wk = weekKeyOf(date);
+        setWeekQuestLog((prev) => {
+          const week = { ...emptyWeek(), ...prev[wk] };
+          const count = Math.max(0, (week.counts[questId] ?? 0) + (done ? 1 : -1));
+          return {
+            ...prev,
+            [wk]: {
+              ...week,
+              counts: { ...week.counts, [questId]: count },
+              targets: { ...week.targets, [questId]: week.targets[questId] ?? quest.perWeek },
+            },
+          };
+        });
+      } else if (isDailyQuest(quest)) {
+        const key = questDateKey(date);
+        setQuestLog((prev) => {
+          const day = prev[key] ?? { energy: null, done: {} };
+          const doneMap = { ...day.done };
+          if (done) doneMap[questId] = doneMap[questId] ?? "normal";
+          else delete doneMap[questId];
+          return { ...prev, [key]: { ...day, done: doneMap } };
+        });
+      }
+    });
+  };
+
+  const linkableQuests = quests.filter(
+    (q) => questTypeOf(q) === "weekly" || isDailyQuest(q),
+  );
+
+  const linkedQuestLabels = (activity) =>
+    (activity.questIds ?? [])
+      .map((id) => quests.find((q) => q.id === id)?.label)
+      .filter(Boolean);
+
   const isDoneActivity = (activity) => {
     const storedDay = activity._storedDayIndex;
     if (activity._recurring)
@@ -1399,6 +1559,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     e.stopPropagation();
     const storedDay = activity._storedDayIndex;
     const newDone = !isDoneActivity(activity);
+    applyEventQuests(activity.questIds, days[storedDay], newDone);
     if (activity._recurring) {
       const key = `${activity.id}|${weekKey}|${storedDay}`;
       setRecurringDone((prev) =>
@@ -1480,7 +1641,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const setGoalsForDay = (i, goals) =>
     setDailyGoals((prev) => ({ ...prev, [dayKey(i)]: goals }));
 
-  const saveGoal = (i, goalId, text) => {
+  const saveGoal = (i, goalId, text, ideaId = null) => {
     if (!text.trim()) {
       setGoalsForDay(
         i,
@@ -1491,7 +1652,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         i,
         getGoalsForDay(i).map((g) =>
           g.id === goalId
-            ? { ...g, text: text.trim() }
+            ? { ...g, text: text.trim(), ideaId: ideaId ?? g.ideaId ?? null }
             : g,
         ),
       );
@@ -1502,6 +1663,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           id: Date.now() + 1,
           text: text.trim(),
           done: false,
+          ideaId,
         },
       ]);
     }
@@ -1517,6 +1679,16 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       g.id === goalId ? { ...g, done: newDone } : g,
     );
     setGoalsForDay(i, updatedGoals);
+
+    // Objectif issu d une idee : le valider valide aussi l idee. Sens unique,
+    // decocher l objectif ne ressuscite pas l idee.
+    if (newDone && goal.ideaId) {
+      setIdeas((prev) =>
+        prev.map((idea) =>
+          idea.id === goal.ideaId ? { ...idea, done: true } : idea,
+        ),
+      );
+    }
   };
 
   // Idees de type Objectif encore en attente : proposees au moment de creer ou de
@@ -1533,8 +1705,15 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             type="button"
             className="goal-idea-chip"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => setEditingGoal((g) => ({ ...g, text: idea.text }))}
-            title="Reprendre cette idée"
+            onClick={() =>
+              saveGoal(
+                editingGoal.dayIndex,
+                editingGoal.goalId,
+                idea.text,
+                idea.id,
+              )
+            }
+            title="Créer cet objectif"
           >
             {idea.text}
           </button>
@@ -1611,6 +1790,134 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
     setGoalsForDay(i, updated);
   };
+
+  // ── Quêtes du jour ─────────────────────────────────────────────
+  // Clé en date locale (convention de l'onglet Quêtes), pas la clé UTC des objectifs.
+  const todayQuestKey = questDateKey(new Date());
+  const questStreak = computeProgress(quests, questLog).streak;
+  const questInstalling = Object.fromEntries(
+    quests
+      .filter((q) => isInstalling(q, questLog))
+      .map((q) => [q.id, installedDays(q, questLog)]),
+  );
+
+  const getQuestDay = (key) => questLog[key] ?? { energy: null, done: {} };
+
+  // Quêtes quotidiennes de ce jour-là : jamais dans le futur, ni avant leur création
+  // (ou leur activation pour une habitude à mettre en place)
+  const getQuestsForDay = (i) => {
+    const key = questDateKey(days[i]);
+    if (key > todayQuestKey) return [];
+    return dailyQuestsOn(quests, key);
+  };
+
+  const updateQuestDay = (i, fn) => {
+    const key = questDateKey(days[i]);
+    setQuestLog((prev) => ({
+      ...prev,
+      [key]: fn(prev[key] ?? { energy: null, done: {} }),
+    }));
+  };
+
+  // Re-cliquer sur le niveau déjà choisi le décoche
+  const setQuestLevel = (i, questId, level) =>
+    updateQuestDay(i, (day) => {
+      const done = { ...day.done };
+      if (done[questId] === level) delete done[questId];
+      else done[questId] = level;
+      return { ...day, done };
+    });
+
+  const setQuestEnergy = (i, energy) =>
+    updateQuestDay(i, (day) => ({ ...day, energy }));
+
+  // ── Types d'événements ─────────────────────────────────────────
+  const [highlightType, setHighlightType] = useState(null); // id de type, "none" ou null
+  const isDimmed = (activity) =>
+    highlightType !== null && (eventTypeId(activity) ?? "none") !== highlightType;
+
+  // Les événements sur plusieurs jours ne sont pas comptés (rares, et à cheval sur la semaine)
+  const typeMinutes = {};
+  days.forEach((_, i) =>
+    getActivitiesForDay(i).forEach((a) => {
+      if (!a.time || !a.endTime || a._isContinuation || (a.endDayOffset ?? 0) > 0) return;
+      const minutes = timeToCalEnd(a.time, a.endTime) - timeToCalMin(a.time);
+      if (minutes <= 0) return;
+      const type = eventTypeId(a) ?? "none";
+      typeMinutes[type] = (typeMinutes[type] ?? 0) + minutes;
+    }),
+  );
+
+  // ── Objectifs de la semaine ────────────────────────────────────
+  const questWeekKey = questDateKey(days[0]);
+  const currentQuestWeekKey = weekKeyOf(new Date());
+  const questWeek = weekQuestLog[questWeekKey] ?? emptyWeek();
+  const weeklyQuests = weeklyQuestsOn(quests, questWeekKey);
+  // Ajustements proposés seulement sur la semaine en cours
+  const weekSuggestions =
+    questWeekKey === currentQuestWeekKey
+      ? Object.fromEntries(
+          weeklyQuests
+            .map((q) => [q.id, adjustSuggestion(q, weekQuestLog)])
+            .filter(([, sug]) => sug),
+        )
+      : {};
+
+  const updateQuestWeek = (fn) =>
+    setWeekQuestLog((prev) => ({
+      ...prev,
+      [questWeekKey]: fn({ ...emptyWeek(), ...prev[questWeekKey] }),
+    }));
+
+  const setWeekCount = (questId, count) => {
+    const quest = quests.find((q) => q.id === questId);
+    updateQuestWeek((week) => ({
+      ...week,
+      counts: { ...week.counts, [questId]: count },
+      targets: { ...week.targets, [questId]: week.targets[questId] ?? quest.perWeek },
+    }));
+  };
+
+  const addWeekGoal = (label) =>
+    updateQuestWeek((week) =>
+      week.goals.length >= MAX_WEEK_GOALS
+        ? week
+        : { ...week, goals: [...week.goals, { id: `wgoal_${Date.now()}`, label, done: false }] },
+    );
+
+  const toggleWeekGoal = (goalId) =>
+    updateQuestWeek((week) => ({
+      ...week,
+      goals: week.goals.map((g) => (g.id === goalId ? { ...g, done: !g.done } : g)),
+    }));
+
+  const deleteWeekGoal = (goalId) =>
+    updateQuestWeek((week) => ({
+      ...week,
+      goals: week.goals.filter((g) => g.id !== goalId),
+    }));
+
+  // Le nouveau réglage vaut dès la semaine en cours et remet le compteur d'historique à zéro
+  const acceptWeekAdjust = (questId, perWeek) => {
+    setQuests((prev) =>
+      prev.map((q) =>
+        q.id === questId
+          ? { ...q, perWeek, perWeekSince: currentQuestWeekKey, adjustDismissed: currentQuestWeekKey }
+          : q,
+      ),
+    );
+    updateQuestWeek((week) => ({
+      ...week,
+      targets: { ...week.targets, [questId]: perWeek },
+    }));
+  };
+
+  const dismissWeekAdjust = (questId) =>
+    setQuests((prev) =>
+      prev.map((q) =>
+        q.id === questId ? { ...q, adjustDismissed: currentQuestWeekKey } : q,
+      ),
+    );
 
   // ── À confirmer ────────────────────────────────────────────────
   const isPastDay = (date) => {
@@ -1698,7 +2005,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
         onClick={(e) => handleToggleDone(activity, i, e)}
-        title={done ? "Marquer comme non effectué" : "Marquer comme effectué"}
+        title={
+          (done ? "Marquer comme non effectué" : "Marquer comme effectué") +
+          (linkedQuestLabels(activity).length > 0
+            ? ` — compte pour ${linkedQuestLabels(activity).join(", ")}`
+            : "")
+        }
       >
         ✓
       </button>
@@ -1732,6 +2044,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     const wk = getWeekKeyForDate(date);
     if (event.days !== undefined) {
       const key = `${event.id}|${wk}|${dayIndex}`;
+      applyEventQuests(event.questIds, date, !recurringDone.includes(key));
       setRecurringDone((prev) =>
         prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
       );
@@ -1740,6 +2053,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         const stored = localStorage.getItem(wk);
         if (stored) {
           const data = JSON.parse(stored);
+          const current = (data[dayIndex] || []).find((e) => e.id === event.id);
+          if (current) applyEventQuests(current.questIds, date, !current.done);
           data[dayIndex] = (data[dayIndex] || []).map((e) =>
             e.id === event.id ? { ...e, done: !e.done } : e,
           );
@@ -1750,6 +2065,72 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         // ignore localStorage errors
       }
     }
+  };
+
+  // Recherche par titre dans toutes les semaines stockees, plus les recurrences.
+  const searchAllEvents = (query) => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const results = [];
+
+    for (let k = 0; k < localStorage.length; k++) {
+      const key = localStorage.key(k);
+      const m = /^planner_week_(\d{4})_(\d{2})$/.exec(key || "");
+      if (!m) continue;
+      let week;
+      try {
+        week = JSON.parse(localStorage.getItem(key));
+      } catch {
+        continue;
+      }
+      if (!Array.isArray(week)) continue;
+      const year = Number(m[1]);
+      const weekNo = Number(m[2]);
+      week.forEach((dayEvents, dayIndex) => {
+        for (const ev of dayEvents || []) {
+          if (!ev || typeof ev.title !== "string") continue;
+          if (!ev.title.toLowerCase().includes(q)) continue;
+          results.push({
+            ...ev,
+            _key: `${key}|${dayIndex}|${ev.id}`,
+            _date: dateFromIsoWeek(year, weekNo, dayIndex),
+          });
+        }
+      });
+    }
+
+    for (const r of recurring) {
+      if (typeof r.title !== "string") continue;
+      if (!r.title.toLowerCase().includes(q)) continue;
+      results.push({ ...r, _key: `recur|${r.id}`, _date: null });
+    }
+
+    // Les recurrences, sans date propre, ferment la liste
+    results.sort((a, b) => {
+      if (!a._date) return 1;
+      if (!b._date) return -1;
+      return a._date - b._date;
+    });
+    return results.slice(0, 60);
+  };
+
+  // Ajout depuis la vue Mois : on aligne la semaine sur la date choisie puis on
+  // ouvre le formulaire d ajout sur le bon jour.
+  const handleAddFromMonth = (date) => {
+    const targetMonday = new Date(date);
+    targetMonday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+    targetMonday.setHours(0, 0, 0, 0);
+    const diffWeeks = Math.round(
+      (targetMonday - getMondayOfWeek(0)) / (7 * 86400000),
+    );
+    const dayIndex = (date.getDay() + 6) % 7;
+    if (diffWeeks !== weekOffset) {
+      // Sans ce drapeau, le changement de semaine ramenerait le jour sur aujourd hui
+      swipeWeekChangeRef.current = true;
+      setWeekOffset(diffWeeks);
+    }
+    setMobileDay(dayIndex);
+    setActiveFormDay(dayIndex);
   };
 
   const handleGoToDayView = (date) => {
@@ -1801,6 +2182,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               />
             )}
           </div>
+          <button
+            className="week-nav-search"
+            onClick={() => setShowSearch(true)}
+            title="Rechercher un événement"
+          >
+            🔍
+          </button>
           <button
             className="week-nav-today"
             onClick={() => setWeekOffset(0)}
@@ -1854,6 +2242,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           </div>
         </div>
         <button
+          className="mobile-header-search"
+          onClick={() => setShowSearch(true)}
+          title="Rechercher un événement"
+        >
+          🔍
+        </button>
+        <button
           className="mobile-week-arrow"
           onClick={() =>
             mobileView === "day"
@@ -1867,6 +2262,26 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         </button>
       </div>
 
+      <WeekQuests
+        recurring={weeklyQuests}
+        week={questWeek}
+        canCount={questWeekKey <= currentQuestWeekKey}
+        weekStreak={computeWeekProgress(quests, weekQuestLog).weekStreak}
+        suggestions={weekSuggestions}
+        onSetCount={setWeekCount}
+        onAddGoal={addWeekGoal}
+        onToggleGoal={toggleWeekGoal}
+        onDeleteGoal={deleteWeekGoal}
+        onAcceptAdjust={acceptWeekAdjust}
+        onDismissAdjust={dismissWeekAdjust}
+      />
+
+      <EventTypeLegend
+        minutesByType={typeMinutes}
+        highlighted={highlightType}
+        onHighlight={setHighlightType}
+      />
+
       {/* Vue mois iOS — mobile uniquement */}
       <MobileMonthView
         year={mobileMonthDate.getFullYear()}
@@ -1876,6 +2291,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         selectedMonthDay={selectedMonthDay}
         onDayTap={setSelectedMonthDay}
         onGoToDay={handleGoToDayView}
+        onAddEvent={handleAddFromMonth}
         recurringDone={recurringDone}
         onToggleDone={handlePreviewToggleDone}
         refreshKey={previewRefreshKey}
@@ -1930,10 +2346,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           })}
         </div>
 
-        <div className="calendar-body">
+        <div
+          className="calendar-body"
+          ref={calBodyRef}
+          style={{ "--hour-weight": totalHourWeight }}
+        >
           <div className="time-gutter">
-            {HOURS.map((h) => (
-              <div key={h} className="hour-slot">
+            {HOURS.map((h, idx) => (
+              <div key={h} className="hour-slot" style={{ flex: hourWeights[idx] }}>
                 <span className="hour-label">
                   {String(h % 24).padStart(2, "0")}:00
                 </span>
@@ -1961,17 +2381,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
             const overlapStyle = (a) => {
               if (a._totalCols <= 1) return {};
-              const n = a._totalCols;
-              // Cascade style: each event is offset but keeps most of its width
-              const offsetPct = Math.min(18, Math.round(54 / n));
-              const widthPct = 100 - offsetPct * (n - 1);
+              // Colonnes jointives : chaque evenement garde sa part, sans recouvrement
+              const widthPct = 100 / a._totalCols;
               return {
-                left: `calc(${a._colIndex * offsetPct}% + 2px)`,
+                left: `calc(${a._colIndex * widthPct}% + 2px)`,
                 width: `calc(${widthPct}% - 4px)`,
                 right: "auto",
                 zIndex: a._colIndex + 1,
-                boxShadow:
-                  a._colIndex > 0 ? "-2px 0 6px rgba(0,0,0,0.15)" : "none",
               };
             };
 
@@ -1985,7 +2401,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   <div
                     key={h}
                     className="hour-line"
-                    style={{ top: `${(idx / HOURS.length) * 100}%` }}
+                    style={{ top: `${(hourOffsets[idx] / totalHourWeight) * 100}%` }}
                   />
                 ))}
 
@@ -1997,11 +2413,17 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       top: toTopPct(preview.newTime),
                       height: preview.newEndTime
                         ? toHeightPct(preview.newTime, preview.newEndTime)
-                        : `${(30 / TOTAL_MINS) * 100}%`,
-                      borderLeftColor:
-                        dragRef.current?.activity.color ?? "#4f8ef7",
+                        : toHeightPct(
+                            preview.newTime,
+                            minutesToTime(timeToCalMin(preview.newTime) + 30),
+                          ),
+                      borderLeftColor: dragRef.current
+                        ? eventColor(dragRef.current.activity)
+                        : "#4f8ef7",
                       backgroundColor:
-                        (dragRef.current?.activity.color ?? "#4f8ef7") + "30",
+                        (dragRef.current
+                          ? eventColor(dragRef.current.activity)
+                          : "#4f8ef7") + "30",
                       pointerEvents: "none",
                     }}
                   >
@@ -2058,29 +2480,27 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           ? `${activity.id}_cont_${i}`
                           : activity.id
                       }
-                      className={`cal-activity-block${isCompact ? " block-compact" : ""}${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}${multidayClass}`}
+                      className={`cal-activity-block${isCompact ? " block-compact" : ""}${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}${multidayClass}${isDimmed(activity) ? " type-dimmed" : ""}`}
                       style={{
                         top: toTopPct(displayTime),
                         height: toHeightPct(displayTime, displayEndTime),
-                        backgroundColor: activity.color + "25",
-                        borderLeftColor: activity.color,
+                        backgroundColor: eventColor(activity) + "25",
+                        borderLeftColor: eventColor(activity),
                         ...overlapStyle(activity),
                       }}
                       onMouseDown={(e) => handleBlockMouseDown(activity, i, e)}
                       onTouchStart={(e) =>
                         handleBlockTouchStart(activity, i, e)
                       }
+                      title={`${activity.title}${activity.time ? ` · ${activity.time} – ${activity.endTime}` : ""}`}
                     >
                       {isCompact ? (
-                        <div
-                          className="cal-compact-row"
-                          title={`${activity.time} – ${activity.endTime}`}
-                        >
+                        <div className="cal-compact-row">
                           {activity._recurring && (
                             <span className="recur-icon">↻ </span>
                           )}
                           <span className="cal-activity-title">
-                            {activity.title}
+                            {eventLabel(activity)}
                           </span>
                           {missed && (
                             <span className="missed-badge" title="Non effectué">
@@ -2161,7 +2581,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                                 : undefined
                             }
                           >
-                            {activity.title}
+                            {eventLabel(activity)}
                           </span>
                         </>
                       )}
@@ -2179,11 +2599,11 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   return (
                     <div
                       key={activity.id}
-                      className={`cal-activity-pill${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}`}
+                      className={`cal-activity-pill${beingDragged ? " is-dragging" : ""}${done ? " is-done" : ""}${missed ? " is-missed" : ""}${isDimmed(activity) ? " type-dimmed" : ""}`}
                       style={{
                         top: toTopPct(activity.time),
-                        backgroundColor: activity.color + "25",
-                        borderLeftColor: activity.color,
+                        backgroundColor: eventColor(activity) + "25",
+                        borderLeftColor: eventColor(activity),
                         ...overlapStyle(activity),
                       }}
                       onMouseDown={(e) => handleBlockMouseDown(activity, i, e)}
@@ -2198,7 +2618,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         {activity.time}
                       </span>
                       <span className="cal-activity-title">
-                        {activity.title}
+                        {eventLabel(activity)}
                       </span>
                       {renderDoneBtn(activity, i)}
                       {renderDeleteBtn(activity, i)}
@@ -2235,12 +2655,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   <div key={idx} className="confirm-item">
                     <span
                       className="confirm-dot"
-                      style={{ backgroundColor: item.activity.color }}
+                      style={{ backgroundColor: eventColor(item.activity) }}
                     />
                     <span className="confirm-day">
                       {DAY_NAMES[item.dayIndex]}
                     </span>
-                    <span className="confirm-title">{item.activity.title}</span>
+                    <span className="confirm-title">{eventLabel(item.activity)}</span>
                     {item.activity.time && (
                       <span className="confirm-time">{item.activity.time}</span>
                     )}
@@ -2306,9 +2726,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     return (
                       <div
                         key={activity.id}
-                        className={`activity-card${done ? " is-done" : ""}`}
+                        className={`activity-card${done ? " is-done" : ""}${isDimmed(activity) ? " type-dimmed" : ""}`}
                         style={{
-                          borderLeftColor: activity.color,
+                          borderLeftColor: eventColor(activity),
                           cursor: "pointer",
                         }}
                         onClick={() =>
@@ -2318,7 +2738,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         {activity._recurring && (
                           <span className="recur-icon">↻ </span>
                         )}
-                        <span className="activity-title">{activity.title}</span>
+                        <span className="activity-title">{eventLabel(activity)}</span>
                         {renderDoneBtn(activity, i)}
                         {renderDeleteBtn(activity, i)}
                       </div>
@@ -2334,6 +2754,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           <div className="goals-gutter" />
           {days.map((_, i) => {
             const goals = getGoalsForDay(i);
+            const questKey = questDateKey(days[i]);
+            const questDay = getQuestDay(questKey);
             const sortedGoals = [
               ...goals.filter((g) => !g.done),
               ...goals.filter((g) => g.done),
@@ -2343,6 +2765,17 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 key={i}
                 className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}
               >
+                <DayQuests
+                  quests={getQuestsForDay(i)}
+                  day={questDay}
+                  isToday={questKey === todayQuestKey}
+                  streak={questStreak}
+                  installing={questInstalling}
+                  onSetLevel={(questId, level) =>
+                    setQuestLevel(i, questId, level)
+                  }
+                  onSetEnergy={(energy) => setQuestEnergy(i, energy)}
+                />
                 <button
                   className="goal-add-btn"
                   onClick={() =>
@@ -2534,6 +2967,17 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         </div>
       </div>
 
+      {showSearch && (
+        <EventSearchModal
+          onSearch={searchAllEvents}
+          onPick={(date) => {
+            handleGoToDayView(date);
+            setShowSearch(false);
+          }}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
+
       {activeFormDay !== null && (
         <ActivityForm
           dayIndex={activeFormDay}
@@ -2541,8 +2985,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           existingActivities={getActivitiesForDay(activeFormDay).filter(
             (a) => a.time,
           )}
-          onAdd={(activity) => handleAdd(activeFormDay, activity)}
+          onAdd={(activity) => {
+            handleAdd(activeFormDay, activity);
+            // force la vue Mois a relire le stockage
+            setPreviewRefreshKey((k) => k + 1);
+          }}
           onAddRecurring={handleAddRecurring}
+          quests={linkableQuests}
           onClose={() => setActiveFormDay(null)}
         />
       )}
@@ -2560,6 +3009,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             editingActivity.dayIndex,
           ).filter((a) => a.time && a.id !== editingActivity.activity.id)}
           onEdit={handleEdit}
+          quests={linkableQuests}
           onDelete={() => {
             const act = editingActivity.activity;
             if (act._recurring) {

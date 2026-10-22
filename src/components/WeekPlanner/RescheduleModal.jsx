@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { eventColor } from '../../data/eventTypes';
 
 const DURATIONS = [
   { label: '15 min', value: 15 },
@@ -89,7 +90,7 @@ export default function RescheduleModal({ activity, days, findSlots, onConfirm, 
               <p className="slot-none">Aucun créneau disponible cette semaine.</p>
             ) : (
               <>
-                <div className="slot-result" style={{ borderLeftColor: activity.color }}>
+                <div className="slot-result" style={{ borderLeftColor: eventColor(activity) }}>
                   <div className="slot-day">
                     {DAY_NAMES_FULL[currentSlot.dayIndex]}
                     <span className="slot-date">{formatDate(days[currentSlot.dayIndex])}</span>

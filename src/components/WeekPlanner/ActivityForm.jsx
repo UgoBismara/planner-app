@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { EVENT_TYPES, guessEventType } from '../../data/eventTypes';
 
 const COLORS = ['#E53935', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA', '#00897B', '#D81B60', '#F9A825', '#00ACC1', '#7CB342', '#3949AB', '#6D4C41'];
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -136,7 +137,9 @@ function pickDistinctColor(usedColors) {
   return COLORS.find((c) => !usedColors.includes(c)) ?? COLORS[0];
 }
 
-export default function ActivityForm({ dayIndex, days, activity, existingActivities, onAdd, onAddRecurring, onEdit, onDelete, onClose }) {
+// quests : quêtes quotidiennes et hebdomadaires auxquelles l'événement peut être relié
+// (cocher ✓ l'événement les compte)
+export default function ActivityForm({ dayIndex, days, activity, existingActivities, quests = [], onAdd, onAddRecurring, onEdit, onDelete, onClose }) {
   const isEditMode = !!activity;
   const effectiveDayIndex = activity?._isContinuation ? activity._storedDayIndex : (dayIndex ?? 0);
 
@@ -151,6 +154,14 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
   const [recurDays, setRecurDays] = useState(activity?.days ?? [effectiveDayIndex]);
   const [endDayOffset, setEndDayOffset] = useState(activity?.endDayOffset ?? 0);
   const [targetDay, setTargetDay] = useState(effectiveDayIndex);
+  const [questIds, setQuestIds] = useState(activity?.questIds ?? []);
+  // Type choisi ; null = deviné d'après le titre, 'none' = sans type (couleur libre)
+  const [category, setCategory] = useState(activity?.category ?? null);
+  const guessedType = guessEventType(title);
+  const effectiveType = category === 'none' ? null : (category ?? guessedType);
+
+  const toggleQuest = (id) =>
+    setQuestIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const toggleDay = (d) => {
     setRecurDays((prev) =>
@@ -167,6 +178,9 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
       endTime: isAllDay ? '' : endTime,
       color,
       id: activity?.id ?? Date.now(),
+      // Toujours présents, pour qu'un lien ou un type retiré disparaisse aussi à la modification
+      questIds,
+      category,
       ...(isAllDay ? { allDay: true } : {}),
       ...(endDayOffset > 0 && !isRecurring && !isAllDay ? { endDayOffset } : {}),
       ...(isEditMode && !isRecurring ? { targetDay } : {}),
@@ -278,19 +292,67 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
           )}
 
           <div className="form-group">
-            <label>Couleur</label>
-            <div className="color-picker">
-              {COLORS.map((c) => (
+            <label>
+              Type
+              {category === null && guessedType && (
+                <span className="field-hint"> (deviné d’après le titre)</span>
+              )}
+            </label>
+            <div className="type-picker">
+              {EVENT_TYPES.map((t) => (
                 <button
-                  key={c}
+                  key={t.id}
                   type="button"
-                  className={`color-dot ${c === color ? 'selected' : ''}`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => setColor(c)}
-                />
+                  className={`type-chip ${effectiveType === t.id ? 'selected' : ''}`}
+                  style={{ '--type-color': t.color }}
+                  // Recliquer le type choisi revient au type deviné
+                  onClick={() => setCategory(category === t.id ? null : t.id)}
+                >
+                  {t.icon} {t.label}
+                </button>
               ))}
+              <button
+                type="button"
+                className={`type-chip ${effectiveType === null ? 'selected' : ''}`}
+                style={{ '--type-color': color }}
+                onClick={() => setCategory(category === 'none' ? null : 'none')}
+              >
+                Autre
+              </button>
             </div>
+            {/* Sans type, la couleur se choisit librement */}
+            {effectiveType === null && (
+              <div className="color-picker">
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`color-dot ${c === color ? 'selected' : ''}`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setColor(c)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
+
+          {quests.length > 0 && (
+            <div className="form-group">
+              <label>Compte pour la quête <span className="field-hint">(cocher ✓ l’événement la compte)</span></label>
+              <div className="recur-days-picker">
+                {quests.map((q) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    className={`recur-day-btn ${questIds.includes(q.id) ? 'active' : ''}`}
+                    onClick={() => toggleQuest(q.id)}
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="form-group recur-toggle">
             <label>
