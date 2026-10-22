@@ -1,0 +1,242 @@
+.week-quests {
+  margin: 0 0 0.6rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.week-quests.succeeded {
+  border-color: var(--accent);
+}
+
+.week-planner.month-view .week-quests {
+  display: none;
+}
+
+.week-quests-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.week-quests-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.week-quests-count {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.week-quests.succeeded .week-quests-count {
+  color: var(--accent);
+}
+
+.week-quests-streak {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.week-quests-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.25rem 1rem;
+  margin-top: 0.4rem;
+}
+
+.week-quest-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 24px;
+}
+
+.week-quest-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-quest-row.done .week-quest-label {
+  color: var(--text-secondary);
+}
+
+.week-goal-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.week-quest-row.done .week-goal-label {
+  text-decoration: line-through;
+}
+
+.week-goal-checkbox {
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.week-quest-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.week-quest-dot {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.week-quest-dot.filled {
+  background: var(--accent);
+}
+
+.week-quest-dot:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.week-quest-ratio {
+  min-width: 2.2em;
+  text-align: right;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.week-quest-suggest {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.1rem 0 0.3rem;
+  font-size: 0.72rem;
+  color: #d69e2e;
+}
+
+.week-quest-suggest button {
+  padding: 0 0.45rem;
+  border: 1px solid #d69e2e;
+  border-radius: 6px;
+  background: transparent;
+  color: #d69e2e;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.week-goal-delete {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.week-goal-delete:hover {
+  opacity: 1;
+  color: var(--danger);
+}
+
+.week-goal-add {
+  margin-top: 0.3rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.week-goal-add:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.week-goal-form {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.week-goal-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.week-goal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.week-goal-save {
+  padding: 0.35rem 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.week-goal-save:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .week-quests {
+    margin: 0 0.5rem 0.5rem;
+  }
+
+  .week-quests-title,
+  .week-quest-label {
+    font-size: 0.88rem;
+  }
+
+  .week-quest-row {
+    min-height: 32px;
+  }
+
+  .week-quest-dot {
+    width: 20px;
+    height: 20px;
+  }
+
+  .week-goal-add {
+    font-size: 0.82rem;
+    padding: 4px 0;
+  }
+
+  .week-quest-suggest,
+  .week-quest-suggest button {
+    font-size: 0.8rem;
+  }
+}

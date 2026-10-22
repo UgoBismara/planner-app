@@ -1,0 +1,577 @@
+.quests-board {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem 0.75rem 3rem;
+}
+
+.quests-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.quests-title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+}
+
+.quests-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* ── Série, jokers, saison ── */
+.quests-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.quests-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.6rem 0.4rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.quests-stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quests-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.quests-season-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.quests-season-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+.quests-warning {
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #b7791f;
+  border-radius: 10px;
+  background: rgba(183, 121, 31, 0.12);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.quests-hint {
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.quests-type-picker,
+.quests-domain-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.quests-type-btn,
+.quests-domain-btn {
+  flex: 1;
+  padding: 0.5rem 0.4rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.quests-type-btn.active,
+.quests-domain-btn.active {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+/* ── Quêtes ── */
+.quests-empty,
+.quests-cap {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1.25rem 1rem;
+}
+
+.quests-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.quests-item {
+  padding: 0.7rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.quests-item.done {
+  border-color: var(--accent);
+}
+
+.quests-item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quests-item-label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quests-edit {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.quests-edit:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.quests-item-sub {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.quests-item-status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ── Formulaire ── */
+.quests-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.quests-input {
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.quests-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.quests-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.quests-save-btn,
+.quests-cancel-btn,
+.quests-delete-btn,
+.quests-add-btn {
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quests-save-btn {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+.quests-save-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.quests-cancel-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.quests-delete-btn {
+  margin-right: auto;
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+}
+
+.quests-add-btn {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.quests-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+/* ── Succès ── */
+.quests-achievements-header {
+  margin-top: 0.5rem;
+}
+
+.quests-achievements {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.quests-achievement {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  opacity: 0.5;
+}
+
+.quests-achievement.unlocked {
+  opacity: 1;
+  border-color: #d69e2e;
+}
+
+.quests-achievement-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.quests-achievement-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quests-achievement-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* ── Sections ── */
+.quests-section {
+  margin-bottom: 1.5rem;
+}
+
+.quests-section .quests-header {
+  margin-bottom: 0.4rem;
+}
+
+.quests-section .quests-hint {
+  margin-bottom: 0.6rem;
+}
+
+.quests-item-done {
+  opacity: 0.6;
+}
+
+.quests-item-head .quests-item-sub {
+  margin-top: 0;
+}
+
+.quests-acquired {
+  color: #d69e2e;
+  font-weight: 600;
+}
+
+/* ── Barres de progression (buts chiffrés, installation) ── */
+.quests-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.quests-progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-main);
+  overflow: hidden;
+}
+
+.quests-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+.quests-progress-fill.install {
+  background: #48bb78;
+}
+
+.quests-progress-label {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.quests-amount-row,
+.quests-target-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.quests-amount-row {
+  margin-top: 0.5rem;
+}
+
+.quests-amount-input,
+.quests-target-row .quests-input {
+  flex: 1;
+}
+
+.quests-amount-input {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.quests-amount-row .quests-save-btn {
+  padding: 0.4rem 0.8rem;
+}
+
+.quests-activate-btn {
+  flex-shrink: 0;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #48bb78;
+  border-radius: 8px;
+  background: transparent;
+  color: #48bb78;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quests-activate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.quests-perweek {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.quests-perweek-picker {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.quests-perweek-picker .quests-domain-btn {
+  padding: 0.45rem 0;
+}
+
+/* ── Challenges ── */
+.quests-domain-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.quests-steps-input {
+  resize: vertical;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.quests-deadline {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.quests-deadline .quests-input {
+  flex: 1;
+}
+
+.challenge-featured {
+  border-color: #d69e2e;
+}
+
+.challenge-pick-btn {
+  margin-bottom: 0;
+}
+
+.quests-items + .challenge-pick-btn {
+  margin-top: 0;
+}
+
+.challenge-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.challenge-step {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.challenge-step input {
+  accent-color: var(--accent);
+}
+
+.challenge-step.done {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.challenge-expired {
+  border-color: #b7791f;
+}
+
+.challenge-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.challenge-actions .quests-item-sub {
+  flex: 1;
+  margin-top: 0;
+}
+
+.challenge-actions .quests-save-btn,
+.challenge-actions .quests-cancel-btn {
+  padding: 0.4rem 0.8rem;
+}
+
+.challenge-trophies {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.challenge-trophy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  opacity: 0.7;
+}
+
+.challenge-trophy.done {
+  opacity: 1;
+  border-color: #d69e2e;
+}
+
+.challenge-trophy-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.challenge-trophy .quests-item-sub {
+  margin-top: 0;
+}
+
+/* ── Import du plan ── */
+.quests-import {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border: 1.5px dashed var(--accent);
+  border-radius: 12px;
+}
+
+.quests-import > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.quests-import-title {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quests-import-done {
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}

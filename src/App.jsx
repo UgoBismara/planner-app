@@ -4,10 +4,14 @@ import MealPlanner from './components/MealPlanner/MealPlanner';
 import NutritionGoal from './components/Nutrition/NutritionGoal';
 import IdeasList from './components/Ideas/IdeasList';
 import VintedWorkshop from './components/Vinted/VintedWorkshop';
+import QuestsBoard from './components/Quests/QuestsBoard';
+import JournalBoard from './components/Journal/JournalBoard';
 import './App.css';
 
 const TABS = [
   { id: 'week', label: '📅 Semaine' },
+  { id: 'quests', label: '🏆 Quêtes' },
+  { id: 'journal', label: '📓 Carnet' },
   { id: 'meals', label: '🍽️ Repas' },
   { id: 'nutrition', label: '🎯 Objectifs' },
   { id: 'ideas', label: '💡 Idées' },
@@ -51,6 +55,8 @@ export default function App() {
         {activeTab === 'nutrition' && <NutritionGoal />}
         {activeTab === 'ideas' && <IdeasList />}
         {activeTab === 'vinted' && <VintedWorkshop />}
+        {activeTab === 'quests' && <QuestsBoard />}
+        {activeTab === 'journal' && <JournalBoard />}
       </main>
     </div>
   );
