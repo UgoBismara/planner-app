@@ -4,15 +4,14 @@ Planning :
 - Créer un widget sur téléphone (impossible en l'état)
 - Pouvoir swiper aussi dans la partie "Mois"
 - [ ] Ajouter courbe poids
-- [ ] Rajouter fonctionnalités de recherche d’événements 
-- [ ] Ne pas superposer les événements qui se chevauchent
-- [ ] Lors d’un ajout d’une « idée » dans « Objectif » le faire directement au clic pas besoin de validation
-- [ ] Une fois l’objectif lié à l’idée effectué valider aussi l’idée 
-- [ ] Pouvoir ajouter des événements dans la partie Mois
+- [x] Rajouter fonctionnalités de recherche d’événements
+- [x] Ne pas superposer les événements qui se chevauchent
+- [x] Lors d’un ajout d’une « idée » dans « Objectif » le faire directement au clic pas besoin de validation
+- [x] Une fois l’objectif lié à l’idée effectué valider aussi l’idée
+- [x] Pouvoir ajouter des événements dans la partie Mois
 
-Recettes :
+Repas :
 - (Téléphone) Affichages des repas jour par jour
-- Modifier le tri
 
 Vinted :
 - Ajouter GEMINI_API_KEY sur Vercel puis tester une vraie annonce
@@ -24,3 +23,13 @@ Technique :
 - analyze-label tourne encore sur Anthropic (crédit à sec) : même bascule Gemini possible
 - Proxy /api dans vite.config pour tester les endpoints sans vercel dev
 - Lint : refreshKey inutilisé dans WeekPlanner, blocs catch vides (useLocalStorage, MealPlanner)
+- Code mort : FoodLogModal.jsx et data/foods.js ne sont plus importés, styles .meal-cell orphelins
+- IdeasPanel.jsx/.css (encart Idées retiré de la Semaine) ne sont plus utilisés nulle part
+
+Quêtes :
+- Écran bilan du dimanche (% de la semaine, météo moyenne, ajuster les minimums)
+- Historique des saisons passées
+- But de type « record » (garde la meilleure valeur, ex. test natation 100 m) en plus du cumul
+- Afficher le défi du mois (barre de progression) dans le bandeau de la Semaine
+- Événement coché ✓ et ronds du bandeau hebdo s’additionnent : relier les ronds aux événements pour éviter le double comptage
+- Prolonger le plan Triathlon & Maths au-delà du 22 nov. (événements récurrents déjà en place, titres de séance à générer)
