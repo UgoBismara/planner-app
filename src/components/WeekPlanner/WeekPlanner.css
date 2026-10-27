@@ -615,6 +615,68 @@
   background: var(--bg-hover);
 }
 
+.goal-link-chip.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Objectifs reliés à une même cible du bandeau ── */
+.goal-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 4px;
+  border-left: 2px solid var(--border);
+}
+
+.goal-group.complete {
+  border-left-color: var(--accent);
+}
+
+.goal-group-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+}
+
+.goal-group-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-group-count {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.goal-group.complete .goal-group-count {
+  color: var(--accent);
+}
+
+.goal-group-add {
+  flex-shrink: 0;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.goal-group-add:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
 .goal-find-slot-btn {
   width: 100%;
   margin-top: 3px;
@@ -1512,6 +1574,21 @@
 
   .goal-idea-picker-label {
     font-size: 0.75rem;
+  }
+
+  .goal-group {
+    gap: 5px;
+    padding-left: 8px;
+  }
+
+  .goal-group-head {
+    font-size: 0.78rem;
+  }
+
+  .goal-group-add {
+    font-size: 1rem;
+    padding: 2px 6px;
+    opacity: 0.7;
   }
 
   .goal-checkbox {

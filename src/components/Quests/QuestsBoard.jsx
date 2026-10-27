@@ -342,7 +342,7 @@ export default function QuestsBoard() {
               {progress.todayValidated ? '✓ Journée validée' : `${doneCount}/${daily.length} aujourd’hui`}
             </span>
           </div>
-          <p className="quests-hint">Se cochent dans 📅 Semaine. Un minimum suffit à valider la journée.</p>
+          <p className="quests-hint">Se cochent en haut de 📅 Semaine, une case par jour (deuxième touche : minimum). Un minimum suffit à valider la journée.</p>
           <ul className="quests-items">
             {daily.map((q) => {
               const installed = installedDays(q, log);

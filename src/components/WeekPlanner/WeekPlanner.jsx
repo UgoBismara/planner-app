@@ -27,8 +27,8 @@ import {
   computeProgress,
   typeOf as questTypeOf,
   isDailyQuest,
+  domainOf,
 } from "../../data/quests";
-import DayQuests from "../Quests/DayQuests";
 import EventTypeLegend from "./EventTypeLegend";
 import { eventColor, eventLabel, eventTypeId } from "../../data/eventTypes";
 import WeekQuests from "../Quests/WeekQuests";
@@ -1638,10 +1638,29 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       : [];
   };
 
-  const setGoalsForDay = (i, goals) =>
-    setDailyGoals((prev) => ({ ...prev, [dayKey(i)]: goals }));
+  // changes = { [index du jour]: objectifs }. Un groupe d objectifs relies qui devient
+  // complet (ou ne l est plus) fait avancer (ou reculer) le bandeau de la semaine.
+  const updateDayGoals = (changes) => {
+    const before = days.map((_, d) => getGoalsForDay(d));
+    const after = before.map((goals, d) => changes[d] ?? goals);
+    setDailyGoals((prev) => {
+      const next = { ...prev };
+      Object.entries(changes).forEach(([d, goals]) => {
+        next[dayKey(Number(d))] = goals;
+      });
+      return next;
+    });
+    applyLinkGroups(completeLinkGroups(before), completeLinkGroups(after));
+  };
+
+  const setGoalsForDay = (i, goals) => updateDayGoals({ [i]: goals });
 
   const saveGoal = (i, goalId, text, ideaId = null) => {
+    // Liens vers le bandeau de la semaine, choisis dans le formulaire
+    const links = {
+      questIds: editingGoal?.questIds ?? [],
+      weekGoalIds: editingGoal?.weekGoalIds ?? [],
+    };
     if (!text.trim()) {
       setGoalsForDay(
         i,
@@ -1652,7 +1671,12 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         i,
         getGoalsForDay(i).map((g) =>
           g.id === goalId
-            ? { ...g, text: text.trim(), ideaId: ideaId ?? g.ideaId ?? null }
+            ? {
+                ...g,
+                text: text.trim(),
+                ideaId: ideaId ?? g.ideaId ?? null,
+                ...links,
+              }
             : g,
         ),
       );
@@ -1664,6 +1688,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           text: text.trim(),
           done: false,
           ideaId,
+          ...links,
         },
       ]);
     }
@@ -1730,11 +1755,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const moveGoalToDay = (fromDay, goalId, toDay) => {
     const goal = getGoalsForDay(fromDay).find((g) => g.id === goalId);
     if (!goal) return;
-    setGoalsForDay(
-      fromDay,
-      getGoalsForDay(fromDay).filter((g) => g.id !== goalId),
-    );
-    setGoalsForDay(toDay, [...getGoalsForDay(toDay), goal]);
+    updateDayGoals({
+      [fromDay]: getGoalsForDay(fromDay).filter((g) => g.id !== goalId),
+      [toDay]: [...getGoalsForDay(toDay), goal],
+    });
   };
 
   const moveGoalToNextWeek = (fromDayIndex, goalId) => {
@@ -1801,35 +1825,37 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       .map((q) => [q.id, installedDays(q, questLog)]),
   );
 
-  const getQuestDay = (key) => questLog[key] ?? { energy: null, done: {} };
+  const questDayKeys = days.map(questDateKey);
+  const questDays = questDayKeys.map(
+    (key) => questLog[key] ?? { energy: null, done: {} },
+  );
+  // Quêtes quotidiennes actives au moins un jour passé de la semaine : rien pour une
+  // semaine entièrement future. Les cases avant création ou après aujourd'hui restent grisées.
+  const weekDailyQuests =
+    questDayKeys[0] > todayQuestKey
+      ? []
+      : dailyQuestsOn(
+          quests,
+          questDayKeys[6] < todayQuestKey ? questDayKeys[6] : todayQuestKey,
+        );
 
-  // Quêtes quotidiennes de ce jour-là : jamais dans le futur, ni avant leur création
-  // (ou leur activation pour une habitude à mettre en place)
-  const getQuestsForDay = (i) => {
-    const key = questDateKey(days[i]);
-    if (key > todayQuestKey) return [];
-    return dailyQuestsOn(quests, key);
-  };
-
-  const updateQuestDay = (i, fn) => {
-    const key = questDateKey(days[i]);
+  const updateQuestDay = (key, fn) =>
     setQuestLog((prev) => ({
       ...prev,
       [key]: fn(prev[key] ?? { energy: null, done: {} }),
     }));
-  };
 
-  // Re-cliquer sur le niveau déjà choisi le décoche
+  // level null décoche
   const setQuestLevel = (i, questId, level) =>
-    updateQuestDay(i, (day) => {
+    updateQuestDay(questDayKeys[i], (day) => {
       const done = { ...day.done };
-      if (done[questId] === level) delete done[questId];
-      else done[questId] = level;
+      if (level) done[questId] = level;
+      else delete done[questId];
       return { ...day, done };
     });
 
-  const setQuestEnergy = (i, energy) =>
-    updateQuestDay(i, (day) => ({ ...day, energy }));
+  const setTodayEnergy = (energy) =>
+    updateQuestDay(todayQuestKey, (day) => ({ ...day, energy }));
 
   // ── Types d'événements ─────────────────────────────────────────
   const [highlightType, setHighlightType] = useState(null); // id de type, "none" ou null
@@ -1896,6 +1922,101 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       ...week,
       goals: week.goals.filter((g) => g.id !== goalId),
     }));
+
+  // ── Objectifs du jour reliés au bandeau ────────────────────────
+  // Ce qu un objectif du jour peut faire avancer : quêtes du jour et de la semaine
+  // (questIds, comptées comme par un événement) et objectifs précis (weekGoalIds).
+  const goalLinkOptions = (i) => [
+    ...dailyQuestsOn(quests, questDayKeys[i]).map((q) => ({
+      id: q.id,
+      field: "questIds",
+      label: `${domainOf(q.domain).icon} ${q.label}`,
+    })),
+    ...weeklyQuests.map((q) => ({
+      id: q.id,
+      field: "questIds",
+      label: `🔁 ${q.label}`,
+    })),
+    ...questWeek.goals.map((g) => ({
+      id: g.id,
+      field: "weekGoalIds",
+      label: `📌 ${g.label}`,
+    })),
+  ];
+
+  const goalLinks = (goal) => [
+    ...(goal.questIds ?? []),
+    ...(goal.weekGoalIds ?? []),
+  ];
+
+  // "jour|cible" pour chaque cible dont tous les objectifs reliés ce jour-là sont cochés
+  const completeLinkGroups = (goalsByDay) => {
+    const complete = new Set();
+    goalsByDay.forEach((goals, d) => {
+      new Set(goals.flatMap(goalLinks)).forEach((id) => {
+        if (goals.filter((g) => goalLinks(g).includes(id)).every((g) => g.done)) {
+          complete.add(`${d}|${id}`);
+        }
+      });
+    });
+    return complete;
+  };
+
+  // Groupe devenu complet : la quête compte une fois pour ce jour-là (comme un
+  // événement), l objectif précis est coché. Groupe qui ne l est plus : on annule,
+  // sauf pour un objectif précis encore complet un autre jour.
+  const applyLinkGroups = (before, after) => {
+    const changes = [
+      ...[...after].filter((k) => !before.has(k)).map((k) => [k, true]),
+      ...[...before].filter((k) => !after.has(k)).map((k) => [k, false]),
+    ];
+    changes.forEach(([k, done]) => {
+      const sep = k.indexOf("|");
+      const d = Number(k.slice(0, sep));
+      const id = k.slice(sep + 1);
+      if (quests.some((q) => q.id === id)) {
+        applyEventQuests([id], days[d], done);
+      } else if (done || ![...after].some((x) => x.endsWith(`|${id}`))) {
+        updateQuestWeek((week) => ({
+          ...week,
+          goals: week.goals.map((g) => (g.id === id ? { ...g, done } : g)),
+        }));
+      }
+    });
+  };
+
+  // Un seul lien par objectif, pour qu il appartienne à un seul groupe
+  const renderGoalLinkPicker = () => {
+    const options = goalLinkOptions(editingGoal.dayIndex);
+    if (options.length === 0) return null;
+    const toggle = ({ id, field }) =>
+      setEditingGoal((g) => ({
+        ...g,
+        questIds: [],
+        weekGoalIds: [],
+        ...(g[field].includes(id) ? {} : { [field]: [id] }),
+      }));
+    return (
+      <div className="goal-idea-picker">
+        <span className="goal-idea-picker-label">Compte pour</span>
+        {options.map((o) => {
+          const active = editingGoal[o.field].includes(o.id);
+          return (
+            <button
+              key={o.id}
+              type="button"
+              className={`goal-idea-chip goal-link-chip${active ? " active" : ""}`}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => toggle(o)}
+              aria-pressed={active}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   // Le nouveau réglage vaut dès la semaine en cours et remet le compteur d'historique à zéro
   const acceptWeekAdjust = (questId, perWeek) => {
@@ -2263,6 +2384,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       </div>
 
       <WeekQuests
+        daily={weekDailyQuests}
+        dayKeys={questDayKeys}
+        dayLog={questDays}
+        todayKey={todayQuestKey}
+        dayStreak={questStreak}
+        installing={questInstalling}
+        onSetLevel={setQuestLevel}
+        onSetEnergy={setTodayEnergy}
         recurring={weeklyQuests}
         week={questWeek}
         canCount={questWeekKey <= currentQuestWeekKey}
@@ -2754,28 +2883,167 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
           <div className="goals-gutter" />
           {days.map((_, i) => {
             const goals = getGoalsForDay(i);
-            const questKey = questDateKey(days[i]);
-            const questDay = getQuestDay(questKey);
             const sortedGoals = [
               ...goals.filter((g) => !g.done),
               ...goals.filter((g) => g.done),
             ];
+            // Objectifs reliés à la même cible rassemblés là où apparaît le premier :
+            // un groupe entièrement fait descend avec les objectifs faits
+            const linkOptions = goalLinkOptions(i);
+            const targetOf = (goal) =>
+              linkOptions.find((o) => goal[o.field]?.includes(o.id));
+            const goalBlocks = [];
+            sortedGoals.forEach((goal) => {
+              const target = targetOf(goal);
+              if (!target) goalBlocks.push({ goal });
+              else if (!goalBlocks.some((b) => b.target?.id === target.id)) {
+                goalBlocks.push({
+                  target,
+                  goals: sortedGoals.filter((g) => targetOf(g)?.id === target.id),
+                });
+              }
+            });
+            const renderGoal = (goal) => {
+              const idx = goals.findIndex((g) => g.id === goal.id);
+              const isEditing =
+                editingGoal?.dayIndex === i &&
+                editingGoal?.goalId === goal.id;
+              if (isEditing) {
+                return (
+                  <form
+                    key={goal.id}
+                    className="goal-edit-form"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      saveGoal(i, goal.id, editingGoal.text);
+                    }}
+                  >
+                    <div className="goal-edit-top">
+                      <input
+                        className="goal-input"
+                        autoFocus
+                        value={editingGoal.text}
+                        enterKeyHint="done"
+                        onChange={(e) =>
+                          setEditingGoal((g) => ({
+                            ...g,
+                            text: e.target.value,
+                          }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") setEditingGoal(null);
+                        }}
+                        placeholder={goal.text}
+                      />
+                      <button type="submit" className="goal-save-btn">
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        className="goal-cancel-btn"
+                        onMouseDown={() => setEditingGoal(null)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {renderGoalLinkPicker()}
+                    {renderGoalIdeaPicker()}
+                  </form>
+                );
+              }
+              return (
+                <div
+                  key={goal.id}
+                  className={`goal-item${goal.done ? " goal-done" : ""}`}
+                >
+                  <span className="goal-priority">{idx + 1}</span>
+                  <input
+                    type="checkbox"
+                    className="goal-checkbox"
+                    checked={goal.done}
+                    onChange={() => toggleGoalDone(i, goal.id)}
+                  />
+                  <span
+                    className="goal-text"
+                    onClick={() =>
+                      setEditingGoal({
+                        dayIndex: i,
+                        goalId: goal.id,
+                        text: goal.text,
+                        questIds: goal.questIds ?? [],
+                        weekGoalIds: goal.weekGoalIds ?? [],
+                      })
+                    }
+                    title="Cliquer pour modifier"
+                  >
+                    {goal.text}
+                  </span>
+                  <div className="goal-actions">
+                    {i > 0 && (
+                      <button
+                        className="goal-move-btn"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => moveGoalToDay(i, goal.id, i - 1)}
+                        title="Jour précédent"
+                      >
+                        ←
+                      </button>
+                    )}
+                    <button
+                      className="goal-move-btn"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={() => moveGoalForward(i, goal.id)}
+                      title={i < 6 ? "Jour suivant" : "Lundi prochain"}
+                    >
+                      →
+                    </button>
+                    {idx > 0 && (
+                      <button
+                        className="goal-move-btn"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => moveGoal(i, goal.id, -1)}
+                        title="Monter"
+                      >
+                        ↑
+                      </button>
+                    )}
+                    {idx < goals.length - 1 && (
+                      <button
+                        className="goal-move-btn"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => moveGoal(i, goal.id, 1)}
+                        title="Descendre"
+                      >
+                        ↓
+                      </button>
+                    )}
+                    {!goal.done && (
+                      <button
+                        className="goal-move-btn goal-next-week-btn"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => moveGoalToNextWeek(i, goal.id)}
+                        title="Reporter à la semaine prochaine"
+                      >
+                        ↗
+                      </button>
+                    )}
+                    <button
+                      className="goal-delete-btn"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={() => deleteGoal(i, goal.id)}
+                      title="Supprimer"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              );
+            };
             return (
               <div
                 key={i}
                 className={`goals-cell${mobileDay === i ? " mobile-active" : ""}`}
               >
-                <DayQuests
-                  quests={getQuestsForDay(i)}
-                  day={questDay}
-                  isToday={questKey === todayQuestKey}
-                  streak={questStreak}
-                  installing={questInstalling}
-                  onSetLevel={(questId, level) =>
-                    setQuestLevel(i, questId, level)
-                  }
-                  onSetEnergy={(energy) => setQuestEnergy(i, energy)}
-                />
                 <button
                   className="goal-add-btn"
                   onClick={() =>
@@ -2783,6 +3051,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       dayIndex: i,
                       goalId: null,
                       text: "",
+                      questIds: [],
+                      weekGoalIds: [],
                     })
                   }
                 >
@@ -2825,139 +3095,46 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           ✕
                         </button>
                       </div>
+                      {renderGoalLinkPicker()}
                       {renderGoalIdeaPicker()}
                     </form>
                   )}
-                {sortedGoals.map((goal) => {
-                  const idx = goals.findIndex((g) => g.id === goal.id);
-                  const isEditing =
-                    editingGoal?.dayIndex === i &&
-                    editingGoal?.goalId === goal.id;
-                  if (isEditing) {
-                    return (
-                      <form
-                        key={goal.id}
-                        className="goal-edit-form"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          saveGoal(i, goal.id, editingGoal.text);
-                        }}
-                      >
-                        <div className="goal-edit-top">
-                          <input
-                            className="goal-input"
-                            autoFocus
-                            value={editingGoal.text}
-                            enterKeyHint="done"
-                            onChange={(e) =>
-                              setEditingGoal((g) => ({
-                                ...g,
-                                text: e.target.value,
-                              }))
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Escape") setEditingGoal(null);
-                            }}
-                            placeholder={goal.text}
-                          />
-                          <button type="submit" className="goal-save-btn">
-                            ✓
-                          </button>
-                          <button
-                            type="button"
-                            className="goal-cancel-btn"
-                            onMouseDown={() => setEditingGoal(null)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                        {renderGoalIdeaPicker()}
-                      </form>
-                    );
-                  }
+                {goalBlocks.map((block) => {
+                  if (!block.target) return renderGoal(block.goal);
+                  const doneCount = block.goals.filter((g) => g.done).length;
+                  const complete = doneCount === block.goals.length;
                   return (
                     <div
-                      key={goal.id}
-                      className={`goal-item${goal.done ? " goal-done" : ""}`}
+                      key={block.target.id}
+                      className={`goal-group${complete ? " complete" : ""}`}
                     >
-                      <span className="goal-priority">{idx + 1}</span>
-                      <input
-                        type="checkbox"
-                        className="goal-checkbox"
-                        checked={goal.done}
-                        onChange={() => toggleGoalDone(i, goal.id)}
-                      />
-                      <span
-                        className="goal-text"
-                        onClick={() =>
-                          setEditingGoal({
-                            dayIndex: i,
-                            goalId: goal.id,
-                            text: goal.text,
-                          })
-                        }
-                        title="Cliquer pour modifier"
-                      >
-                        {goal.text}
-                      </span>
-                      <div className="goal-actions">
-                        {i > 0 && (
-                          <button
-                            className="goal-move-btn"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => moveGoalToDay(i, goal.id, i - 1)}
-                            title="Jour précédent"
-                          >
-                            ←
-                          </button>
-                        )}
+                      <div className="goal-group-head">
+                        <span className="goal-group-label">
+                          {block.target.label}
+                        </span>
+                        <span className="goal-group-count">
+                          {doneCount}/{block.goals.length}
+                          {complete && " ✓"}
+                        </span>
                         <button
-                          className="goal-move-btn"
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={() => moveGoalForward(i, goal.id)}
-                          title={i < 6 ? "Jour suivant" : "Lundi prochain"}
+                          className="goal-group-add"
+                          onClick={() =>
+                            setEditingGoal({
+                              dayIndex: i,
+                              goalId: null,
+                              text: "",
+                              questIds: [],
+                              weekGoalIds: [],
+                              [block.target.field]: [block.target.id],
+                            })
+                          }
+                          title="Ajouter un objectif à ce groupe"
+                          aria-label="Ajouter un objectif à ce groupe"
                         >
-                          →
-                        </button>
-                        {idx > 0 && (
-                          <button
-                            className="goal-move-btn"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => moveGoal(i, goal.id, -1)}
-                            title="Monter"
-                          >
-                            ↑
-                          </button>
-                        )}
-                        {idx < goals.length - 1 && (
-                          <button
-                            className="goal-move-btn"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => moveGoal(i, goal.id, 1)}
-                            title="Descendre"
-                          >
-                            ↓
-                          </button>
-                        )}
-                        {!goal.done && (
-                          <button
-                            className="goal-move-btn goal-next-week-btn"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => moveGoalToNextWeek(i, goal.id)}
-                            title="Reporter à la semaine prochaine"
-                          >
-                            ↗
-                          </button>
-                        )}
-                        <button
-                          className="goal-delete-btn"
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={() => deleteGoal(i, goal.id)}
-                          title="Supprimer"
-                        >
-                          ×
+                          +
                         </button>
                       </div>
+                      {block.goals.map(renderGoal)}
                     </div>
                   );
                 })}

@@ -16,6 +16,7 @@
 
 .week-quests-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.5rem;
@@ -36,10 +37,85 @@
   color: var(--accent);
 }
 
+.week-quests-side {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
 .week-quests-streak {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+.week-quests-energy {
+  display: flex;
+}
+
+.week-quests-energy-btn {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.week-quests-energy-btn.active {
+  opacity: 1;
+  filter: none;
+}
+
+.week-quest-install {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.week-quest-days {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.week-quest-day {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.week-quest-day.filled {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Minimum : case à moitié remplie */
+.week-quest-day.min {
+  background: linear-gradient(to top, var(--accent) 50%, transparent 50%);
+  color: var(--text-primary);
+}
+
+.week-quest-day.today {
+  outline: 1.5px solid var(--text-secondary);
+  outline-offset: 1px;
+}
+
+.week-quest-day:disabled {
+  border-color: var(--border);
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .week-quests-items {
@@ -106,6 +182,19 @@
 
 .week-quest-dot.filled {
   background: var(--accent);
+}
+
+/* Au-delà de la cible : bonus en doré, le prochain en pointillés */
+.week-quest-dot.extra {
+  border-color: #d69e2e;
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.week-quest-dot.extra.filled {
+  background: #d69e2e;
+  border-style: solid;
+  opacity: 1;
 }
 
 .week-quest-dot:disabled {
@@ -228,6 +317,21 @@
   .week-quest-dot {
     width: 20px;
     height: 20px;
+  }
+
+  .week-quest-days {
+    gap: 4px;
+  }
+
+  .week-quest-day {
+    width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+
+  .week-quests-energy-btn {
+    font-size: 1rem;
+    padding: 2px 4px;
   }
 
   .week-goal-add {
