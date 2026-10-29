@@ -30,6 +30,7 @@ import {
 } from "../../data/quests";
 import EventTypeLegend from "./EventTypeLegend";
 import { eventColor, eventLabel, eventTypeId } from "../../data/eventTypes";
+import { planSubjectFor } from "../../data/questsPlan";
 import WeekQuests from "../Quests/WeekQuests";
 import RescheduleModal from "./RescheduleModal";
 import {
@@ -2433,6 +2434,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       <WeekQuests
         daily={weekDailyQuests}
         dayKeys={questDayKeys}
+        subjectFor={(questId, key) => {
+          const subject = planSubjectFor(questId, key);
+          return subject ? eventLabel({ title: subject }) : null;
+        }}
         dayLog={questDays}
         todayKey={todayQuestKey}
         dayStreak={questStreak}

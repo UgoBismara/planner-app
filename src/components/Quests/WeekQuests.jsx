@@ -43,6 +43,7 @@ const nextLevel = (q, level) => {
 export default function WeekQuests({
   daily,
   dayKeys,
+  subjectFor = () => null,
   dayLog,
   todayKey,
   dayStreak,
@@ -152,7 +153,8 @@ export default function WeekQuests({
             const levels = dayLog.map((day) => day.done[q.id]);
             const allDone = open.every((o, i) => !o || levels[i]);
             return (
-              <div key={q.id} className={`week-quest-row${allDone ? ' done' : ''}`}>
+              <div key={q.id} className="week-quest">
+              <div className={`week-quest-row${allDone ? ' done' : ''}`}>
                 <span
                   className="week-quest-label"
                   title={q.minimum ? `Minimum : ${q.minimum}` : q.label}
@@ -181,13 +183,20 @@ export default function WeekQuests({
                         className={`week-quest-day${levelClass}${key === todayKey ? ' today' : ''}`}
                         onClick={() => onSetLevel(i, q.id, nextLevel(q, level))}
                         disabled={!open[i]}
-                        title={`${DAY_NAMES[i]} : ${state}`}
+                        title={`${DAY_NAMES[i]} : ${state}${subjectFor(q.id, key) ? ` · ${subjectFor(q.id, key)}` : ''}`}
                       >
                         {level === 'min' ? 'm' : DAY_LETTERS[i]}
                       </button>
                     );
                   })}
                 </span>
+              </div>
+              {/* Le sujet précis du jour, pour savoir quoi étudier sans chercher */}
+              {todayIndex >= 0 && subjectFor(q.id, todayKey) && (
+                <div className={`week-quest-subject${levels[todayIndex] ? ' done' : ''}`}>
+                  Aujourd’hui : {subjectFor(q.id, todayKey)}
+                </div>
+              )}
               </div>
             );
           })}

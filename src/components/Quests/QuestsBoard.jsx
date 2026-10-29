@@ -40,6 +40,7 @@ import {
   DAILY_GOALS_KEY,
   RECURRING_KEY,
   RECURRING_OVERRIDES_KEY,
+  PLAN_VERSION,
   isPlanImported,
   planMissingLabels,
   planQuestsToAdd,
@@ -83,6 +84,8 @@ export default function QuestsBoard() {
   const [importResult, setImportResult] = useState(null); // { added, skipped }
   // Événements récurrents du planning : le plan y ajoute ses séances
   const [recurring, setRecurring] = useLocalStorage(RECURRING_KEY, []);
+  const [planVersion, setPlanVersion] = useLocalStorage('planner_plan_version', null);
+  const planUpToDate = isPlanImported(quests, recurring) && planVersion === PLAN_VERSION;
 
   const todayKey = dateKey(new Date());
   const today = log[todayKey] ?? { energy: null, done: {} };
@@ -253,6 +256,7 @@ export default function QuestsBoard() {
     // Ces clés vivent dans la Semaine, qui n'est pas montée ici
     writeStoredValue(RECURRING_OVERRIDES_KEY, mergePlanOverrides);
     writeStoredValue(DAILY_GOALS_KEY, mergePlanDailyGoals);
+    setPlanVersion(PLAN_VERSION);
     setImportResult({ added: added.length, skipped });
   };
 
@@ -321,13 +325,13 @@ export default function QuestsBoard() {
             ` Non ajoutées (plafond atteint) : ${importResult.skipped.join(', ')}.`}
         </p>
       ) : (
-        !isPlanImported(quests, recurring) && (
+        !planUpToDate && (
           <div className="quests-import">
             <div>
               <div className="quests-import-title">Plan Triathlon & Maths</div>
               <div className="quests-item-sub">
                 {quests.some((q) => q.id.startsWith('plan_'))
-                  ? `Mise à jour du plan : ${planMissingLabels(quests).join(', ') || 'planning ajusté'}. Rien de ce que tu as déjà n’est modifié.`
+                  ? `Mise à jour du plan : ${planMissingLabels(quests).join(', ') || 'titres plus clairs pour l’étude du soir (🧮 Maths · 🎷 Jazz…)'}. Rien de ce que tu as déjà n’est modifié.`
                   : 'Crée d’un clic tes quêtes, le défi de novembre, le challenge Triathlon S et tes séances dans le planning jusqu’au 22 novembre. Détails dans ta page Notion.'}
               </div>
             </div>

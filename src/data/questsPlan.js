@@ -80,6 +80,51 @@ const PLAN_SESSIONS = {
   '2026-11-22': ['🏃 Course facile 40 min', '🧮 Bonus : coder Dijkstra'],
 };
 
+// Sujet culture du jour, d'après les cycles du défi culture (pages Notion : thèmes et
+// ressources par semaine), en alternant lecture, vidéo, écoute et pratique
+const CULTURE_SESSIONS = {
+  '2026-10-23': '🎲 Backgammon · une partie contre un bot (XG Mobile ou Backgammon NJ)',
+  '2026-10-24': '🎲 Backgammon · analyser cette partie avec eXtreme Gammon',
+  '2026-10-25': '🎲 Backgammon · une partie sur ton plateau, en jouant le cube de doublement',
+  '2026-10-26': '🎲 Backgammon · 2 problèmes de « 555 Backgammon Problems » (Robertie)',
+  '2026-10-27': '🎲 Backgammon · une partie contre un bot, puis compter les pips',
+  '2026-10-28': '🎲 Backgammon · relire un chapitre de « Backgammon » (Magriel)',
+  '2026-10-29': '🎲 Backgammon · quiz de fin de cycle + bilan',
+  '2026-10-30': '🎷 Jazz · Ken Burns « Jazz », épisode 1 (1re moitié)',
+  '2026-10-31': '🎷 Jazz · le ragtime : écouter Scott Joplin, « Maple Leaf Rag »',
+  '2026-11-01': '🎷 Jazz · les brass bands et les second lines (vidéo)',
+  '2026-11-02': '🎷 Jazz · le blues et les chants de travail (podcast Les Chroniques du Jazz)',
+  '2026-11-03': '🎷 Jazz · Congo Square et la culture créole (lecture)',
+  '2026-11-04': '🎷 Jazz · Ken Burns « Jazz », épisode 1 (2e moitié)',
+  '2026-11-05': '🎷 Jazz · lire le début de « Jazzmen » (Ramsey & Smith)',
+  '2026-11-06': '🎷 Jazz · Buddy Bolden, le premier roi du jazz, sans aucun disque',
+  '2026-11-07': '🎷 Jazz · Storyville, et sa fermeture en 1917',
+  '2026-11-08': '🎷 Jazz · King Oliver : écouter le Creole Jazz Band',
+  '2026-11-09': '🎷 Jazz · Louis Armstrong : écouter « West End Blues »',
+  '2026-11-10': '🎷 Jazz · un épisode de Version Standard (podcast)',
+  '2026-11-11': '🎷 Jazz · l’exode vers Chicago (Ken Burns, épisode 2)',
+  '2026-11-12': '🎷 Jazz · quiz de fin de cycle + bilan',
+  '2026-11-13': '📚 Lotus Bleu · Hergé et sa rencontre avec Tchang Tchong-Jen',
+  '2026-11-14': '📚 Lotus Bleu · lire les pages 1 à 15',
+  '2026-11-15': '📚 Lotus Bleu · lire les pages 16 à 31',
+  '2026-11-16': '📚 Lotus Bleu · lire les pages 32 à 47',
+  '2026-11-17': '📚 Lotus Bleu · lire les pages 48 à 62 (fin de l’album)',
+  '2026-11-18': '📚 Lotus Bleu · « Hergé à l’ombre de Tintin » (1re partie)',
+  '2026-11-19': '📚 Lotus Bleu · « Hergé à l’ombre de Tintin » (suite)',
+  '2026-11-20': '📚 Lotus Bleu · l’incident de Moukden (1931) et l’occupation japonaise',
+  '2026-11-21': '📚 Lotus Bleu · la critique politique d’Hergé et les réactions de l’époque',
+  '2026-11-22': '📚 Lotus Bleu · sa place dans l’œuvre : des Cigares du pharaon au Lotus Bleu',
+};
+
+// Thème court de chaque cycle, pour le titre de l'événement du soir
+const cultureTheme = (localKey) => {
+  const text = CULTURE_SESSIONS[localKey];
+  return text ? text.split(' · ')[0] : '📚 Culture';
+};
+
+// Version du plan : une nouvelle version fait réapparaître la carte d'import
+export const PLAN_VERSION = 2;
+
 const PLAN_START = '2026-10-26';
 const PLAN_END = '2026-11-22';
 
@@ -233,7 +278,27 @@ export const mergePlanRecurring = (prev) => {
   });
 };
 
-// Titre de chaque occurrence : la séance du jour ; maths sans notion le week-end = Zetamac
+// Sujet d'étude précis du jour pour une quête (bandeau de la Semaine) ; null s'il n'y en a pas
+export const planSubjectFor = (questId, localKey) => {
+  if (questId === 'plan_culture') return CULTURE_SESSIONS[localKey] ?? null;
+  if (questId !== 'plan_maths' || localKey < PLAN_START || localKey > PLAN_END) return null;
+  const maths = (PLAN_SESSIONS[localKey] ?? []).find((t) => t.startsWith('🧮'));
+  if (!maths) {
+    return parseLocalKey(localKey).getDay() % 6 === 0 ? '🧮 Maths · Zetamac 2 min (calcul mental)' : null;
+  }
+  // Le thème devant le sujet, comme pour la culture : « 🧮 Graphes · Graphes bipartis »
+  const topic = maths.replace(/^🧮\s*/, '');
+  return topic.startsWith('Project Euler') ? `🧮 Maths · ${topic}` : `🧮 Graphes · ${topic}`;
+};
+
+// Titre de l'événement maths + culture de la version 1 du plan, remplacé par un titre court
+const legacyStudyTitle = (localKey, dayIndex) => {
+  const maths = (PLAN_SESSIONS[localKey] ?? []).find((t) => t.startsWith('🧮'));
+  return `${maths ?? (dayIndex >= 5 ? '🧮 Zetamac 2 min' : '🧮 Maths 15 min')} · 📚 Culture`;
+};
+
+// Titre de chaque occurrence : la séance du jour ; le soir, « 🧮 Maths · 🎷 Jazz » (le sujet
+// précis est dans les objectifs du jour)
 export const mergePlanOverrides = (prev) => {
   const next = { ...(prev ?? {}) };
   for (let d = parseLocalKey(PLAN_START); d <= parseLocalKey(PLAN_END); d.setDate(d.getDate() + 1)) {
@@ -245,14 +310,13 @@ export const mergePlanOverrides = (prev) => {
       const eventId = SESSION_EVENT_BY_EMOJI[[...text][0]];
       if (eventId) titles[eventId] = text;
     });
-    titles.plan_ev_study = `${titles.plan_ev_study ?? (dayIndex >= 5 ? '🧮 Zetamac 2 min' : '🧮 Maths 15 min')} · 📚 Culture`;
+    titles.plan_ev_study = `🧮 Maths · ${cultureTheme(localKey)}`;
     Object.entries(titles).forEach(([sessionEventId, title]) => {
-      const eventId =
-        sessionEventId === 'plan_ev_study' && ULTIMATE_DAYS.includes(dayIndex)
-          ? 'plan_ev_study_early'
-          : sessionEventId;
+      const isStudy = sessionEventId === 'plan_ev_study';
+      const eventId = isStudy && ULTIMATE_DAYS.includes(dayIndex) ? 'plan_ev_study_early' : sessionEventId;
       const key = `${eventId}|${plannerWeekKey(d)}|${dayIndex}`;
-      if (!next[key]) next[key] = { title };
+      const replaceLegacy = isStudy && next[key]?.title === legacyStudyTitle(localKey, dayIndex);
+      if (!next[key] || replaceLegacy) next[key] = { ...next[key], title };
     });
   }
   return next;
