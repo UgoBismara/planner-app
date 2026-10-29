@@ -10,9 +10,9 @@ export const ETATS = [
 ];
 
 export const STATUSES = [
-  { id: 'draft', label: '✏️ Brouillon' },
-  { id: 'ready', label: '📋 À publier' },
-  { id: 'published', label: '✓ En ligne' },
+  { id: 'draft', label: 'Brouillon' },
+  { id: 'ready', label: 'À publier' },
+  { id: 'published', label: 'En ligne' },
 ];
 
 export function statusOf(id) {

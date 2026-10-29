@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { IDEAS_KEY, IDEA_TYPES, ideaTypeOf, makeIdea } from '../../data/ideas';
+import { IdeaTypeIcon } from '../Icons';
 import './IdeasList.css';
 
 const FILTERS = [
   { id: 'all', label: 'Tout' },
-  { id: 'event', label: '📅 Événements' },
-  { id: 'goal', label: '🎯 Objectifs' },
-  { id: 'done', label: '✓ Réalisés' },
+  { id: 'event', label: 'Événements' },
+  { id: 'goal', label: 'Objectifs' },
+  { id: 'done', label: 'Réalisés' },
 ];
 
 export default function IdeasList() {
@@ -77,7 +78,8 @@ export default function IdeasList() {
               className={`ideas-type-btn${draftType === t.id ? ' active' : ''}`}
               onClick={() => setDraftType(t.id)}
             >
-              {t.icon} {t.label}
+              <IdeaTypeIcon id={t.id} size={15} />
+              {t.label}
             </button>
           ))}
         </div>
@@ -137,7 +139,7 @@ export default function IdeasList() {
                 className="ideas-item-type"
                 title={ideaTypeOf(idea.type).label}
               >
-                {ideaTypeOf(idea.type).icon}
+                <IdeaTypeIcon id={ideaTypeOf(idea.type).id} size={16} />
               </span>
 
               {editingId === idea.id ? (

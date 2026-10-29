@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
+import { CalendarCheck, Flame, Lock, Medal, Pencil, Ticket, TriangleAlert } from 'lucide-react';
 import { useLocalStorage, writeStoredValue } from '../../hooks/useLocalStorage';
+import { AchievementIcon, ChallengeKindIcon, DomainIcon, QuestTypeIcon } from '../Icons';
 import {
   QUESTS_KEY,
   QUEST_LOG_KEY,
@@ -17,7 +19,6 @@ import {
   typeOf,
   kindOf,
   hasSteps,
-  domainOf,
   makeQuest,
   dateKey,
   weekKeyOf,
@@ -264,24 +265,35 @@ export default function QuestsBoard() {
 
   const renderEditBtn = (q) => (
     <button className="quests-edit" onClick={() => openForm(q)} title="Modifier" aria-label="Modifier">
-      ✎
+      <Pencil size={14} />
     </button>
   );
 
   return (
     <div className="quests-board">
+      <h2 className="quests-page-title">Mes quêtes</h2>
+
       {/* ── Série, jokers, saison ── */}
       <div className="quests-stats">
         <div className="quests-stat">
-          <span className="quests-stat-value">🔥 {progress.streak}</span>
+          <span className="quests-stat-value">
+            <Flame size={18} className="quests-stat-icon" style={{ color: 'var(--warning)' }} aria-hidden="true" />
+            {progress.streak}
+          </span>
           <span className="quests-stat-label">série (record {progress.maxStreak})</span>
         </div>
         <div className="quests-stat">
-          <span className="quests-stat-value">🗓️ {progress.weekStreak}</span>
+          <span className="quests-stat-value">
+            <CalendarCheck size={18} className="quests-stat-icon" style={{ color: 'var(--accent)' }} aria-hidden="true" />
+            {progress.weekStreak}
+          </span>
           <span className="quests-stat-label">semaines réussies d’affilée</span>
         </div>
         <div className="quests-stat">
-          <span className="quests-stat-value">🃏 {progress.jokers}</span>
+          <span className="quests-stat-value">
+            <Ticket size={18} className="quests-stat-icon" style={{ color: '#BF5AF2' }} aria-hidden="true" />
+            {progress.jokers}
+          </span>
           <span className="quests-stat-label">1 joker / {DAYS_PER_JOKER} jours</span>
         </div>
         <div className="quests-stat">
@@ -295,15 +307,16 @@ export default function QuestsBoard() {
 
       {progress.missRun === 1 && !progress.todayValidated && (
         <p className="quests-warning">
-          ⚠️ Hier est raté : jamais deux fois de suite. Coche au moins les minimums aujourd’hui
+          <TriangleAlert size={15} className="quests-inline-icon" aria-hidden="true" />
+          Hier est raté : jamais deux fois de suite. Coche au moins les minimums aujourd’hui
           {progress.jokers > 0 ? ' (sinon un joker sera utilisé).' : '.'}
         </p>
       )}
 
       {importResult ? (
         <p className="quests-import-done">
-          ✓ Plan importé : {importResult.added} quête(s) créée(s). Tes séances sont dans 📅 Semaine :
-          coche ✓ un événement et la quête correspondante est comptée toute seule.
+          Plan importé : {importResult.added} quête(s) créée(s). Tes séances sont dans l’onglet Semaine :
+          coche un événement et la quête correspondante est comptée toute seule.
           {importResult.skipped.length > 0 &&
             ` Non ajoutées (plafond atteint) : ${importResult.skipped.join(', ')}.`}
         </p>
@@ -311,7 +324,7 @@ export default function QuestsBoard() {
         !isPlanImported(quests, recurring) && (
           <div className="quests-import">
             <div>
-              <div className="quests-import-title">📥 Plan Triathlon & Maths</div>
+              <div className="quests-import-title">Plan Triathlon & Maths</div>
               <div className="quests-item-sub">
                 {quests.some((q) => q.id.startsWith('plan_'))
                   ? `Mise à jour du plan : ${planMissingLabels(quests).join(', ') || 'planning ajusté'}. Rien de ce que tu as déjà n’est modifié.`
@@ -327,9 +340,9 @@ export default function QuestsBoard() {
 
       {quests.length === 0 && !draft && (
         <p className="quests-empty">
-          Quatre sortes de quêtes : ✅ une case à cocher chaque jour, 🔁 un objectif à faire
-          plusieurs fois par semaine, 🎯 un challenge (défi du mois ou long terme), 🌱 une
-          habitude à mettre en place quand tu te sens prêt.
+          Quatre sortes de quêtes : une case à cocher chaque jour, un objectif à faire plusieurs
+          fois par semaine, un challenge (défi du mois ou long terme) et une habitude à mettre
+          en place quand tu te sens prêt.
         </p>
       )}
 
@@ -337,19 +350,22 @@ export default function QuestsBoard() {
       {daily.length > 0 && (
         <section className="quests-section">
           <div className="quests-header">
-            <h2 className="quests-title">✅ Chaque jour</h2>
+            <h2 className="quests-title">
+              <QuestTypeIcon id="daily" size={18} />
+              Chaque jour
+            </h2>
             <span className="quests-count">
               {progress.todayValidated ? '✓ Journée validée' : `${doneCount}/${daily.length} aujourd’hui`}
             </span>
           </div>
-          <p className="quests-hint">Se cochent en haut de 📅 Semaine, une case par jour (deuxième touche : minimum). Un minimum suffit à valider la journée.</p>
+          <p className="quests-hint">Se cochent en haut de l’onglet Semaine, une case par jour (deuxième touche : minimum). Un minimum suffit à valider la journée.</p>
           <ul className="quests-items">
             {daily.map((q) => {
               const installed = installedDays(q, log);
               return (
                 <li key={q.id} className={`quests-item${today.done[q.id] ? ' done' : ''}`}>
                   <div className="quests-item-head">
-                    <span className="quests-item-domain">{domainOf(q.domain).icon}</span>
+                    <DomainIcon id={q.domain} size={16} className="quests-item-domain" />
                     <span className="quests-item-label">{q.label}</span>
                     {today.done[q.id] && <span className="quests-item-status">✓</span>}
                     {renderEditBtn(q)}
@@ -357,7 +373,10 @@ export default function QuestsBoard() {
                   {q.minimum && <div className="quests-item-sub">Minimum : {q.minimum}</div>}
                   {typeOf(q) === 'habit' &&
                     (isAcquired(q, log) ? (
-                      <div className="quests-item-sub quests-acquired">🏅 Habitude acquise</div>
+                      <div className="quests-item-sub quests-acquired">
+                        <Medal size={14} className="quests-inline-icon" aria-hidden="true" />
+                        Habitude acquise
+                      </div>
                     ) : (
                       <div className="quests-progress">
                         <div className="quests-progress-bar">
@@ -367,7 +386,7 @@ export default function QuestsBoard() {
                           />
                         </div>
                         <span className="quests-progress-label">
-                          🌱 {installed}/{INSTALL_DAYS} jours
+                          {installed}/{INSTALL_DAYS} jours
                         </span>
                       </div>
                     ))}
@@ -382,13 +401,16 @@ export default function QuestsBoard() {
       {weekly.length > 0 && (
         <section className="quests-section">
           <div className="quests-header">
-            <h2 className="quests-title">🔁 Chaque semaine</h2>
+            <h2 className="quests-title">
+              <QuestTypeIcon id="weekly" size={18} />
+              Chaque semaine
+            </h2>
             <span className="quests-count">
               {progress.currentWeekSucceeded ? '✓ Semaine réussie' : 'Cette semaine'}
             </span>
           </div>
           <p className="quests-hint">
-            Se cochent en haut de 📅 Semaine, avec jusqu’à 2 objectifs précis propres à la semaine.
+            Se cochent en haut de l’onglet Semaine, avec jusqu’à 2 objectifs précis propres à la semaine.
           </p>
           <ul className="quests-items">
             {weekly.map((q) => {
@@ -397,7 +419,7 @@ export default function QuestsBoard() {
               return (
                 <li key={q.id} className={`quests-item${count >= target ? ' done' : ''}`}>
                   <div className="quests-item-head">
-                    <span className="quests-item-domain">{domainOf(q.domain).icon}</span>
+                    <DomainIcon id={q.domain} size={16} className="quests-item-domain" />
                     <span className="quests-item-label">{q.label}</span>
                     <span className="quests-item-sub">
                       {count}/{target} cette semaine
@@ -422,7 +444,10 @@ export default function QuestsBoard() {
       {waiting.length > 0 && (
         <section className="quests-section">
           <div className="quests-header">
-            <h2 className="quests-title">🌱 À mettre en place</h2>
+            <h2 className="quests-title">
+              <QuestTypeIcon id="habit" size={18} />
+              À mettre en place
+            </h2>
             <span className="quests-count">{waiting.length} en attente</span>
           </div>
           <p className="quests-hint">
@@ -432,7 +457,7 @@ export default function QuestsBoard() {
             {waiting.map((q) => (
               <li key={q.id} className="quests-item">
                 <div className="quests-item-head">
-                  <span className="quests-item-domain">{domainOf(q.domain).icon}</span>
+                  <DomainIcon id={q.domain} size={16} className="quests-item-domain" />
                   <span className="quests-item-label">{q.label}</span>
                   {renderEditBtn(q)}
                   <button
@@ -470,7 +495,8 @@ export default function QuestsBoard() {
                     className={`quests-type-btn${draft.type === t.id ? ' active' : ''}`}
                     onClick={() => setDraft({ ...draft, type: t.id })}
                   >
-                    {t.icon} {t.label}
+                    <QuestTypeIcon id={t.id} size={15} />
+                    {t.label}
                   </button>
                 ))}
               </div>
@@ -485,7 +511,8 @@ export default function QuestsBoard() {
                         className={`quests-domain-btn${draft.kind === k.id ? ' active' : ''}`}
                         onClick={() => setDraft({ ...draft, kind: k.id })}
                       >
-                        {k.icon} {k.label}
+                        <ChallengeKindIcon id={k.id} size={15} />
+                        {k.label}
                       </button>
                     ))}
                   </div>
@@ -519,7 +546,8 @@ export default function QuestsBoard() {
                 onClick={() => setDraft({ ...draft, domain: d.id })}
                 title={d.label}
               >
-                {d.icon} {d.label}
+                <DomainIcon id={d.id} size={15} />
+                {d.label}
               </button>
             ))}
           </div>
@@ -604,7 +632,7 @@ export default function QuestsBoard() {
           {!editingId && typeFull(draft.type, draft.kind) && (
             <p className="quests-cap">
               {draft.type === 'daily'
-                ? `Déjà ${MAX_DAILY} quêtes quotidiennes : mets plutôt celle-ci en 🌱 À mettre en place.`
+                ? `Déjà ${MAX_DAILY} quêtes quotidiennes : mets plutôt celle-ci dans « À mettre en place ».`
                 : draft.type === 'weekly'
                   ? `Déjà ${MAX_WEEKLY} quêtes hebdomadaires : garde de la place pour tenir celles-là.`
                   : `Déjà ${MAX_LONG} challenges long terme en cours : termine ou archive-en un d’abord.`}
@@ -656,7 +684,9 @@ export default function QuestsBoard() {
           const isUnlocked = unlocked.includes(a);
           return (
             <li key={a.id} className={`quests-achievement${isUnlocked ? ' unlocked' : ''}`}>
-              <span className="quests-achievement-icon">{isUnlocked ? a.icon : '🔒'}</span>
+              <span className="quests-achievement-icon">
+                {isUnlocked ? <AchievementIcon id={a.id} size={20} /> : <Lock size={18} aria-hidden="true" />}
+              </span>
               <div>
                 <div className="quests-achievement-title">{a.title}</div>
                 <div className="quests-achievement-desc">{a.description}</div>

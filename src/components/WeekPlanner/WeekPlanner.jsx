@@ -27,12 +27,20 @@ import {
   computeProgress,
   typeOf as questTypeOf,
   isDailyQuest,
-  domainOf,
 } from "../../data/quests";
 import EventTypeLegend from "./EventTypeLegend";
 import { eventColor, eventLabel, eventTypeId } from "../../data/eventTypes";
 import WeekQuests from "../Quests/WeekQuests";
 import RescheduleModal from "./RescheduleModal";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Pin,
+  Search,
+  TriangleAlert,
+} from "lucide-react";
+import { QuestTypeIcon } from "../Icons";
 import "./WeekPlanner.css";
 
 function getWeekKeyForDate(date) {
@@ -120,16 +128,18 @@ function formatMonthYear(date) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+// Titre de la semaine (relatif quand c'est parlant) et ses dates en sous-titre
 function formatWeekLabel(weekOffset) {
   const days = getDaysOfWeek(weekOffset);
-  const first = days[0];
-  const last = days[6];
   const fmt = (d) =>
     d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
-  if (weekOffset === 0) return `Cette semaine (${fmt(first)} – ${fmt(last)})`;
-  if (weekOffset === -1) return `Semaine dernière`;
-  if (weekOffset === 1) return `Semaine prochaine`;
-  return `${fmt(first)} – ${fmt(last)}`;
+  const range = `${fmt(days[0])} – ${fmt(days[6])}`;
+  const relative = {
+    0: "Cette semaine",
+    [-1]: "Semaine dernière",
+    1: "Semaine prochaine",
+  }[weekOffset];
+  return { title: relative ?? range, range: relative ? range : null };
 }
 
 function getDefaultRecurring() {
@@ -1926,23 +1936,34 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   // ── Objectifs du jour reliés au bandeau ────────────────────────
   // Ce qu un objectif du jour peut faire avancer : quêtes du jour et de la semaine
   // (questIds, comptées comme par un événement) et objectifs précis (weekGoalIds).
+  // kind choisit l'icône : case du jour, quête hebdo ou objectif précis.
   const goalLinkOptions = (i) => [
     ...dailyQuestsOn(quests, questDayKeys[i]).map((q) => ({
       id: q.id,
       field: "questIds",
-      label: `${domainOf(q.domain).icon} ${q.label}`,
+      kind: "daily",
+      label: q.label,
     })),
     ...weeklyQuests.map((q) => ({
       id: q.id,
       field: "questIds",
-      label: `🔁 ${q.label}`,
+      kind: "weekly",
+      label: q.label,
     })),
     ...questWeek.goals.map((g) => ({
       id: g.id,
       field: "weekGoalIds",
-      label: `📌 ${g.label}`,
+      kind: "goal",
+      label: g.label,
     })),
   ];
+
+  const renderLinkIcon = (kind) =>
+    kind === "goal" ? (
+      <Pin size={12} style={{ color: "var(--warning)" }} aria-hidden="true" />
+    ) : (
+      <QuestTypeIcon id={kind} size={12} />
+    );
 
   const goalLinks = (goal) => [
     ...(goal.questIds ?? []),
@@ -2010,6 +2031,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               onClick={() => toggle(o)}
               aria-pressed={active}
             >
+              {renderLinkIcon(o.kind)}
               {o.label}
             </button>
           );
@@ -2268,32 +2290,58 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     setMobileView("day");
   };
 
+  const weekLabel = formatWeekLabel(weekOffset);
+
   return (
     <div
       className={`week-planner${mobileView === "month" ? " month-view" : ""}`}
     >
       <div className="week-nav">
+        <h2 className="week-label">
+          {weekLabel.title}
+          {weekLabel.range && (
+            <span className="week-label-range">{weekLabel.range}</span>
+          )}
+        </h2>
         <div className="week-nav-controls">
-          <button
-            onClick={() => setWeekOffset((o) => o - 1)}
-            disabled={weekOffset <= minWeekOffset}
-          >
-            ← Précédente
-          </button>
-          <span className="week-label">{formatWeekLabel(weekOffset)}</span>
-          <button onClick={() => setWeekOffset((o) => o + 1)}>
-            Suivante →
-          </button>
+          {weekOffset !== 0 && (
+            <button
+              className="week-nav-btn week-nav-today"
+              onClick={() => setWeekOffset(0)}
+            >
+              Aujourd'hui
+            </button>
+          )}
+          <div className="week-nav-stepper">
+            <button
+              className="week-nav-btn"
+              onClick={() => setWeekOffset((o) => o - 1)}
+              disabled={weekOffset <= minWeekOffset}
+              title="Semaine précédente"
+              aria-label="Semaine précédente"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              className="week-nav-btn"
+              onClick={() => setWeekOffset((o) => o + 1)}
+              title="Semaine suivante"
+              aria-label="Semaine suivante"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
           <div className="mini-cal-wrapper">
             <button
-              className="mini-cal-toggle"
+              className="week-nav-btn mini-cal-toggle"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMiniCal((v) => !v);
               }}
               title="Aller à une date"
+              aria-label="Aller à une date"
             >
-              📅
+              <CalendarDays size={17} />
             </button>
             {showMiniCal && (
               <MiniCalendar
@@ -2304,43 +2352,24 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             )}
           </div>
           <button
-            className="week-nav-search"
+            className="week-nav-btn week-nav-search"
             onClick={() => setShowSearch(true)}
             title="Rechercher un événement"
+            aria-label="Rechercher un événement"
           >
-            🔍
-          </button>
-          <button
-            className="week-nav-today"
-            onClick={() => setWeekOffset(0)}
-            style={{ visibility: weekOffset !== 0 ? "visible" : "hidden" }}
-          >
-            Aujourd'hui
+            <Search size={17} />
           </button>
         </div>
       </div>
 
       {/* Header iOS mobile */}
       <div className="mobile-week-header">
-        <button
-          className="mobile-week-arrow"
-          onClick={() =>
-            mobileView === "day"
-              ? setWeekOffset((o) => o - 1)
-              : setMobileMonthDate(
-                  (d) => new Date(d.getFullYear(), d.getMonth() - 1, 1),
-                )
-          }
-          disabled={mobileView === "day" && weekOffset <= minWeekOffset}
-        >
-          ‹
-        </button>
-        <div className="mobile-header-center">
-          <span className="mobile-month-label">
-            {mobileView === "day"
-              ? getMobileMonthLabel(weekOffset)
-              : formatMonthYear(mobileMonthDate)}
-          </span>
+        <span className="mobile-month-label">
+          {mobileView === "day"
+            ? getMobileMonthLabel(weekOffset)
+            : formatMonthYear(mobileMonthDate)}
+        </span>
+        <div className="mobile-header-actions">
           <div className="mobile-view-toggle">
             <button
               className={`mobile-view-btn${mobileView === "day" ? " active" : ""}`}
@@ -2361,26 +2390,44 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               Mois
             </button>
           </div>
+          <button
+            className="week-nav-btn mobile-header-search"
+            onClick={() => setShowSearch(true)}
+            title="Rechercher un événement"
+            aria-label="Rechercher un événement"
+          >
+            <Search size={17} />
+          </button>
+          <div className="week-nav-stepper">
+            <button
+              className="week-nav-btn"
+              onClick={() =>
+                mobileView === "day"
+                  ? setWeekOffset((o) => o - 1)
+                  : setMobileMonthDate(
+                      (d) => new Date(d.getFullYear(), d.getMonth() - 1, 1),
+                    )
+              }
+              disabled={mobileView === "day" && weekOffset <= minWeekOffset}
+              aria-label={mobileView === "day" ? "Semaine précédente" : "Mois précédent"}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              className="week-nav-btn"
+              onClick={() =>
+                mobileView === "day"
+                  ? setWeekOffset((o) => o + 1)
+                  : setMobileMonthDate(
+                      (d) => new Date(d.getFullYear(), d.getMonth() + 1, 1),
+                    )
+              }
+              aria-label={mobileView === "day" ? "Semaine suivante" : "Mois suivant"}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
-        <button
-          className="mobile-header-search"
-          onClick={() => setShowSearch(true)}
-          title="Rechercher un événement"
-        >
-          🔍
-        </button>
-        <button
-          className="mobile-week-arrow"
-          onClick={() =>
-            mobileView === "day"
-              ? setWeekOffset((o) => o + 1)
-              : setMobileMonthDate(
-                  (d) => new Date(d.getFullYear(), d.getMonth() + 1, 1),
-                )
-          }
-        >
-          ›
-        </button>
       </div>
 
       <WeekQuests
@@ -2461,7 +2508,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     className="overlap-badge"
                     title="Des événements se superposent sur ce jour"
                   >
-                    ⚠
+                    <TriangleAlert size={13} aria-hidden="true" />
                   </span>
                 )}
                 <button
@@ -3110,6 +3157,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     >
                       <div className="goal-group-head">
                         <span className="goal-group-label">
+                          {renderLinkIcon(block.target.kind)}
                           {block.target.label}
                         </span>
                         <span className="goal-group-count">

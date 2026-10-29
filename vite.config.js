@@ -26,7 +26,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Police : seuls les sous-ensembles latins servent au français
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}', '**/inter-latin*-wght-normal-*.woff2'],
       },
     }),
   ],

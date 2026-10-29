@@ -14,8 +14,16 @@
 
 .journal-title {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
+}
+
+/* « Cette semaine, j'ai fait… » : titre de section, pas de page */
+.journal-feed-header .journal-title {
+  font-size: 1.1rem;
+  letter-spacing: -0.015em;
 }
 
 .journal-week {
@@ -44,7 +52,7 @@
   min-width: 0;
   padding: 0.55rem 0.7rem;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--bg-main);
   color: var(--text-primary);
   font-family: inherit;
@@ -70,7 +78,7 @@
 .journal-danger-btn {
   flex-shrink: 0;
   padding: 0.5rem 0.9rem;
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 700;
@@ -84,11 +92,17 @@
 }
 
 .journal-primary-btn:disabled {
-  opacity: 0.35;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  box-shadow: none;
+  opacity: 1;
   cursor: not-allowed;
 }
 
 .journal-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-secondary);
@@ -107,6 +121,8 @@
 }
 
 .journal-edit-btn {
+  display: inline-grid;
+  place-items: center;
   flex-shrink: 0;
   width: 26px;
   height: 26px;
@@ -174,7 +190,7 @@
   padding: 0.75rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .journal-victory {
@@ -199,11 +215,11 @@
   padding: 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .journal-project.reached {
-  border-color: #d69e2e;
+  border-color: var(--gold);
 }
 
 .journal-project-head {
@@ -213,7 +229,14 @@
 }
 
 .journal-project-icon {
+  display: inline-flex;
   font-size: 1.1rem;
+}
+
+.journal-inline-icon {
+  margin-right: 0.3rem;
+  vertical-align: -2px;
+  color: var(--gold);
 }
 
 .journal-project-label {
@@ -240,7 +263,7 @@
 
 .journal-bar-fill {
   height: 100%;
-  background: #48bb78;
+  background: var(--success);
   transition: width 0.3s;
 }
 
@@ -257,10 +280,10 @@
 .journal-plus-btn {
   flex-shrink: 0;
   padding: 0.35rem 0.75rem;
-  border: 1.5px solid #48bb78;
+  border: 1.5px solid var(--success);
   border-radius: 999px;
   background: transparent;
-  color: #48bb78;
+  color: var(--success);
   font-family: inherit;
   font-size: 0.8rem;
   font-weight: 700;
@@ -268,7 +291,7 @@
 }
 
 .journal-plus-btn:hover {
-  background: #48bb78;
+  background: var(--success);
   color: #fff;
 }
 
@@ -307,7 +330,7 @@
   margin-bottom: 1.25rem;
   padding: 0.6rem 1rem;
   border: 1.5px dashed var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
@@ -350,7 +373,7 @@
   padding: 0.45rem 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-size: 0.85rem;
   color: var(--text-primary);
 }
@@ -404,7 +427,7 @@
   padding: 0.45rem 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .journal-entry-text {
@@ -467,8 +490,8 @@
   margin-bottom: 1rem;
   padding: 0.75rem;
   background: var(--bg-card);
-  border: 1.5px dashed #48bb78;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
 .journal-suggest > div {
@@ -533,7 +556,7 @@
 }
 
 .journal-step input {
-  accent-color: #48bb78;
+  accent-color: var(--success);
 }
 
 .journal-step.done {

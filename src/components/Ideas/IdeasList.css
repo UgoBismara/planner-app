@@ -14,7 +14,9 @@
 
 .ideas-title {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
 }
 
@@ -27,7 +29,7 @@
 .ideas-form {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -40,9 +42,13 @@
 
 .ideas-type-btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.5rem 0.4rem;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--bg-main);
   color: var(--text-secondary);
   font-family: inherit;
@@ -68,7 +74,7 @@
   min-width: 0;
   padding: 0.6rem 0.7rem;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--bg-main);
   color: var(--text-primary);
   font-family: inherit;
@@ -84,7 +90,7 @@
   flex-shrink: 0;
   padding: 0.6rem 1rem;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--accent);
   color: #fff;
   font-family: inherit;
@@ -94,7 +100,10 @@
 }
 
 .ideas-add-btn:disabled {
-  opacity: 0.35;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  box-shadow: none;
+  opacity: 1;
   cursor: not-allowed;
 }
 
@@ -149,7 +158,7 @@
   padding: 0.65rem 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .ideas-item.done {
@@ -178,8 +187,8 @@
 }
 
 .ideas-item-type {
+  display: inline-flex;
   flex-shrink: 0;
-  font-size: 0.95rem;
 }
 
 .ideas-item-text {

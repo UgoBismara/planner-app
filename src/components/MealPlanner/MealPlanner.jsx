@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { Ban, ChevronLeft, ChevronRight, Copy, Droplet, Undo2 } from 'lucide-react';
 import './MealPlanner.css';
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -31,6 +32,8 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   const [skippedMeals, setSkippedMeals] = useLocalStorage(`planner_skipped_${mealsKey}`, {});
   const [waterLog, setWaterLog] = useLocalStorage(`planner_water_${mealsKey}`, {});
   const [clipboard, setClipboard] = useState(null); // { text, label }
+  // Téléphone : un seul jour affiché à la fois, aujourd'hui par défaut
+  const [mobileDay, setMobileDay] = useState(() => (new Date().getDay() + 6) % 7);
 
   const WATER_GOAL = 2000;
   const getWater = (dayIndex) => waterLog[dayIndex] || 0;
@@ -77,6 +80,18 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
     setClipboard(null);
   };
 
+  // Date du i-ème jour (0 = lundi) de la semaine affichée
+  const dayDate = (i) => {
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7) + weekOffset * 7);
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    return date;
+  };
+
+  const isTodayCol = (i) => weekOffset === 0 && i === (new Date().getDay() + 6) % 7;
+
   const plannedCount = DAY_NAMES.reduce((sum, _, i) => (
     sum + MEAL_ORDER.filter((mt) => !!skippedMeals[mk(i, mt)] || !!getMealText(i, mt)).length
   ), 0);
@@ -84,9 +99,32 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
   return (
     <div className="meal-planner">
       <div className="week-nav">
-        <button onClick={() => setWeekOffset((o) => o - 1)}>← Précédente</button>
-        <span className="week-label">{formatWeekLabel()}</span>
-        <button onClick={() => setWeekOffset((o) => o + 1)}>Suivante →</button>
+        <h2 className="week-label">{formatWeekLabel()}</h2>
+        <div className="week-nav-controls">
+          {weekOffset !== 0 && (
+            <button className="week-nav-btn week-nav-today" onClick={() => setWeekOffset(0)}>
+              Aujourd'hui
+            </button>
+          )}
+          <div className="week-nav-stepper">
+            <button
+              className="week-nav-btn"
+              onClick={() => setWeekOffset((o) => o - 1)}
+              title="Semaine précédente"
+              aria-label="Semaine précédente"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              className="week-nav-btn"
+              onClick={() => setWeekOffset((o) => o + 1)}
+              title="Semaine suivante"
+              aria-label="Semaine suivante"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="week-progress-bar">
@@ -101,22 +139,34 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
 
       {clipboard && (
         <div className="meal-clipboard-bar">
-          <span>📋 Copié : <strong>{clipboard.label}</strong> — clique sur un repas pour coller</span>
+          <span>Copié : <strong>{clipboard.label}</strong> — clique sur un repas pour coller</span>
           <button className="meal-clipboard-cancel" onClick={() => setClipboard(null)}>✕ Annuler</button>
         </div>
       )}
 
+      {/* Téléphone : sélecteur de jour, le même que dans la Semaine */}
+      <div className="mobile-day-tabs meal-day-tabs">
+        {DAY_NAMES.map((dayName, i) => (
+          <button
+            key={i}
+            className={`mobile-day-tab${mobileDay === i ? ' active' : ''}${isTodayCol(i) ? ' today' : ''}`}
+            onClick={() => setMobileDay(i)}
+          >
+            <span className="tab-day-name">{dayName.charAt(0)}</span>
+            <span className="tab-day-num">{dayDate(i).getDate()}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="meals-grid">
         {DAY_NAMES.map((dayName, i) => {
-          const now = new Date();
-          const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
-          const monday = new Date(now);
-          monday.setDate(now.getDate() - dow + weekOffset * 7);
-          const colDate = new Date(monday);
-          colDate.setDate(monday.getDate() + i);
-          const isToday = weekOffset === 0 && i === (now.getDay() + 6) % 7;
+          const colDate = dayDate(i);
+          const isToday = isTodayCol(i);
           return (
-            <div key={i} className={`meal-day${isToday ? ' meal-day-today' : ''}`}>
+            <div
+              key={i}
+              className={`meal-day${isToday ? ' meal-day-today' : ''}${mobileDay === i ? ' mobile-active' : ''}`}
+            >
               <div className="meal-day-name">
                 {dayName}
                 <span className="meal-day-date">{colDate.getDate()}</span>
@@ -135,8 +185,9 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                             className="meal-slot-copy-btn"
                             onClick={() => copyMeal(i, mealType)}
                             title="Copier ce repas"
+                            aria-label="Copier ce repas"
                           >
-                            📋
+                            <Copy size={13} />
                           </button>
                         )}
                         <button
@@ -144,7 +195,7 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
                           onClick={() => toggleSkip(i, mealType)}
                           title={skipped ? 'Reprendre ce repas' : 'Sauter ce repas'}
                         >
-                          {skipped ? '↩' : '⊘'}
+                          {skipped ? <Undo2 size={13} /> : <Ban size={13} />}
                         </button>
                       </div>
                     </div>
@@ -168,7 +219,7 @@ export default function MealPlanner({ weekOffset, setWeekOffset }) {
               })}
               <div className={`water-tracker${getWater(i) >= WATER_GOAL ? ' water-tracker-done' : ''}`}>
                 <div className="water-header">
-                  <span className="water-icon">💧</span>
+                  <Droplet size={15} className="water-icon" aria-hidden="true" />
                   <span className="water-amount">
                     {getWater(i) >= 1000
                       ? `${(getWater(i) / 1000).toFixed(getWater(i) % 1000 === 0 ? 0 : 1)} L`

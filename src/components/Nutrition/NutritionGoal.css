@@ -14,8 +14,9 @@
 }
 
 .ng-form-title {
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 700;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
   margin: 0;
 }
@@ -73,7 +74,7 @@
 .ng-toggle-btn.active {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(79, 142, 247, 0.1);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   font-weight: 700;
 }
 
@@ -98,7 +99,7 @@
 
 .ng-activity-btn.active {
   border-color: var(--accent);
-  background: rgba(79, 142, 247, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .ng-activity-label {
@@ -135,7 +136,7 @@
 
 .ng-diet-btn.active {
   border-color: var(--accent);
-  background: rgba(79, 142, 247, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .ng-diet-name {
@@ -156,7 +157,7 @@
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius);
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 700;
@@ -210,7 +211,7 @@
 .ng-metric {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
@@ -246,7 +247,7 @@
 .ng-macro-targets {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
 }
 
@@ -264,15 +265,15 @@
   border: 1px solid;
 }
 
-.ng-chip-carbs   { color: #e09a3a; border-color: #e09a3a; background: rgba(224,154,58,0.1); }
-.ng-chip-fat     { color: #e05a7a; border-color: #e05a7a; background: rgba(224,90,122,0.1); }
-.ng-chip-protein { color: #4fbf8a; border-color: #4fbf8a; background: rgba(79,191,138,0.1); }
+.ng-chip-carbs   { color: #FF9F0A; border-color: #FF9F0A; background: color-mix(in srgb, #FF9F0A 12%, transparent); }
+.ng-chip-fat     { color: #FF375F; border-color: #FF375F; background: color-mix(in srgb, #FF375F 12%, transparent); }
+.ng-chip-protein { color: var(--success); border-color: var(--success); background: color-mix(in srgb, var(--success) 10%, transparent); }
 
 /* ── Suivi du jour ── */
 .ng-today-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
@@ -308,7 +309,7 @@
   font-size: 0.88rem;
 }
 
-.ng-remain { color: #4fbf8a; }
+.ng-remain { color: var(--success); }
 .ng-over   { color: var(--danger); }
 
 .ng-bar-track {
@@ -349,7 +350,7 @@
 }
 
 /* ── Eau ── */
-.ng-over-water { color: #4abde8; }
+.ng-over-water { color: #64D2FF; }
 
 .ng-water-btns {
   display: flex;
@@ -370,7 +371,7 @@
   transition: all 0.12s;
 }
 
-.ng-water-btn:hover:not(:disabled) { border-color: #4abde8; color: #4abde8; }
+.ng-water-btn:hover:not(:disabled) { border-color: #64D2FF; color: #64D2FF; }
 .ng-water-sub:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
 .ng-water-btn:disabled { opacity: 0.3; cursor: default; }
 
@@ -378,7 +379,7 @@
 .ng-weekly-recap {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
 }
 
@@ -416,12 +417,12 @@
 }
 
 .ng-weekly-cell.ng-today-col {
-  background: rgba(79, 142, 247, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
-.ng-check-ok   { color: #4fbf8a; }
-.ng-check-low  { color: #e09a3a; }
-.ng-check-high { color: #e05a7a; }
+.ng-check-ok   { color: var(--success); }
+.ng-check-low  { color: #FF9F0A; }
+.ng-check-high { color: #FF375F; }
 .ng-check-none { color: var(--text-secondary); opacity: 0.4; }
 
 .ng-weekly-legend {
@@ -435,7 +436,7 @@
 .ng-history {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
@@ -486,9 +487,9 @@
   border: 1px solid;
 }
 
-.ng-hscore-good  { color: #4fbf8a; border-color: #4fbf8a; background: rgba(79,191,138,0.1);  }
-.ng-hscore-mid   { color: #e09a3a; border-color: #e09a3a; background: rgba(224,154,58,0.1);  }
-.ng-hscore-low   { color: #e05a7a; border-color: #e05a7a; background: rgba(224,90,122,0.1);  }
+.ng-hscore-good  { color: var(--success); border-color: var(--success); background: color-mix(in srgb, var(--success) 10%, transparent);  }
+.ng-hscore-mid   { color: #FF9F0A; border-color: #FF9F0A; background: color-mix(in srgb, #FF9F0A 12%, transparent);  }
+.ng-hscore-low   { color: #FF375F; border-color: #FF375F; background: color-mix(in srgb, #FF375F 12%, transparent);  }
 
 .ng-history-chevron {
   font-size: 0.65rem;

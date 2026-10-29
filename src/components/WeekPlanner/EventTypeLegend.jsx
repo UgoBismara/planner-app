@@ -5,7 +5,7 @@ import { EVENT_TYPES, formatDuration } from '../../data/eventTypes';
 export default function EventTypeLegend({ minutesByType, highlighted, onHighlight }) {
   const entries = [
     ...EVENT_TYPES.map((t) => ({ ...t, minutes: minutesByType[t.id] ?? 0 })),
-    { id: 'none', label: 'Sans type', icon: '', color: '#8b90a8', minutes: minutesByType.none ?? 0 },
+    { id: 'none', label: 'Sans type', color: '#636366', minutes: minutesByType.none ?? 0 },
   ].filter((t) => t.id !== 'none' || t.minutes > 0);
 
   return (
@@ -18,7 +18,7 @@ export default function EventTypeLegend({ minutesByType, highlighted, onHighligh
           onClick={() => onHighlight(highlighted === t.id ? null : t.id)}
           title={highlighted === t.id ? 'Tout afficher' : `Mettre en avant : ${t.label}`}
         >
-          {t.icon ? <span className="type-legend-icon">{t.icon}</span> : <span className="type-legend-dot" />}
+          <span className="type-legend-dot" />
           {t.label}
           {t.minutes > 0 && <span className="type-legend-time">{formatDuration(t.minutes)}</span>}
         </button>

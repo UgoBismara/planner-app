@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { Clock, Trophy } from 'lucide-react';
 import {
   MAX_LONG,
   typeOf,
   kindOf,
   hasSteps,
-  domainOf,
   dateKey,
   monthKeyOf,
   monthLabel,
@@ -13,6 +13,7 @@ import {
   challengeStatus,
   daysLeft,
 } from '../../data/quests';
+import { ChallengeKindIcon, DomainIcon } from '../Icons';
 
 const fmt = (n) => Number(n.toFixed(2)).toLocaleString('fr-FR');
 
@@ -162,7 +163,11 @@ export default function ChallengesSection({ quests, updateQuest, onEdit, onNew }
   const renderChallenge = (q, status, { featuredCard = false } = {}) => (
     <li key={q.id} className={`quests-item${featuredCard ? ' challenge-featured' : ''}${status === 'done' ? ' done' : ''}`}>
       <div className="quests-item-head">
-        <span className="quests-item-domain">{status === 'done' ? '🏆' : domainOf(q.domain).icon}</span>
+        {status === 'done' ? (
+          <Trophy size={16} className="quests-item-domain" style={{ color: 'var(--gold)' }} aria-hidden="true" />
+        ) : (
+          <DomainIcon id={q.domain} size={16} className="quests-item-domain" />
+        )}
         <span className="quests-item-label">{q.label}</span>
         {q.deadline && status !== 'done' && (
           <span className="quests-item-sub" title={`Échéance : ${formatDeadline(q.deadline)}`}>
@@ -183,7 +188,10 @@ export default function ChallengesSection({ quests, updateQuest, onEdit, onNew }
       {/* ── Défi du mois ── */}
       <section className="quests-section">
         <div className="quests-header">
-          <h2 className="quests-title">⭐ Défi de {monthLabel(currentMonth)}</h2>
+          <h2 className="quests-title">
+            <ChallengeKindIcon id="monthly" size={18} />
+            Défi de {monthLabel(currentMonth)}
+          </h2>
           {upcoming.length > 0 && (
             <span className="quests-count">
               À venir : {upcoming.map(({ q }) => `${monthLabel(q.month)}, ${q.label}`).join(' · ')}
@@ -206,13 +214,16 @@ export default function ChallengesSection({ quests, updateQuest, onEdit, onNew }
       {expired.length > 0 && (
         <section className="quests-section">
           <div className="quests-header">
-            <h2 className="quests-title">⏰ Échéance passée</h2>
+            <h2 className="quests-title">
+              <Clock size={18} style={{ color: 'var(--warning)' }} aria-hidden="true" />
+              Échéance passée
+            </h2>
           </div>
           <ul className="quests-items">
             {expired.map(({ q }) => (
               <li key={q.id} className="quests-item challenge-expired">
                 <div className="quests-item-head">
-                  <span className="quests-item-domain">{domainOf(q.domain).icon}</span>
+                  <DomainIcon id={q.domain} size={16} className="quests-item-domain" />
                   <span className="quests-item-label">{q.label}</span>
                   <span className="quests-item-sub">{formatDeadline(q.deadline)}</span>
                 </div>
@@ -256,7 +267,10 @@ export default function ChallengesSection({ quests, updateQuest, onEdit, onNew }
       {/* ── Long terme ── */}
       <section className="quests-section">
         <div className="quests-header">
-          <h2 className="quests-title">🏔️ Long terme</h2>
+          <h2 className="quests-title">
+            <ChallengeKindIcon id="long" size={18} />
+            Long terme
+          </h2>
         </div>
         {long.length > 0 && (
           <ul className="quests-items">{long.map(({ q, status }) => renderChallenge(q, status))}</ul>
@@ -276,7 +290,10 @@ export default function ChallengesSection({ quests, updateQuest, onEdit, onNew }
       {trophies.length > 0 && (
         <section className="quests-section">
           <div className="quests-header">
-            <h2 className="quests-title">🏆 Vitrine</h2>
+            <h2 className="quests-title">
+              <Trophy size={18} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              Vitrine
+            </h2>
             <span className="quests-count">
               {trophies.filter(({ status }) => status === 'done').length} réussi(s)
             </span>
@@ -284,7 +301,11 @@ export default function ChallengesSection({ quests, updateQuest, onEdit, onNew }
           <ul className="challenge-trophies">
             {trophies.map(({ q, status }) => (
               <li key={q.id} className={`challenge-trophy${status === 'done' ? ' done' : ''}`}>
-                <span>{status === 'done' ? '🏆' : '🎗️'}</span>
+                <Trophy
+                  size={15}
+                  style={{ color: status === 'done' ? 'var(--gold)' : 'var(--text-tertiary)' }}
+                  aria-hidden="true"
+                />
                 <span className="challenge-trophy-label">
                   {kindOf(q) === 'monthly' && q.month ? `${monthLabel(q.month)} · ` : ''}
                   {q.label}

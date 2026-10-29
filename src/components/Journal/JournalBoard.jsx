@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Pause, Pencil, Play, Sparkles, Trophy } from 'lucide-react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import {
   PROJECTS_KEY,
@@ -250,15 +251,18 @@ export default function JournalBoard() {
             {projectOf(editing.id)?.status === 'active' ? (
               <>
                 <button type="button" className="journal-ghost-btn" onClick={() => setStatus(editing.id, 'paused')}>
-                  ⏸ En pause
+                  <Pause size={14} aria-hidden="true" />
+                  En pause
                 </button>
                 <button type="button" className="journal-ghost-btn" onClick={() => setStatus(editing.id, 'done')}>
-                  🏆 Terminé
+                  <Trophy size={14} aria-hidden="true" />
+                  Terminé
                 </button>
               </>
             ) : (
               <button type="button" className="journal-ghost-btn" onClick={() => setStatus(editing.id, 'active')}>
-                ▶ Reprendre
+                <Play size={14} aria-hidden="true" />
+                Reprendre
               </button>
             )}
           </>
@@ -279,7 +283,7 @@ export default function JournalBoard() {
   return (
     <div className="journal-board">
       <div className="journal-header">
-        <h2 className="journal-title">📓 Mon carnet</h2>
+        <h2 className="journal-title">Mon carnet</h2>
         <span className="journal-week">
           Cette semaine : <strong>{weekEntries.length}</strong> chose{weekEntries.length > 1 ? 's' : ''} faite
           {weekEntries.length > 1 ? 's' : ''}
@@ -291,7 +295,7 @@ export default function JournalBoard() {
       {suggestions.length > 0 && (
         <div className="journal-suggest">
           <div>
-            <div className="journal-suggest-title">🎮 À ajouter à tes projets</div>
+            <div className="journal-suggest-title">À ajouter à tes projets</div>
             {suggestions.map((s) => (
               <div key={s.id} className="journal-suggest-item">
                 {s.icon} <strong>{s.label}</strong>
@@ -314,7 +318,7 @@ export default function JournalBoard() {
         <div className="journal-form-row">
           <input
             className="journal-input"
-            placeholder="✨ Une petite victoire (ex. rangé ma chambre, 15 min de marche)"
+            placeholder="Une petite victoire (ex. rangé ma chambre, 15 min de marche)"
             value={victory.text}
             maxLength={100}
             onChange={(e) => setVictory({ ...victory, text: e.target.value })}
@@ -335,10 +339,12 @@ export default function JournalBoard() {
           return (
             <li key={p.id} className={`journal-project${reached ? ' reached' : ''}`}>
               <div className="journal-project-head">
-                <span className="journal-project-icon">{reached ? '🏆' : p.icon}</span>
+                <span className="journal-project-icon">
+                  {reached ? <Trophy size={18} style={{ color: 'var(--gold)' }} aria-hidden="true" /> : p.icon}
+                </span>
                 <span className="journal-project-label">{p.label}</span>
                 <button className="journal-edit-btn" onClick={() => openEdit(p)} title="Modifier" aria-label="Modifier">
-                  ✎
+                  <Pencil size={14} />
                 </button>
               </div>
               <div className="journal-project-progress">
@@ -423,7 +429,7 @@ export default function JournalBoard() {
         <div className="journal-shelves">
           {paused.length > 0 && (
             <div>
-              <h3 className="journal-subtitle">⏸ En pause, sans culpabilité</h3>
+              <h3 className="journal-subtitle">En pause, sans culpabilité</h3>
               <ul className="journal-shelf">
                 {paused.map((p) => (
                   <li key={p.id}>
@@ -434,7 +440,8 @@ export default function JournalBoard() {
                       renderProjectForm()
                     ) : (
                       <button className="journal-ghost-btn" onClick={() => setStatus(p.id, 'active')}>
-                        ▶ Reprendre
+                        <Play size={14} aria-hidden="true" />
+                        Reprendre
                       </button>
                     )}
                   </li>
@@ -444,15 +451,16 @@ export default function JournalBoard() {
           )}
           {done.length > 0 && (
             <div>
-              <h3 className="journal-subtitle">🏆 Terminés</h3>
+              <h3 className="journal-subtitle">Terminés</h3>
               <ul className="journal-shelf">
                 {done.map((p) => (
                   <li key={p.id}>
                     <span>
-                      🏆 {p.label} · {formatAmount(p.current, p.unit)}
+                      <Trophy size={14} className="journal-inline-icon" aria-hidden="true" />
+                      {p.label} · {formatAmount(p.current, p.unit)}
                     </span>
                     <button className="journal-edit-btn" onClick={() => openEdit(p)} title="Modifier" aria-label="Modifier">
-                      ✎
+                      <Pencil size={14} />
                     </button>
                     {editing?.id === p.id && renderProjectForm()}
                   </li>
@@ -483,7 +491,9 @@ export default function JournalBoard() {
                 const project = e.projectId ? projectOf(e.projectId) : null;
                 return (
                   <li key={e.id} className="journal-entry">
-                    <span className="journal-entry-icon">{project?.icon ?? '✨'}</span>
+                    <span className="journal-entry-icon">
+                      {project?.icon ?? <Sparkles size={15} style={{ color: 'var(--gold)' }} aria-hidden="true" />}
+                    </span>
                     <span className="journal-entry-text">
                       {project && e.stepId ? (
                         <>

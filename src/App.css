@@ -4,77 +4,189 @@
   min-height: 100vh;
 }
 
+/* Barre du haut translucide ; les marges « safe-area » évitent l'encoche et la barre
+   d'état de l'iPhone (appli installée en black-translucent). */
 .app-header {
   display: flex;
   align-items: center;
   gap: 2rem;
-  padding: 1rem 2rem;
+  padding: calc(0.75rem + env(safe-area-inset-top)) calc(2rem + env(safe-area-inset-right))
+    0.75rem calc(2rem + env(safe-area-inset-left));
   border-bottom: 1px solid var(--border);
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--bg-main) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .app-title {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
   white-space: nowrap;
 }
 
+/* Contrôle segmenté : l'onglet actif est une pastille plus claire, sans couleur */
 .tab-nav {
   display: flex;
-  gap: 0.5rem;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-card);
+  border-radius: 10px;
 }
 
 .tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   background: none;
-  border: 1px solid transparent;
+  border: none;
   border-radius: 8px;
-  padding: 0.45rem 1rem;
+  padding: 0.4rem 0.8rem;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   color: var(--text-secondary);
-  transition: all 0.15s;
+  white-space: nowrap;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.tab-icon {
+  flex-shrink: 0;
 }
 
 .tab-btn:hover {
   color: var(--text-primary);
-  background: var(--bg-hover);
 }
 
 .tab-btn.active {
   background: var(--bg-hover);
-  border-color: var(--accent);
-  color: var(--accent);
+  color: var(--text-primary);
   font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .app-main {
   flex: 1;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem calc(2rem + env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom))
+    calc(2rem + env(safe-area-inset-left));
   overflow-x: auto;
 }
 
+/* Barre du bas et menu « Plus » : téléphone uniquement */
+.bottom-nav,
+.more-sheet,
+.more-backdrop {
+  display: none;
+}
 
 @media (max-width: 640px) {
+  /* Plus d'en-tête : chaque écran a son titre, la navigation passe en bas */
   .app-header {
-    padding: 0.5rem 0.75rem;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .app-title {
-    font-size: 1rem;
+    display: none;
   }
 
   .app-main {
-    padding: 0.5rem;
+    padding: calc(0.25rem + env(safe-area-inset-top)) calc(0.5rem + env(safe-area-inset-right))
+      calc(var(--bottom-nav-h) + 1rem + env(safe-area-inset-bottom)) calc(0.5rem + env(safe-area-inset-left));
   }
 
-.tab-btn {
-    padding: 0.4rem 0.7rem;
-    font-size: 0.82rem;
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    display: flex;
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-main) 82%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  .bottom-nav-btn {
+    flex: 1;
+    min-width: 0;
+    height: var(--bottom-nav-h);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 2px;
+    border: none;
+    background: none;
+    color: var(--text-tertiary);
+    font-size: 0.68rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .bottom-nav-btn span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bottom-nav-btn.active {
+    color: var(--accent);
+  }
+
+  .more-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  /* Petit menu posé au-dessus du bouton « Plus » */
+  .more-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: calc(0.5rem + env(safe-area-inset-right));
+    bottom: calc(var(--bottom-nav-h) + 0.5rem + env(safe-area-inset-bottom));
+    z-index: 51;
+    min-width: 200px;
+    padding: 0.35rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    animation: more-in 0.18s var(--ease);
+  }
+
+  .more-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border: none;
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .more-item:active,
+  .more-item.active {
+    background: var(--bg-hover);
+  }
+
+  .more-item.active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  @keyframes more-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
   }
 }

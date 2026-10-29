@@ -48,7 +48,7 @@
 .meal-slot {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 0.5rem 0.6rem;
   display: flex;
   flex-direction: column;
@@ -83,6 +83,7 @@
 }
 
 .meal-slot-skip-btn {
+  display: inline-flex;
   background: none;
   border: none;
   cursor: pointer;
@@ -98,8 +99,10 @@
 .meal-slot-skip-btn.active { opacity: 1; color: var(--accent); }
 
 .meal-slot-copy-btn {
+  display: inline-flex;
   background: none;
   border: none;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 0.75rem;
   padding: 0;
@@ -164,7 +167,7 @@
 .meal-cell {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 0.65rem 0.75rem;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
@@ -199,7 +202,7 @@
 .water-tracker {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 0.45rem 0.6rem;
   display: flex;
   flex-direction: column;
@@ -207,7 +210,7 @@
 }
 
 .water-tracker-done {
-  border-color: #4abde8;
+  border-color: #64D2FF;
 }
 
 .water-header {
@@ -217,7 +220,7 @@
   gap: 0.3rem;
 }
 
-.water-icon { font-size: 0.78rem; }
+.water-icon { color: #64D2FF; }
 
 .water-amount {
   font-size: 0.68rem;
@@ -225,10 +228,10 @@
   color: var(--text-secondary);
 }
 
-.water-tracker-done .water-amount { color: #4abde8; }
+.water-tracker-done .water-amount { color: #64D2FF; }
 
 .water-check {
-  color: #4abde8;
+  color: #64D2FF;
   font-size: 0.7rem;
 }
 
@@ -241,7 +244,7 @@
 
 .water-bar-fill {
   height: 100%;
-  background: #4abde8;
+  background: #64D2FF;
   border-radius: 99px;
   transition: width 0.35s ease;
   min-width: 2px;
@@ -266,7 +269,7 @@
   color: var(--text-secondary);
 }
 
-.water-add-btn:hover { border-color: #4abde8; color: #4abde8; }
+.water-add-btn:hover { border-color: #64D2FF; color: #64D2FF; }
 .water-sub-btn:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
 .water-sub-btn:disabled { opacity: 0.3; cursor: default; }
 
@@ -370,14 +373,14 @@
 }
 
 .btn-batch-filter.active {
-  background: rgba(79, 142, 247, 0.15);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
   border-color: var(--accent);
   color: var(--accent);
 }
 
 .tag-batch {
-  color: #f0a500;
-  border-color: #f0a500;
+  color: var(--warning);
+  border-color: var(--warning);
 }
 
 .tag {
@@ -426,7 +429,7 @@
 .shopping-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -536,7 +539,7 @@
 /* ── Sections par type de repas ── */
 .shopping-meal-section {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   overflow: hidden;
   margin-bottom: 0.75rem;
 }
@@ -594,11 +597,11 @@
 
 .btn-like:hover {
   transform: scale(1.2);
-  color: #e05a7a;
+  color: #FF375F;
 }
 
 .btn-like.active {
-  color: #e05a7a;
+  color: #FF375F;
 }
 
 .btn-like-detail {
@@ -632,7 +635,7 @@
 .week-progress-bar {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 0.6rem 1rem;
   font-size: 0.85rem;
   color: var(--text-primary);
@@ -707,7 +710,7 @@
 
 .food-verify-fill {
   height: 100%;
-  background: #4fbf8a;
+  background: var(--success);
   border-radius: 99px;
   transition: width 0.3s;
 }
@@ -761,13 +764,13 @@
 }
 
 .food-verify-btn:hover {
-  border-color: #4fbf8a;
-  color: #4fbf8a;
+  border-color: var(--success);
+  color: var(--success);
 }
 
 .food-verify-btn.verified {
-  background: #4fbf8a;
-  border-color: #4fbf8a;
+  background: var(--success);
+  border-color: var(--success);
   color: #fff;
 }
 
@@ -776,7 +779,7 @@
 }
 
 .food-result-verified {
-  border-color: rgba(79, 191, 138, 0.2);
+  border-color: color-mix(in srgb, var(--success) 20%, transparent);
 }
 
 .search-hint {
@@ -880,7 +883,7 @@
 
 .scan-error {
   font-size: 0.78rem;
-  color: var(--danger, #e05);
+  color: var(--danger, var(--danger));
   margin: 0.25rem 0 0;
   text-align: center;
 }
@@ -1048,13 +1051,13 @@
 }
 .food-result-del:hover { color: var(--danger); }
 
-.food-result-custom { border-color: rgba(79, 191, 138, 0.3); }
-.food-result-custom:hover { border-color: #4fbf8a; }
+.food-result-custom { border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+.food-result-custom:hover { border-color: var(--success); }
 
 .food-result-cat-custom {
-  color: #4fbf8a;
-  border-color: #4fbf8a;
-  background: rgba(79, 191, 138, 0.1);
+  color: var(--success);
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
 }
 
 .manual-form-body {
@@ -1072,7 +1075,7 @@
 
 .manual-save-hint {
   font-size: 0.75rem;
-  color: #4fbf8a;
+  color: var(--success);
   margin: 0.25rem 0 0;
 }
 
@@ -1095,8 +1098,28 @@
 }
 
 .manual-type-btn.active {
-  background: rgba(79, 142, 247, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
+}
+
+/* ── Téléphone : un jour à la fois (le sélecteur reprend celui de la Semaine) ── */
+@media (max-width: 640px) {
+  .meal-day-tabs {
+    margin: 0.25rem 0 0.75rem;
+  }
+
+  .meals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .meal-day:not(.mobile-active) {
+    display: none;
+  }
+
+  /* Le sélecteur donne déjà le jour */
+  .meal-day-name {
+    display: none;
+  }
 }

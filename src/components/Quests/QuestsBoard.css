@@ -12,9 +12,22 @@
   margin-bottom: 1rem;
 }
 
+.quests-page-title {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
 .quests-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--text-primary);
 }
 
@@ -36,44 +49,55 @@
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.6rem 0.4rem;
+  padding: 0.75rem 0.4rem 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   text-align: center;
 }
 
 .quests-stat-value {
-  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 1.35rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }
 
 .quests-stat-label {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
+  line-height: 1.3;
   color: var(--text-secondary);
 }
 
 .quests-season-bar {
   height: 6px;
   border-radius: 999px;
-  background: var(--bg-card);
+  background: var(--bg-elevated);
+  box-shadow: inset 0 0 0 1px var(--border);
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .quests-season-fill {
   height: 100%;
+  border-radius: inherit;
   background: var(--accent);
-  transition: width 0.3s;
+  transition: width 0.3s var(--ease);
 }
 
 .quests-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   margin-bottom: 1rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #b7791f;
-  border-radius: 10px;
-  background: rgba(183, 121, 31, 0.12);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
   color: var(--text-primary);
   font-size: 0.85rem;
 }
@@ -94,9 +118,13 @@
 .quests-type-btn,
 .quests-domain-btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.5rem 0.4rem;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--bg-main);
   color: var(--text-secondary);
   font-family: inherit;
@@ -134,7 +162,7 @@
   padding: 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .quests-item.done {
@@ -155,6 +183,8 @@
 }
 
 .quests-edit {
+  display: inline-grid;
+  place-items: center;
   width: 26px;
   height: 26px;
   border: none;
@@ -188,7 +218,7 @@
   gap: 0.5rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0.75rem;
   margin-bottom: 1.5rem;
 }
@@ -197,7 +227,7 @@
   min-width: 0;
   padding: 0.6rem 0.7rem;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--bg-main);
   color: var(--text-primary);
   font-family: inherit;
@@ -220,7 +250,7 @@
 .quests-delete-btn,
 .quests-add-btn {
   padding: 0.6rem 1rem;
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 700;
@@ -234,7 +264,10 @@
 }
 
 .quests-save-btn:disabled {
-  opacity: 0.35;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  box-shadow: none;
+  opacity: 1;
   cursor: not-allowed;
 }
 
@@ -283,18 +316,30 @@
   padding: 0.6rem 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   opacity: 0.5;
 }
 
 .quests-achievement.unlocked {
   opacity: 1;
-  border-color: #d69e2e;
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
 }
 
+/* Pastille ronde : grise si verrouillé, dorée une fois débloqué */
 .quests-achievement-icon {
-  font-size: 1.4rem;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+}
+
+.quests-achievement.unlocked .quests-achievement-icon {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--gold);
 }
 
 .quests-achievement-title {
@@ -330,8 +375,20 @@
 }
 
 .quests-acquired {
-  color: #d69e2e;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--gold);
   font-weight: 600;
+}
+
+.quests-inline-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.quests-item-domain {
+  flex-shrink: 0;
 }
 
 /* ── Barres de progression (buts chiffrés, installation) ── */
@@ -357,7 +414,7 @@
 }
 
 .quests-progress-fill.install {
-  background: #48bb78;
+  background: var(--success);
 }
 
 .quests-progress-label {
@@ -394,10 +451,10 @@
 .quests-activate-btn {
   flex-shrink: 0;
   padding: 0.3rem 0.7rem;
-  border: 1px solid #48bb78;
+  border: 1px solid var(--success);
   border-radius: 8px;
   background: transparent;
-  color: #48bb78;
+  color: var(--success);
   font-family: inherit;
   font-size: 0.8rem;
   font-weight: 700;
@@ -451,7 +508,7 @@
 }
 
 .challenge-featured {
-  border-color: #d69e2e;
+  border-color: var(--gold);
 }
 
 .challenge-pick-btn {
@@ -489,7 +546,7 @@
 }
 
 .challenge-expired {
-  border-color: #b7791f;
+  border-color: var(--warning);
 }
 
 .challenge-actions {
@@ -524,13 +581,13 @@
   padding: 0.45rem 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   opacity: 0.7;
 }
 
 .challenge-trophy.done {
   opacity: 1;
-  border-color: #d69e2e;
+  border-color: var(--gold);
 }
 
 .challenge-trophy-label {
@@ -552,8 +609,8 @@
   margin-bottom: 1rem;
   padding: 0.75rem;
   background: var(--bg-card);
-  border: 1.5px dashed var(--accent);
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
 .quests-import > div {
@@ -570,8 +627,15 @@
   margin-bottom: 1rem;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--accent);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--bg-hover);
   color: var(--text-primary);
   font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  /* 2 × 2 : chaque tuile garde son libellé sur une ou deux lignes */
+  .quests-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

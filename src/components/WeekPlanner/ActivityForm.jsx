@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { TriangleAlert } from 'lucide-react';
 import { EVENT_TYPES, guessEventType } from '../../data/eventTypes';
 
-const COLORS = ['#E53935', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA', '#00897B', '#D81B60', '#F9A825', '#00ACC1', '#7CB342', '#3949AB', '#6D4C41'];
+// Couleurs système iOS (mode sombre), bien distinctes ; même ordre de préférence qu'avant
+const COLORS = ['#FF453A', '#0A84FF', '#30D158', '#FF9F0A', '#BF5AF2', '#40C8E0', '#FF375F', '#FFD60A', '#64D2FF', '#63E6E2', '#5E5CE6', '#AC8E68'];
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 function toMin(t) {
@@ -270,7 +272,10 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
                 </div>
               </div>
               {endDayOffset === 0 && hasTimeOverlap(time, endTime, existingActivities) && (
-                <p className="overlap-warning">⚠ Ce créneau se superpose à une activité existante.</p>
+                <p className="overlap-warning">
+                  <TriangleAlert size={14} aria-hidden="true" />
+                  Ce créneau se superpose à une activité existante.
+                </p>
               )}
               {!isRecurring && maxOffset > 0 && (
                 <div className="form-group">
@@ -308,7 +313,8 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
                   // Recliquer le type choisi revient au type deviné
                   onClick={() => setCategory(category === t.id ? null : t.id)}
                 >
-                  {t.icon} {t.label}
+                  <span className="type-chip-dot" />
+                  {t.label}
                 </button>
               ))}
               <button
@@ -317,6 +323,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
                 style={{ '--type-color': color }}
                 onClick={() => setCategory(category === 'none' ? null : 'none')}
               >
+                <span className="type-chip-dot" />
                 Autre
               </button>
             </div>

@@ -24,31 +24,28 @@ export const MAX_JOKERS = 3;
 export const DAYS_PER_JOKER = 7;
 
 export const QUEST_TYPES = [
-  { id: 'daily', label: 'Case du jour', icon: '✅', hint: 'Une case à cocher chaque jour (ex. 20 pompes).' },
-  { id: 'weekly', label: 'Chaque semaine', icon: '🔁', hint: 'À faire plusieurs fois par semaine (ex. 2 séances de natation). Se coche en haut de la Semaine.' },
-  { id: 'target', label: 'Challenge', icon: '🎯', hint: 'Un défi du mois chiffré, ou un objectif long terme découpé en étapes.' },
-  { id: 'habit', label: 'À mettre en place', icon: '🌱', hint: `Une habitude en liste d’attente. Une fois activée, ${INSTALL_DAYS} jours cochés pour l’acquérir.` },
+  { id: 'daily', label: 'Case du jour', hint: 'Une case à cocher chaque jour (ex. 20 pompes).' },
+  { id: 'weekly', label: 'Chaque semaine', hint: 'À faire plusieurs fois par semaine (ex. 2 séances de natation). Se coche en haut de la Semaine.' },
+  { id: 'target', label: 'Challenge', hint: 'Un défi du mois chiffré, ou un objectif long terme découpé en étapes.' },
+  { id: 'habit', label: 'À mettre en place', hint: `Une habitude en liste d’attente. Une fois activée, ${INSTALL_DAYS} jours cochés pour l’acquérir.` },
 ];
 
 export const DOMAINS = [
-  { id: 'sport', label: 'Sport / santé', icon: '🏃' },
-  { id: 'work', label: 'Travail', icon: '💼' },
-  { id: 'perso', label: 'Projets perso', icon: '🚀' },
-  { id: 'daily', label: 'Quotidien', icon: '🏠' },
+  { id: 'sport', label: 'Sport / santé' },
+  { id: 'work', label: 'Travail' },
+  { id: 'perso', label: 'Projets perso' },
+  { id: 'daily', label: 'Quotidien' },
 ];
 
 export const CHALLENGE_KINDS = [
-  { id: 'monthly', label: 'Défi du mois', icon: '⭐', hint: 'Un chiffre à atteindre avant la fin du mois (ex. nager 10 km). Un seul par mois.' },
-  { id: 'long', label: 'Long terme', icon: '🏔️', hint: 'Un grand objectif découpé en étapes, avec une date finale (ex. triathlon S en juin).' },
+  { id: 'monthly', label: 'Défi du mois', hint: 'Un chiffre à atteindre avant la fin du mois (ex. nager 10 km). Un seul par mois.' },
+  { id: 'long', label: 'Long terme', hint: 'Un grand objectif découpé en étapes, avec une date finale (ex. triathlon S en juin).' },
 ];
 
-export const domainOf = (id) =>
-  DOMAINS.find((d) => d.id === id) ?? DOMAINS[0];
-
 export const ENERGY_LEVELS = [
-  { id: 'low', label: 'Basse', icon: '🪫', hint: 'Les minimums suffisent, et c’est une victoire.' },
-  { id: 'mid', label: 'Normale', icon: '🔋', hint: 'Fais tes quêtes en version complète quand tu peux.' },
-  { id: 'high', label: 'Haute', icon: '⚡', hint: 'Profites-en pour avancer un challenge, pas pour ajouter de nouvelles quêtes.' },
+  { id: 'low', label: 'Basse', hint: 'Les minimums suffisent, et c’est une victoire.' },
+  { id: 'mid', label: 'Normale', hint: 'Fais tes quêtes en version complète quand tu peux.' },
+  { id: 'high', label: 'Haute', hint: 'Profites-en pour avancer un challenge, pas pour ajouter de nouvelles quêtes.' },
 ];
 
 // Les quêtes créées avant les types étaient toutes des cases du jour
@@ -368,26 +365,26 @@ export const adjustSuggestion = (q, weekLog, today = new Date()) => {
 };
 
 export const ACHIEVEMENTS = [
-  { id: 'first_step', icon: '👣', title: 'Premier pas', description: 'Valider une première journée.', check: (s) => s.validatedDays >= 1 },
-  { id: 'low_day', icon: '🪫', title: 'Même sans batterie', description: 'Valider une journée en batterie basse.', check: (s) => s.lowDaysValidated >= 1 },
-  { id: 'streak_7', icon: '🔥', title: 'Une semaine solide', description: 'Atteindre une série de 7 jours.', check: (s) => s.maxStreak >= 7 },
-  { id: 'week_1', icon: '🗓️', title: 'Semaine réussie', description: 'Remplir tous tes objectifs d’une semaine.', check: (s) => s.weeksSucceeded >= 1 },
-  { id: 'target_1', icon: '🎯', title: 'Challenge relevé', description: 'Réussir un challenge.', check: (s) => s.challengesDone >= 1 },
-  { id: 'perfect_week', icon: '📅', title: 'Semaine parfaite', description: 'Valider tous les jours, du lundi au dimanche.', check: (s) => s.perfectWeeks >= 1 },
-  { id: 'joker_saved', icon: '🃏', title: 'Sauvé par le joker', description: 'Un joker a protégé ta série.', check: (s) => s.jokersUsed >= 1 },
-  { id: 'comeback', icon: '🔄', title: 'Remontada', description: 'Repartir après un raté et enchaîner 7 jours.', check: (s) => s.comebacks >= 1 },
-  { id: 'low_5', icon: '🛡️', title: 'Tenir la ligne', description: 'Valider 5 journées en batterie basse.', check: (s) => s.lowDaysValidated >= 5 },
-  { id: 'habit_1', icon: '🌱', title: 'Habitude installée', description: `Cocher une habitude ${INSTALL_DAYS} jours.`, check: (s) => s.habitsAcquired >= 1 },
-  { id: 'week_streak_4', icon: '📆', title: 'Mois carré', description: 'Réussir 4 semaines d’affilée.', check: (s) => s.maxWeekStreak >= 4 },
-  { id: 'no_double_30', icon: '✌️', title: 'Jamais deux fois', description: '30 jours sans deux ratés d’affilée.', check: (s) => s.maxNoDoubleRun >= 30 },
-  { id: 'streak_30', icon: '⛓️', title: 'Mois de fer', description: 'Atteindre une série de 30 jours.', check: (s) => s.maxStreak >= 30 },
-  { id: 'target_3', icon: '🏹', title: 'Tireur d’élite', description: 'Réussir 3 challenges.', check: (s) => s.challengesDone >= 3 },
-  { id: 'monthly_3', icon: '🌙', title: 'Trois lunes', description: 'Réussir 3 défis du mois.', check: (s) => s.monthlyDone >= 3 },
-  { id: 'long_1', icon: '⛰️', title: 'Sommet atteint', description: 'Réussir un challenge long terme.', check: (s) => s.longDone >= 1 },
-  { id: 'normal_50', icon: '💪', title: 'Pas que le minimum', description: 'Faire 50 quêtes en version complète.', check: (s) => s.normalCount >= 50 },
-  { id: 'full_season', icon: '🏆', title: 'Saison à 100 %', description: 'Valider chaque jour d’un mois entier.', check: (s) => s.fullMonths >= 1 },
-  { id: 'week_streak_12', icon: '🧭', title: 'Trimestre en or', description: 'Réussir 12 semaines d’affilée.', check: (s) => s.maxWeekStreak >= 12 },
-  { id: 'habit_3', icon: '🌳', title: 'Jardinier', description: 'Installer 3 habitudes.', check: (s) => s.habitsAcquired >= 3 },
-  { id: 'total_100', icon: '💯', title: 'Centenaire', description: 'Cumuler 100 journées validées.', check: (s) => s.validatedDays >= 100 },
-  { id: 'streak_100', icon: '👑', title: 'Centurion', description: 'Atteindre une série de 100 jours.', check: (s) => s.maxStreak >= 100 },
+  { id: 'first_step', title: 'Premier pas', description: 'Valider une première journée.', check: (s) => s.validatedDays >= 1 },
+  { id: 'low_day', title: 'Même sans batterie', description: 'Valider une journée en batterie basse.', check: (s) => s.lowDaysValidated >= 1 },
+  { id: 'streak_7', title: 'Une semaine solide', description: 'Atteindre une série de 7 jours.', check: (s) => s.maxStreak >= 7 },
+  { id: 'week_1', title: 'Semaine réussie', description: 'Remplir tous tes objectifs d’une semaine.', check: (s) => s.weeksSucceeded >= 1 },
+  { id: 'target_1', title: 'Challenge relevé', description: 'Réussir un challenge.', check: (s) => s.challengesDone >= 1 },
+  { id: 'perfect_week', title: 'Semaine parfaite', description: 'Valider tous les jours, du lundi au dimanche.', check: (s) => s.perfectWeeks >= 1 },
+  { id: 'joker_saved', title: 'Sauvé par le joker', description: 'Un joker a protégé ta série.', check: (s) => s.jokersUsed >= 1 },
+  { id: 'comeback', title: 'Remontada', description: 'Repartir après un raté et enchaîner 7 jours.', check: (s) => s.comebacks >= 1 },
+  { id: 'low_5', title: 'Tenir la ligne', description: 'Valider 5 journées en batterie basse.', check: (s) => s.lowDaysValidated >= 5 },
+  { id: 'habit_1', title: 'Habitude installée', description: `Cocher une habitude ${INSTALL_DAYS} jours.`, check: (s) => s.habitsAcquired >= 1 },
+  { id: 'week_streak_4', title: 'Mois carré', description: 'Réussir 4 semaines d’affilée.', check: (s) => s.maxWeekStreak >= 4 },
+  { id: 'no_double_30', title: 'Jamais deux fois', description: '30 jours sans deux ratés d’affilée.', check: (s) => s.maxNoDoubleRun >= 30 },
+  { id: 'streak_30', title: 'Mois de fer', description: 'Atteindre une série de 30 jours.', check: (s) => s.maxStreak >= 30 },
+  { id: 'target_3', title: 'Tireur d’élite', description: 'Réussir 3 challenges.', check: (s) => s.challengesDone >= 3 },
+  { id: 'monthly_3', title: 'Trois lunes', description: 'Réussir 3 défis du mois.', check: (s) => s.monthlyDone >= 3 },
+  { id: 'long_1', title: 'Sommet atteint', description: 'Réussir un challenge long terme.', check: (s) => s.longDone >= 1 },
+  { id: 'normal_50', title: 'Pas que le minimum', description: 'Faire 50 quêtes en version complète.', check: (s) => s.normalCount >= 50 },
+  { id: 'full_season', title: 'Saison à 100 %', description: 'Valider chaque jour d’un mois entier.', check: (s) => s.fullMonths >= 1 },
+  { id: 'week_streak_12', title: 'Trimestre en or', description: 'Réussir 12 semaines d’affilée.', check: (s) => s.maxWeekStreak >= 12 },
+  { id: 'habit_3', title: 'Jardinier', description: 'Installer 3 habitudes.', check: (s) => s.habitsAcquired >= 3 },
+  { id: 'total_100', title: 'Centenaire', description: 'Cumuler 100 journées validées.', check: (s) => s.validatedDays >= 100 },
+  { id: 'streak_100', title: 'Centurion', description: 'Atteindre une série de 100 jours.', check: (s) => s.maxStreak >= 100 },
 ];

@@ -11,9 +11,9 @@ const ACTIVITY_LEVELS = [
 ];
 
 const GOALS = [
-  { id: 'lose',     label: 'Perte de poids',   delta: -400, color: '#4fbf8a' },
+  { id: 'lose',     label: 'Perte de poids',   delta: -400, color: '#30D158' },
   { id: 'maintain', label: 'Maintien',          delta: 0,    color: '#4f8ef7' },
-  { id: 'gain',     label: 'Prise de masse',    delta: +400, color: '#e09a3a' },
+  { id: 'gain',     label: 'Prise de masse',    delta: +400, color: '#FF9F0A' },
 ];
 
 const DIETS = [
@@ -33,7 +33,7 @@ const METRIC_ROWS = [
   { key: 'carbs',   label: 'Gluc'   },
   { key: 'fat',     label: 'Lip'    },
   { key: 'protein', label: 'Prot'   },
-  { key: 'water',   label: '💧'     },
+  { key: 'water',   label: 'Eau'    },
 ];
 const FR_MONTHS = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
 
@@ -423,28 +423,28 @@ export default function NutritionGoal() {
               <span className="ng-progress-label">Glucides</span>
               <span className="ng-progress-values">{todayIntake.carbs} / {targets.carbs} g</span>
             </div>
-            <ProgressBar value={todayIntake.carbs} max={targets.carbs} color="#e09a3a" />
+            <ProgressBar value={todayIntake.carbs} max={targets.carbs} color="#FF9F0A" />
           </div>
           <div className="ng-progress-block">
             <div className="ng-progress-header">
               <span className="ng-progress-label">Lipides</span>
               <span className="ng-progress-values">{todayIntake.fat} / {targets.fat} g</span>
             </div>
-            <ProgressBar value={todayIntake.fat} max={targets.fat} color="#e05a7a" />
+            <ProgressBar value={todayIntake.fat} max={targets.fat} color="#FF375F" />
           </div>
           <div className="ng-progress-block">
             <div className="ng-progress-header">
               <span className="ng-progress-label">Protéines</span>
               <span className="ng-progress-values">{todayIntake.protein} / {targets.protein} g</span>
             </div>
-            <ProgressBar value={todayIntake.protein} max={targets.protein} color="#4fbf8a" />
+            <ProgressBar value={todayIntake.protein} max={targets.protein} color="#30D158" />
           </div>
         </div>
 
         {/* Eau */}
         <div className="ng-progress-block">
           <div className="ng-progress-header">
-            <span className="ng-progress-label">💧 Eau</span>
+            <span className="ng-progress-label">Eau</span>
             <span className="ng-progress-values">
               <strong>{todayWater >= 1000 ? `${(todayWater / 1000).toFixed(todayWater % 1000 === 0 ? 0 : 1)} L` : `${todayWater} mL`}</strong>
               {' '}/ 2 L
@@ -453,7 +453,7 @@ export default function NutritionGoal() {
                 : <span className="ng-over-water"> · {((WATER_GOAL - todayWater) / 1000).toFixed(1)} L restants</span>}
             </span>
           </div>
-          <ProgressBar value={todayWater} max={WATER_GOAL} color="#4abde8" />
+          <ProgressBar value={todayWater} max={WATER_GOAL} color="#64D2FF" />
           <div className="ng-water-btns">
             {[150, 250, 500, 1000].map((ml) => (
               <button key={ml} className="ng-water-btn" onClick={() => addWater(ml)}>

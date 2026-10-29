@@ -11,7 +11,7 @@ Planning :
 - [x] Pouvoir ajouter des événements dans la partie Mois
 
 Repas :
-- (Téléphone) Affichages des repas jour par jour
+- [x] (Téléphone) Affichages des repas jour par jour
 
 Vinted :
 - Ajouter GEMINI_API_KEY sur Vercel puis tester une vraie annonce

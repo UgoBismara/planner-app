@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Camera } from 'lucide-react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import {
   VINTED_KEY,
@@ -8,6 +9,7 @@ import {
   fromApi,
   descriptionText,
 } from '../../data/vinted';
+import { VintedStatusIcon } from '../Icons';
 import './VintedWorkshop.css';
 
 const MAX_PHOTOS = 6;
@@ -128,7 +130,7 @@ export default function VintedWorkshop() {
             onChange={addPhotos}
             disabled={photos.length >= MAX_PHOTOS || loading}
           />
-          <span className="vinted-drop-icon">📷</span>
+          <Camera size={22} className="vinted-drop-icon" aria-hidden="true" />
           <span className="vinted-drop-label">
             {photos.length >= MAX_PHOTOS
               ? `${MAX_PHOTOS} photos — maximum atteint`
@@ -214,6 +216,7 @@ export default function VintedWorkshop() {
             className={`vinted-filter-btn${filter === s.id ? ' active' : ''}`}
             onClick={() => setFilter(s.id)}
           >
+            <VintedStatusIcon id={s.id} size={14} />
             {s.label}
           </button>
         ))}
@@ -241,6 +244,7 @@ export default function VintedWorkshop() {
                     {listing.titre || 'Annonce sans titre'}
                   </span>
                   <span className="vinted-item-meta">
+                    <VintedStatusIcon id={listing.status} size={13} className="vinted-meta-icon" />
                     {statusOf(listing.status).label}
                     {listing.prix && ` · ${listing.prix} €`}
                   </span>
@@ -364,6 +368,7 @@ export default function VintedWorkshop() {
                         className={`vinted-status-btn${listing.status === s.id ? ' active' : ''}`}
                         onClick={() => update(listing.id, { status: s.id })}
                       >
+                        <VintedStatusIcon id={s.id} size={14} />
                         {s.label}
                       </button>
                     ))}

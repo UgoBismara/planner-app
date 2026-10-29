@@ -1,14 +1,29 @@
 import { useState } from 'react';
+import { CalendarCheck, ChevronDown, Flame, Sprout } from 'lucide-react';
 import {
   ENERGY_LEVELS,
   INSTALL_DAYS,
   MAX_WEEK_GOALS,
   dailyStartKey,
-  domainOf,
   weekCount,
   weekTarget,
 } from '../../data/quests';
+import { DomainIcon, EnergyIcon } from '../Icons';
 import './WeekQuests.css';
+
+// Bandeau replié ou non : réglage propre à chaque appareil, donc hors Firestore
+const COLLAPSED_KEY = 'planner_week_banner_collapsed';
+
+// Sans choix enregistré : replié sur téléphone, où il cachait le calendrier
+const readCollapsed = () => {
+  try {
+    const saved = localStorage.getItem(COLLAPSED_KEY);
+    if (saved !== null) return saved === '1';
+  } catch {
+    // stockage indisponible : on retombe sur le choix par défaut
+  }
+  return window.matchMedia?.('(max-width: 640px)').matches ?? false;
+};
 
 const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -47,6 +62,7 @@ export default function WeekQuests({
   onDismissAdjust,
 }) {
   const [draft, setDraft] = useState(null); // null = saisie fermée
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   const goals = week?.goals ?? [];
   const total = recurring.length + goals.length;
   const done =
@@ -54,6 +70,18 @@ export default function WeekQuests({
     goals.filter((g) => g.done).length;
   const todayIndex = dayKeys.indexOf(todayKey);
   const todayEnergy = todayIndex >= 0 ? dayLog[todayIndex].energy : null;
+  const todayDone =
+    todayIndex >= 0 ? daily.filter((q) => dayLog[todayIndex].done[q.id]).length : 0;
+
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0');
+    } catch {
+      // stockage indisponible : le choix vaut pour la session
+    }
+  };
 
   const submit = (e) => {
     e.preventDefault();
@@ -63,12 +91,22 @@ export default function WeekQuests({
   };
 
   return (
-    <div className={`week-quests${total > 0 && done === total ? ' succeeded' : ''}`}>
+    <div
+      className={`week-quests${total > 0 && done === total ? ' succeeded' : ''}${collapsed ? ' collapsed' : ''}`}
+    >
       <div className="week-quests-head">
-        <span className="week-quests-title">
-          🗓️ Objectifs de la semaine
-          {total > 0 && <span className="week-quests-count"> {done}/{total}{done === total && ' ✓'}</span>}
-        </span>
+        <button className="week-quests-toggle" onClick={toggleCollapsed} aria-expanded={!collapsed}>
+          <ChevronDown size={16} className="week-quests-chevron" aria-hidden="true" />
+          <span className="week-quests-title">
+            Objectifs de la semaine
+            {total > 0 && <span className="week-quests-count"> {done}/{total}{done === total && ' ✓'}</span>}
+          </span>
+          {collapsed && daily.length > 0 && todayIndex >= 0 && (
+            <span className={`week-quests-today${todayDone === daily.length ? ' done' : ''}`}>
+              Aujourd’hui {todayDone}/{daily.length}
+            </span>
+          )}
+        </button>
         <span className="week-quests-side">
           {daily.length > 0 && todayIndex >= 0 && (
             <span className="week-quests-energy">
@@ -78,20 +116,29 @@ export default function WeekQuests({
                   className={`week-quests-energy-btn${todayEnergy === e.id ? ' active' : ''}`}
                   onClick={() => onSetEnergy(todayEnergy === e.id ? null : e.id)}
                   title={`Batterie du jour ${e.label.toLowerCase()} : ${e.hint}`}
+                  aria-label={`Batterie ${e.label.toLowerCase()}`}
+                  aria-pressed={todayEnergy === e.id}
                 >
-                  {e.icon}
+                  <EnergyIcon
+                    id={e.id}
+                    size={16}
+                    // Seule la batterie choisie prend sa couleur
+                    style={todayEnergy === e.id ? undefined : { color: 'var(--text-tertiary)' }}
+                  />
                 </button>
               ))}
             </span>
           )}
           {daily.length > 0 && dayStreak > 0 && (
             <span className="week-quests-streak" title="Jours validés d’affilée">
-              🔥 {dayStreak} j
+              <Flame size={14} className="week-quests-flame" aria-hidden="true" />
+              {dayStreak} j
             </span>
           )}
           {weekStreak > 0 && (
             <span className="week-quests-streak" title="Semaines réussies d’affilée">
-              🔥 {weekStreak} sem.
+              <CalendarCheck size={14} aria-hidden="true" />
+              {weekStreak} sem.
             </span>
           )}
         </span>
@@ -110,10 +157,12 @@ export default function WeekQuests({
                   className="week-quest-label"
                   title={q.minimum ? `Minimum : ${q.minimum}` : q.label}
                 >
-                  {domainOf(q.domain).icon} {q.label}
+                  <DomainIcon id={q.domain} size={14} className="week-quest-icon" />
+                  {q.label}
                   {q.id in installing && (
                     <span className="week-quest-install">
-                      {' '}🌱{installing[q.id]}/{INSTALL_DAYS}
+                      <Sprout size={11} aria-hidden="true" />
+                      {installing[q.id]}/{INSTALL_DAYS}
                     </span>
                   )}
                 </span>
@@ -152,7 +201,8 @@ export default function WeekQuests({
               <div key={q.id} className="week-quest">
                 <div className={`week-quest-row${count >= target ? ' done' : ''}`}>
                   <span className="week-quest-label">
-                    🔁 {domainOf(q.domain).icon} {q.label}
+                    <DomainIcon id={q.domain} size={14} className="week-quest-icon" />
+                    {q.label}
                   </span>
                   <span className="week-quest-dots">
                     {Array.from({ length: dots }, (_, i) => (
@@ -192,7 +242,7 @@ export default function WeekQuests({
                   checked={g.done}
                   onChange={() => onToggleGoal(g.id)}
                 />
-                📌 {g.label}
+                {g.label}
               </label>
               <button
                 className="week-goal-delete"

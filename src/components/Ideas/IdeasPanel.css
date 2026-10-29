@@ -1,7 +1,7 @@
 .ideas-panel {
   margin: 0.75rem 0 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bg-card);
   overflow: hidden;
 }
@@ -114,7 +114,10 @@
 }
 
 .ideas-panel-add:disabled {
-  opacity: 0.35;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  box-shadow: none;
+  opacity: 1;
   cursor: not-allowed;
 }
 

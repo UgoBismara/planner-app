@@ -1,13 +1,13 @@
 .week-quests {
   margin: 0 0 0.6rem;
-  padding: 0.5rem 0.7rem;
+  padding: 0.7rem 0.9rem 0.6rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .week-quests.succeeded {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .week-planner.month-view .week-quests {
@@ -17,14 +17,79 @@
 .week-quests-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
+/* Titre cliquable : replie ou déplie le bandeau */
+.week-quests-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  margin: -0.25rem -0.4rem;
+  padding: 0.25rem 0.4rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.week-quests-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.week-quests-chevron {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform 0.2s var(--ease);
+}
+
+.week-quests.collapsed .week-quests-chevron {
+  transform: rotate(-90deg);
+}
+
+/* Replié : seule la ligne de titre reste */
+.week-quests.collapsed .week-quests-items,
+.week-quests.collapsed .week-goal-form,
+.week-quests.collapsed .week-goal-add {
+  display: none;
+}
+
+.week-quests.collapsed {
+  padding-bottom: 0.7rem;
+}
+
+/* Sur téléphone, replié tient sur une ligne : batterie et séries reviennent en dépliant */
+@media (max-width: 640px) {
+  .week-quests.collapsed .week-quests-side {
+    display: none;
+  }
+}
+
+.week-quests-today {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.week-quests-today.done {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
 .week-quests-title {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
@@ -45,34 +110,55 @@
 }
 
 .week-quests-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.75rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
+}
+
+.week-quests-flame {
+  color: var(--warning);
 }
 
 .week-quests-energy {
   display: flex;
+  gap: 2px;
 }
 
 .week-quests-energy-btn {
+  display: inline-flex;
+  padding: 3px;
   background: none;
   border: none;
-  padding: 0 2px;
-  font-size: 0.75rem;
-  line-height: 1;
+  border-radius: 6px;
   cursor: pointer;
-  opacity: 0.3;
-  filter: grayscale(1);
+}
+
+.week-quests-energy-btn:hover {
+  background: var(--bg-hover);
 }
 
 .week-quests-energy-btn.active {
-  opacity: 1;
-  filter: none;
+  background: var(--bg-hover);
 }
 
 .week-quest-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 0.35rem;
   font-size: 0.68rem;
   color: var(--text-secondary);
+  vertical-align: 1px;
+}
+
+/* Icône de domaine devant le libellé, alignée sur la ligne de texte */
+.week-quest-icon {
+  margin-right: 0.4rem;
+  vertical-align: -2px;
 }
 
 .week-quest-days {
@@ -81,11 +167,12 @@
   flex-shrink: 0;
 }
 
+/* Cases du jour en vert (couleur des quêtes quotidiennes), ronds hebdo en bleu */
 .week-quest-day {
   width: 16px;
   height: 16px;
   padding: 0;
-  border: 1.5px solid var(--accent);
+  border: 1.5px solid color-mix(in srgb, var(--success) 70%, transparent);
   border-radius: 4px;
   background: transparent;
   color: var(--text-secondary);
@@ -97,13 +184,15 @@
 }
 
 .week-quest-day.filled {
-  background: var(--accent);
-  color: #fff;
+  border-color: var(--success);
+  background: var(--success);
+  color: #06200f;
 }
 
 /* Minimum : case à moitié remplie */
 .week-quest-day.min {
-  background: linear-gradient(to top, var(--accent) 50%, transparent 50%);
+  border-color: var(--success);
+  background: linear-gradient(to top, var(--success) 50%, transparent 50%);
   color: var(--text-primary);
 }
 
@@ -186,13 +275,13 @@
 
 /* Au-delà de la cible : bonus en doré, le prochain en pointillés */
 .week-quest-dot.extra {
-  border-color: #d69e2e;
+  border-color: var(--gold);
   border-style: dashed;
   opacity: 0.6;
 }
 
 .week-quest-dot.extra.filled {
-  background: #d69e2e;
+  background: var(--gold);
   border-style: solid;
   opacity: 1;
 }
@@ -216,15 +305,15 @@
   gap: 0.35rem;
   margin: 0.1rem 0 0.3rem;
   font-size: 0.72rem;
-  color: #d69e2e;
+  color: var(--gold);
 }
 
 .week-quest-suggest button {
   padding: 0 0.45rem;
-  border: 1px solid #d69e2e;
+  border: 1px solid var(--gold);
   border-radius: 6px;
   background: transparent;
-  color: #d69e2e;
+  color: var(--gold);
   font-size: 0.72rem;
   cursor: pointer;
 }
@@ -296,7 +385,10 @@
 }
 
 .week-goal-save:disabled {
-  opacity: 0.35;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  box-shadow: none;
+  opacity: 1;
   cursor: not-allowed;
 }
 

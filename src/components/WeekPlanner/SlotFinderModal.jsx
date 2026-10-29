@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-const COLORS = ['#E53935', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA', '#00897B', '#D81B60', '#F9A825', '#00ACC1', '#7CB342', '#3949AB', '#6D4C41'];
+// Couleurs système iOS (mode sombre), bien distinctes ; même ordre de préférence qu'avant
+const COLORS = ['#FF453A', '#0A84FF', '#30D158', '#FF9F0A', '#BF5AF2', '#40C8E0', '#FF375F', '#FFD60A', '#64D2FF', '#63E6E2', '#5E5CE6', '#AC8E68'];
 const DURATIONS = [
   { label: '15 min', value: 15 },
   { label: '30 min', value: 30 },
