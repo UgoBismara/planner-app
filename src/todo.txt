@@ -22,7 +22,7 @@ Technique :
 - analyze-label : aucune gestion d'erreur, une panne API renvoie une 500 muette
 - analyze-label tourne encore sur Anthropic (crédit à sec) : même bascule Gemini possible
 - Proxy /api dans vite.config pour tester les endpoints sans vercel dev
-- Lint : refreshKey inutilisé dans WeekPlanner, blocs catch vides (useLocalStorage, MealPlanner)
+- Lint : refreshKey inutilisé dans WeekPlanner, blocs catch vides (useLocalStorage, NutritionGoal)
 - Code mort : FoodLogModal.jsx et data/foods.js ne sont plus importés, styles .meal-cell orphelins
 - IdeasPanel.jsx/.css (encart Idées retiré de la Semaine) ne sont plus utilisés nulle part
 
@@ -33,3 +33,12 @@ Quêtes :
 - Afficher le défi du mois (barre de progression) dans le bandeau de la Semaine
 - Événement coché ✓ et ronds du bandeau hebdo s’additionnent : relier les ronds aux événements pour éviter le double comptage
 - Prolonger le plan Triathlon & Maths au-delà du 22 nov. (événements récurrents déjà en place, titres de séance à générer)
+
+Maths :
+- Lot 2 : cartes mémo (flashcards par chapitre, révision espacée) et mes propres exercices (formulaire avec aperçu des formules)
+- Lots 3 à 5, un chapitre par lot : Polynômes, puis Algèbre linéaire & matrices, puis Groupes & anneaux (npm run check:maths avant de livrer)
+- Plus tard : domaines Analyse, Probas & stats, Graphes
+- Figures (courbes, schémas SVG) dans les cours et les énoncés
+- Exercices générés par IA (Gemini), seulement si les corrigés sont fiables
+- Bouton retour du téléphone dans l’onglet (l’appli n’a pas de routeur)
+- Rendu : une virgule collée après une formule passe parfois seule à la ligne

@@ -1,0 +1,1222 @@
+.maths-board {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem 0.75rem 3rem;
+}
+
+.maths-page-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+.maths-hero {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.maths-quest-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Chiffres du haut ── */
+.maths-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.maths-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.75rem 0.4rem 0.7rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.maths-stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.maths-stat-total {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.maths-stat-label {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+.maths-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  box-shadow: inset 0 0 0 1px var(--border);
+  overflow: hidden;
+}
+
+.maths-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s var(--ease);
+}
+
+.maths-global-bar {
+  margin-bottom: 1.25rem;
+}
+
+/* ── Continuer, dé ── */
+.maths-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.maths-continue {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maths-continue > svg:first-child {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.maths-continue:hover {
+  border-color: var(--border-strong);
+}
+
+.maths-continue-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.maths-continue-sub {
+  overflow: hidden;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maths-dice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.maths-dice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.maths-dice-btn:active {
+  background: var(--accent-strong);
+}
+
+.maths-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.maths-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-main);
+  cursor: pointer;
+}
+
+.maths-chip.active {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.maths-stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--gold);
+}
+
+.maths-chip:not(.active) .maths-stars {
+  color: var(--text-tertiary);
+}
+
+/* ── Sections et listes ── */
+.maths-section {
+  margin-bottom: 1.5rem;
+}
+
+.maths-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.maths-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+.maths-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.maths-hint {
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.maths-later {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.75rem 0 1.25rem;
+}
+
+.maths-items,
+.maths-chapters {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.maths-item,
+.maths-chapter-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease);
+}
+
+.maths-item:hover,
+.maths-chapter-card:hover {
+  border-color: var(--border-strong);
+}
+
+.maths-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.maths-item-title {
+  font-weight: 600;
+}
+
+.maths-item-chevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.maths-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.maths-meta-kind,
+.maths-meta-drill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.maths-level {
+  flex-shrink: 0;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.maths-status {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.maths-status-tried {
+  color: var(--accent);
+}
+
+.maths-status-review {
+  color: var(--warning);
+}
+
+.maths-status-later {
+  color: var(--text-secondary);
+}
+
+.maths-status-validated {
+  color: var(--success);
+}
+
+/* ── Chapitres de l'accueil ── */
+.maths-chapter-card {
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.maths-chapter-card.complete {
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+.maths-chapter-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+}
+
+.maths-chapter-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.maths-chapter-title {
+  font-weight: 700;
+}
+
+.maths-chapter-sub {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.maths-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.maths-progress .maths-bar {
+  flex: 1;
+}
+
+.maths-progress-label {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.maths-soon {
+  margin: -0.75rem 0 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* ── Succès ── */
+.maths-achievements-header {
+  margin-top: 0.5rem;
+}
+
+.maths-achievements {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.maths-achievement {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  opacity: 0.5;
+}
+
+.maths-achievement.unlocked {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+.maths-achievement-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+}
+
+.maths-achievement.unlocked .maths-achievement-icon {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--gold);
+}
+
+.maths-achievement-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.maths-achievement-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Bandeau « succès débloqué », collé en haut de l'écran */
+.maths-toast {
+  position: sticky;
+  top: calc(0.5rem + env(safe-area-inset-top));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  animation: maths-toast-in 0.25s var(--ease);
+}
+
+.maths-toast > svg {
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
+.maths-toast > span {
+  flex: 1;
+}
+
+.maths-toast button {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+@keyframes maths-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* ── Chapitre ── */
+.maths-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.6rem;
+  padding: 0.25rem 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.maths-chapter-head {
+  margin-bottom: 1rem;
+}
+
+.maths-chapter-meta {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.maths-chapter-summary {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Contrôle segmenté, comme la barre d'onglets de l'appli */
+.maths-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 1rem;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.maths-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.maths-tab.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.maths-sections {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.maths-section-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.maths-section-card.open {
+  border-color: var(--border-strong);
+}
+
+.maths-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maths-section-num {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.maths-section-num.read {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.maths-section-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.maths-chevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform 0.2s var(--ease);
+}
+
+.maths-section-card.open .maths-chevron {
+  transform: rotate(180deg);
+}
+
+.maths-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.maths-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* ── Blocs de cours ── */
+.maths-block {
+  --block-color: var(--border-strong);
+  padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--block-color);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: color-mix(in srgb, var(--block-color) 8%, transparent);
+}
+
+.maths-block-texte {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.maths-block-definition {
+  --block-color: var(--accent);
+}
+
+.maths-block-theoreme {
+  --block-color: var(--success);
+}
+
+.maths-block-propriete {
+  --block-color: #63e6e2;
+}
+
+.maths-block-methode {
+  --block-color: #bf5af2;
+}
+
+.maths-block-exemple {
+  background: none;
+}
+
+.maths-block-piege {
+  --block-color: var(--warning);
+}
+
+.maths-block-histoire {
+  --block-color: var(--gold);
+}
+
+.maths-block-label {
+  margin-bottom: 0.3rem;
+  color: var(--block-color);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.maths-block-exemple .maths-block-label {
+  color: var(--text-secondary);
+}
+
+/* Démonstration et culture : repliées par défaut */
+details.maths-block > summary {
+  margin-bottom: 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+details.maths-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.maths-block > summary::before {
+  content: '▸ ';
+}
+
+details.maths-block[open] > summary {
+  margin-bottom: 0.4rem;
+}
+
+details.maths-block[open] > summary::before {
+  content: '▾ ';
+}
+
+.maths-block-demo .maths-block-label {
+  color: var(--text-secondary);
+}
+
+/* ── Texte mathématique (Markdown + KaTeX) ── */
+.maths-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+.maths-text > * + * {
+  margin-top: 0.6rem;
+}
+
+.maths-text ul,
+.maths-text ol {
+  padding-left: 1.3rem;
+}
+
+.maths-text li + li {
+  margin-top: 0.25rem;
+}
+
+.maths-text table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.maths-text th,
+.maths-text td {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.maths-text th {
+  background: var(--bg-hover);
+  font-weight: 600;
+}
+
+.maths-text pre {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-main);
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.maths-text code {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.maths-text .katex {
+  font-size: 1.1em;
+}
+
+/* Une formule trop longue défile au lieu de déborder de l'écran */
+.maths-text .katex-display {
+  margin: 0.5rem 0;
+  padding: 0.2rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.maths-text-inline,
+.maths-text-inline > * {
+  display: inline;
+}
+
+/* ── Exercice ── */
+.maths-ex-head {
+  margin-bottom: 0.75rem;
+}
+
+.maths-ex-chapter {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.maths-ex-title {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.maths-card {
+  margin-bottom: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.maths-card-title {
+  margin-bottom: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.maths-statement {
+  border-left: 3px solid var(--accent);
+}
+
+.maths-solution {
+  border-left: 3px solid var(--success);
+}
+
+.maths-recall {
+  margin-bottom: 0.75rem;
+}
+
+.maths-recall-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.5rem 0 0;
+}
+
+.maths-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maths-link-btn > svg {
+  flex-shrink: 0;
+}
+
+.maths-answer {
+  margin-bottom: 0.75rem;
+}
+
+.maths-answer-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.maths-answer-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* 16 px : iOS ne zoome pas sur le champ */
+.maths-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.maths-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.maths-answer-help {
+  margin-top: 0.35rem;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.maths-primary-btn,
+.maths-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.maths-primary-btn {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+.maths-primary-btn:disabled {
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}
+
+.maths-ghost-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.maths-ghost-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.maths-ghost-btn.active {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.maths-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.maths-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.maths-choice:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.maths-choice:disabled {
+  cursor: default;
+}
+
+.maths-choice.correct {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.maths-choice.wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  opacity: 0.7;
+}
+
+.maths-choice-letter {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.maths-truefalse {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.maths-truefalse .maths-choice {
+  justify-content: center;
+  font-weight: 700;
+}
+
+.maths-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+}
+
+.maths-feedback > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.maths-feedback.correct {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.maths-feedback.correct > svg {
+  color: var(--success);
+}
+
+.maths-feedback.wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.maths-feedback.wrong > svg {
+  color: var(--danger);
+}
+
+.maths-feedback.invalid {
+  border-color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.maths-feedback.invalid > svg {
+  color: var(--warning);
+}
+
+.maths-hints {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.maths-hint-card {
+  align-self: stretch;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+}
+
+.maths-hint-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.25rem;
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.maths-solution-btn {
+  margin-bottom: 0.75rem;
+}
+
+.maths-grade,
+.maths-after {
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.maths-grade-question {
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.maths-grade-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.maths-grade-btn {
+  --grade-color: var(--success);
+  padding: 0.65rem 0.3rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.maths-grade-btn.aide {
+  --grade-color: var(--warning);
+}
+
+.maths-grade-btn.rate {
+  --grade-color: var(--danger);
+}
+
+.maths-grade-btn:hover,
+.maths-grade-btn.suggested {
+  border-color: var(--grade-color);
+  background: color-mix(in srgb, var(--grade-color) 14%, transparent);
+  color: var(--grade-color);
+}
+
+.maths-after {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.maths-after-text {
+  margin-bottom: 0.65rem;
+  font-size: 0.9rem;
+}
+
+.maths-after-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ── Filtres des exercices ── */
+.maths-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.maths-select {
+  padding: 0.45rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.maths-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+.maths-filter-tag button {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.maths-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1.25rem 0 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.maths-empty {
+  padding: 1.25rem 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+}

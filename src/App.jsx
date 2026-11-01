@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Ellipsis } from 'lucide-react';
 import WeekPlanner from './components/WeekPlanner/WeekPlanner';
 import MealPlanner from './components/MealPlanner/MealPlanner';
@@ -10,12 +10,16 @@ import JournalBoard from './components/Journal/JournalBoard';
 import { TabIcon } from './components/Icons';
 import './App.css';
 
+// Chargé à la première ouverture : KaTeX, Markdown et le contenu ne pèsent pas sur le planner
+const MathsBoard = lazy(() => import('./components/Maths/MathsBoard'));
+
 // primary : présent dans la barre du bas sur téléphone, les autres passent dans « Plus »
 const TABS = [
   { id: 'week', label: 'Semaine', primary: true },
   { id: 'quests', label: 'Quêtes', primary: true },
   { id: 'journal', label: 'Carnet', primary: true },
   { id: 'meals', label: 'Repas', primary: true },
+  { id: 'maths', label: 'Maths' },
   { id: 'nutrition', label: 'Nutrition' },
   { id: 'ideas', label: 'Idées' },
   { id: 'vinted', label: 'Vinted' },
@@ -72,6 +76,11 @@ export default function App() {
         {activeTab === 'vinted' && <VintedWorkshop />}
         {activeTab === 'quests' && <QuestsBoard />}
         {activeTab === 'journal' && <JournalBoard />}
+        {activeTab === 'maths' && (
+          <Suspense fallback={<p className="tab-loading">Chargement…</p>}>
+            <MathsBoard />
+          </Suspense>
+        )}
       </main>
 
       {/* ── Téléphone : barre d'onglets en bas, à portée de pouce ── */}

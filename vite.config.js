@@ -26,8 +26,13 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Police : seuls les sous-ensembles latins servent au français
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}', '**/inter-latin*-wght-normal-*.woff2'],
+        // Police : seuls les sous-ensembles latins servent au français. Polices KaTeX :
+        // l'onglet Maths doit afficher ses formules hors ligne.
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg}',
+          '**/inter-latin*-wght-normal-*.woff2',
+          '**/KaTeX_*.woff2',
+        ],
       },
     }),
   ],

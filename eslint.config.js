@@ -27,8 +27,9 @@ export default defineConfig([
     },
   },
   {
-    // Fonctions serverless : elles tournent sous Node, pas dans le navigateur
-    files: ['api/**/*.js'],
+    // Fonctions serverless et scripts de vérification : ils tournent sous Node, pas
+    // dans le navigateur
+    files: ['api/**/*.js', 'scripts/**/*.js'],
     languageOptions: {
       globals: globals.node,
     },

@@ -705,6 +705,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const swipeWeekRef = useRef(null);
   const calWrapperRef = useRef(null);
   const calBodyRef = useRef(null);
+  const plannerRef = useRef(null);
+  const weekNavRef = useRef(null);
+  const mobileHeaderRef = useRef(null);
+  const dayTabsRef = useRef(null);
 
   // Swipe sur la barre des onglets → changer de semaine
   const handleTabsSwipeStart = (e) => {
@@ -755,30 +759,46 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     minWeekOffsetRef.current = minWeekOffset;
   }, [minWeekOffset]);
 
-  // La grille occupe toute la hauteur restante de l'écran, quelle que soit la taille du
-  // bandeau et de la légende au-dessus (recalculé à chaque rendu et redimensionnement).
+  // La grille occupe AU MOINS la hauteur restante de l'écran, quelle que soit la taille
+  // du bandeau et de la légende au-dessus (recalculé à chaque rendu et redimensionnement).
+  // Une semaine chargée l'allonge au-delà : c'est la page qui défile, pas la grille.
   // Style posé directement : pas d'état, donc pas de rendu supplémentaire.
   useLayoutEffect(() => {
     const fit = () => {
       const el = calBodyRef.current;
       if (!el) return;
+      // Haut mesuré par rapport au document : la valeur ne bouge pas avec le défilement
       const top = el.getBoundingClientRect().top + window.scrollY;
-      el.style.height = `${Math.max(360, Math.round(window.innerHeight - top - 12))}px`;
+      el.style.minHeight = `${Math.max(360, Math.round(window.innerHeight - top - 12))}px`;
     };
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   });
 
-  // Si la semaine est trop chargée pour tenir à l'écran, la grille défile : à l'ouverture,
-  // on la place une heure avant l'heure actuelle
-  useEffect(() => {
-    const el = calBodyRef.current;
-    if (!el || el.scrollHeight <= el.clientHeight) return;
-    const hourBefore = `${String(Math.max(0, new Date().getHours() - 1)).padStart(2, "0")}:00`;
-    el.scrollTop = minToFrac(timeToCalMin(hourBefore)) * el.scrollHeight;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Barres de navigation collantes : chacune se cale sous la precedente, donc il faut
+  // leur hauteur reelle. L en-tete de l application est colle sur ordinateur mais
+  // masque sur telephone, et les barres mobiles sont masquees sur ordinateur : les
+  // elements caches mesurent 0, la meme somme marche donc dans les deux cas.
+  useLayoutEffect(() => {
+    const root = plannerRef.current;
+    if (!root) return;
+    const measure = () => {
+      const h = (el) => (el ? Math.round(el.getBoundingClientRect().height) : 0);
+      root.style.setProperty(
+        "--sticky-top",
+        `${h(document.querySelector(".app-header"))}px`,
+      );
+      root.style.setProperty(
+        "--sticky-nav-h",
+        `${h(weekNavRef.current) + h(mobileHeaderRef.current)}px`,
+      );
+      root.style.setProperty("--sticky-tabs-h", `${h(dayTabsRef.current)}px`);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  });
 
   useEffect(() => {
     const el = calWrapperRef.current;
@@ -2295,9 +2315,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   return (
     <div
+      ref={plannerRef}
       className={`week-planner${mobileView === "month" ? " month-view" : ""}`}
     >
-      <div className="week-nav">
+      <div className="week-nav" ref={weekNavRef}>
         <h2 className="week-label">
           {weekLabel.title}
           {weekLabel.range && (
@@ -2364,7 +2385,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       </div>
 
       {/* Header iOS mobile */}
-      <div className="mobile-week-header">
+      <div className="mobile-week-header" ref={mobileHeaderRef}>
         <span className="mobile-month-label">
           {mobileView === "day"
             ? getMobileMonthLabel(weekOffset)
@@ -2481,6 +2502,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       {/* Onglets de navigation jour — mobile uniquement */}
       <div
         className="mobile-day-tabs"
+        ref={dayTabsRef}
         onTouchStart={handleTabsSwipeStart}
         onTouchEnd={handleTabsSwipeEnd}
       >

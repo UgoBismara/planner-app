@@ -5,12 +5,19 @@
 }
 
 /* ── Navigation (partagée avec l'onglet Repas) ── */
+/* Reste accessible pendant le defilement de la page. Le fond opaque evite que la
+   grille se voie au travers ; z-index 9 passe sous l en-tete de l app (10). */
 .week-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  position: sticky;
+  top: var(--sticky-top, 0px);
+  z-index: 9;
+  background: var(--bg-main);
+  padding: 0.35rem 0;
 }
 
 .week-label {
@@ -91,10 +98,12 @@
 
 
 /* ── Calendrier global ── */
+/* clip et non hidden : le rognage reste, mais sans creer de conteneur de defilement
+   qui empecherait .calendar-header de coller par rapport a la page. */
 .calendar-wrapper {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: clip;
   background: var(--bg-card);
   touch-action: pan-y pinch-zoom;
 }
@@ -105,6 +114,9 @@
   grid-template-columns: 52px repeat(7, 1fr);
   border-bottom: 2px solid var(--border);
   background: var(--bg-card);
+  position: sticky;
+  top: calc(var(--sticky-top, 0px) + var(--sticky-nav-h, 0px) + var(--sticky-tabs-h, 0px));
+  z-index: 9;
 }
 
 .time-gutter-header {
@@ -160,19 +172,21 @@
   color: var(--text-secondary);
 }
 
-/* ── Corps (remplit la hauteur disponible) ── */
+/* ── Corps (remplit au moins la hauteur disponible) ── */
 /* Les heures occupées pèsent plus que les heures vides (--hour-weight = somme des poids) :
    la journée tient en général à l'écran. Une unité de poids ne descend pas sous
-   --weight-px ; si la semaine est très chargée, la grille défile verticalement. */
+   --weight-px ; si la semaine est très chargée, la grille s'allonge et c'est la page
+   qui défile : la grille n'a pas de barre de défilement propre.
+   Aucune règle overflow ici, volontairement : overflow-x: hidden seul ferait calculer
+   overflow-y: auto par le navigateur, donc réapparaître une barre verticale. Le rognage
+   horizontal est déjà assuré par .calendar-wrapper. */
 .calendar-body {
   --weight-px: 14px;
   display: grid;
   grid-template-columns: 52px repeat(7, 1fr);
   grid-template-rows: minmax(calc(var(--hour-weight, 19) * var(--weight-px)), 1fr);
-  height: calc(100dvh - 260px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  /* Valeur de repli : le script affine cette hauteur minimale au rendu */
+  min-height: calc(100dvh - 260px);
 }
 
 /* ── Colonne des heures ── */
@@ -1512,6 +1526,11 @@
     justify-content: space-between;
     gap: 8px;
     padding: 10px 8px 12px;
+    /* Pas d en-tete d application sur telephone : --sticky-top vaut 0 */
+    position: sticky;
+    top: var(--sticky-top, 0px);
+    z-index: 9;
+    background: var(--bg-main);
   }
   .week-label { font-size: 1.15rem; }
   .week-label-range { font-size: 0.8rem; }
@@ -1546,6 +1565,10 @@
     padding: 4px 0 0;
     border-bottom: 0.5px solid var(--border);
     gap: 0;
+    position: sticky;
+    top: calc(var(--sticky-top, 0px) + var(--sticky-nav-h, 0px));
+    z-index: 9;
+    background: var(--bg-main);
   }
   .mobile-day-tabs::-webkit-scrollbar { display: none; }
 
@@ -1599,7 +1622,7 @@
   }
 
   /* ── Vue 1 jour : cacher toutes les colonnes sauf l'active ── */
-  .calendar-wrapper { overflow-x: hidden; }
+  .calendar-wrapper { overflow: clip; }
 
   .calendar-header,
   .goals-row,
@@ -1708,7 +1731,7 @@
   /* ── Calendrier corps ── */
   .calendar-body {
     --weight-px: 16px;
-    height: calc(100dvh - 220px);
+    min-height: calc(100dvh - 220px);
   }
 
   .cal-day-header.mobile-active {

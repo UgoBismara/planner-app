@@ -69,11 +69,22 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Pas de règle overflow ici : `overflow-x: auto` ferait de ce bloc un conteneur de
+   défilement, et les barres collantes des écrans (semaine, en-tête des jours) ne
+   pourraient plus se coller par rapport à la page. Un contenu trop large fait donc
+   défiler la page elle-même. */
 .app-main {
   flex: 1;
   padding: 1.5rem calc(2rem + env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom))
     calc(2rem + env(safe-area-inset-left));
-  overflow-x: auto;
+}
+
+/* Onglet chargé à la demande (Maths), le temps de récupérer son code */
+.tab-loading {
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 /* Barre du bas et menu « Plus » : téléphone uniquement */
