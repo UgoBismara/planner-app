@@ -34,6 +34,7 @@ import { planSubjectFor } from "../../data/questsPlan";
 import WeekQuests from "../Quests/WeekQuests";
 import RescheduleModal from "./RescheduleModal";
 import {
+  CalendarArrowDown,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -101,6 +102,25 @@ function toDayKey(date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d.toISOString().split("T")[0];
+}
+
+// « mardi 4 novembre » : annonce ou un element deplace a atterri
+function formatDayLong(date) {
+  return date.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+// Retire les champs calcules a l'affichage (prefixe _) avant de stocker un evenement :
+// ils sont recalcules a la lecture, et seraient faux dans une autre semaine.
+function stripComputed(activity) {
+  const clean = {};
+  Object.entries(activity).forEach(([k, v]) => {
+    if (!k.startsWith("_")) clean[k] = v;
+  });
+  return clean;
 }
 
 function getDaysOfWeek(weekOffset) {
@@ -628,6 +648,46 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const [pendingRecurringEdit, setPendingRecurringEdit] = useState(null); // { original, updated, storedDay }
   const days = getDaysOfWeek(weekOffset);
 
+  // ── Écriture dans une semaine quelconque ───────────────────────
+  // Par l'état React quand la semaine visée est déjà montée (sinon son affichage
+  // resterait périmé), sinon droit dans le stockage et Firestore.
+  const liveWeekSetters = {
+    [weekKey]: setWeekData,
+    [prevWeekKey]: setPrevWeekData,
+    [prevPrevWeekKey]: setPrevPrevWeekData,
+    [prevPrevPrevWeekKey]: setPrevPrevPrevWeekData,
+  };
+  // La semaine visée peut n'avoir jamais été ouverte (absente) ou être incomplète
+  const normalizeWeek = (base) => {
+    const next = Array.from({ length: 7 }, () => []);
+    if (Array.isArray(base))
+      base.forEach((day, i) => {
+        if (i < 7 && Array.isArray(day)) next[i] = day;
+      });
+    return next;
+  };
+  const writeWeek = (key, updater) => {
+    const live = liveWeekSetters[key];
+    if (live) {
+      live((prev) => updater(prev));
+      return;
+    }
+    // Semaine non montée : le stockage local est mis à jour tout de suite, pour qu'elle
+    // soit juste dès qu'on l'ouvre, writeStoredValue n'étant pas immédiat (il lit
+    // d'abord Firestore). L'écriture est répétable sans doublon, les deux passages
+    // peuvent donc s'appliquer dans n'importe quel ordre.
+    try {
+      const item = window.localStorage.getItem(key);
+      window.localStorage.setItem(
+        key,
+        JSON.stringify(updater(item !== null ? JSON.parse(item) : null)),
+      );
+    } catch {
+      // Stockage indisponible : writeStoredValue reste la seule écriture
+    }
+    writeStoredValue(key, updater);
+  };
+
   // ── Fenêtre horaire affichée (07:00 par défaut, étendue vers le haut si besoin) ──
   const START_HOUR = computeGridStartHour(
     days,
@@ -677,6 +737,10 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const [editingActivity, setEditingActivity] = useState(null);
   const [showMiniCal, setShowMiniCal] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  // Confirme ou un element deplace a atterri, avec un raccourci pour y aller
+  const [moveNotice, setMoveNotice] = useState(null); // { text, weekOffset }
+  // Objectif dont la rangee de jours est ouverte, pour changer de jour en un clic
+  const [dayPickerGoal, setDayPickerGoal] = useState(null); // { dayIndex, goalId }
   const [reportingActivity, setReportingActivity] = useState(null);
   const [mobileDay, setMobileDay] = useState(() => {
     const d = getDaysOfWeek(0);
@@ -744,6 +808,13 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   };
 
   // Swipe dans le calendrier via listeners natifs (contourne le scroll vertical)
+  // Le bandeau de confirmation s'efface de lui-meme
+  useEffect(() => {
+    if (!moveNotice) return;
+    const t = setTimeout(() => setMoveNotice(null), 8000);
+    return () => clearTimeout(t);
+  }, [moveNotice]);
+
   const mobileDayRef = useRef(mobileDay);
   const weekOffsetRef = useRef(weekOffset);
   const minWeekOffsetRef = useRef(minWeekOffset);
@@ -1376,12 +1447,14 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
       setPendingRecurringEdit({ original: activity, updated: updatedActivity });
       setEditingActivity(null);
     } else {
+      // targetDay et targetWeekShift pilotent le déplacement : ils ne sont pas stockés
+      const { targetDay, targetWeekShift = 0, ...fields } = updatedActivity;
       const oldStoredDay = activity._storedDayIndex;
       let newStoredDay;
-      if (updatedActivity.targetDay !== undefined) {
+      if (targetDay !== undefined) {
         // Explicit day change from the day picker
-        const visualDay = updatedActivity.targetDay;
-        newStoredDay = isPostMidnight(updatedActivity.time) && visualDay < 6
+        const visualDay = targetDay;
+        newStoredDay = isPostMidnight(fields.time) && visualDay < 6
           ? visualDay + 1
           : visualDay;
       } else {
@@ -1389,27 +1462,56 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         const visualDay = isPostMidnight(activity.time) && oldStoredDay > 0
           ? oldStoredDay - 1
           : oldStoredDay;
-        newStoredDay = isPostMidnight(updatedActivity.time) && visualDay < 6
+        newStoredDay = isPostMidnight(fields.time) && visualDay < 6
           ? visualDay + 1
           : visualDay;
       }
-      setWeekData((prev) => {
-        const next = [...prev];
-        if (newStoredDay !== oldStoredDay) {
-          next[oldStoredDay] = next[oldStoredDay].filter(
+      if (targetWeekShift !== 0) {
+        // Autre semaine : l'événement quitte celle-ci et va dans la semaine visée,
+        // dont la clé de stockage est différente.
+        const targetDate = new Date(days[newStoredDay]);
+        targetDate.setDate(targetDate.getDate() + targetWeekShift * 7);
+        const moved = stripComputed({ ...activity, ...fields });
+        // Un événement venu d'une semaine antérieure est stocké là-bas, pas ici
+        const removeFrom = activity._fromPastWeekSetter ?? setWeekData;
+        removeFrom((prev) => {
+          const next = [...prev];
+          next[oldStoredDay] = (next[oldStoredDay] || []).filter(
             (a) => a.id !== activity.id,
           );
+          return next;
+        });
+        writeWeek(getWeekKeyForDate(targetDate), (base) => {
+          const next = normalizeWeek(base);
           next[newStoredDay] = [
-            ...(next[newStoredDay] || []),
-            { ...activity, ...updatedActivity },
+            ...next[newStoredDay].filter((a) => a.id !== moved.id),
+            moved,
           ];
-        } else {
-          next[oldStoredDay] = next[oldStoredDay].map((a) =>
-            a.id === activity.id ? { ...a, ...updatedActivity } : a,
-          );
-        }
-        return next;
-      });
+          return next;
+        });
+        setMoveNotice({
+          text: `« ${eventLabel(moved)} » déplacé au ${formatDayLong(targetDate)}.`,
+          weekOffset: weekOffset + targetWeekShift,
+        });
+      } else {
+        setWeekData((prev) => {
+          const next = [...prev];
+          if (newStoredDay !== oldStoredDay) {
+            next[oldStoredDay] = next[oldStoredDay].filter(
+              (a) => a.id !== activity.id,
+            );
+            next[newStoredDay] = [
+              ...(next[newStoredDay] || []),
+              { ...activity, ...fields },
+            ];
+          } else {
+            next[oldStoredDay] = next[oldStoredDay].map((a) =>
+              a.id === activity.id ? { ...a, ...fields } : a,
+            );
+          }
+          return next;
+        });
+      }
       setEditingActivity(null);
     }
   };
@@ -1810,6 +1912,31 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         ...prev,
         [nextWeekKey]: [...existing, { ...goal, done: false }],
       };
+    });
+  };
+
+  // Ramene un objectif sur la semaine en cours, au meme jour de la semaine — ou
+  // aujourd'hui si ce jour est deja passe, pour ne pas le remettre dans le passe.
+  const moveGoalToCurrentWeek = (fromDayIndex, goalId) => {
+    const goal = getGoalsForDay(fromDayIndex).find((g) => g.id === goalId);
+    if (!goal) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sameWeekday = getDaysOfWeek(0)[fromDayIndex];
+    const target = sameWeekday < today ? today : sameWeekday;
+    const targetKey = toDayKey(target);
+    if (targetKey === dayKey(fromDayIndex)) return;
+    setGoalsForDay(
+      fromDayIndex,
+      getGoalsForDay(fromDayIndex).filter((g) => g.id !== goalId),
+    );
+    setDailyGoals((prev) => {
+      const existing = Array.isArray(prev[targetKey]) ? prev[targetKey] : [];
+      return { ...prev, [targetKey]: [...existing, { ...goal, done: false }] };
+    });
+    setMoveNotice({
+      text: `Objectif « ${goal.text} » déplacé au ${formatDayLong(target)}.`,
+      weekOffset: 0,
     });
   };
 
@@ -2452,6 +2579,31 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         </div>
       </div>
 
+      {moveNotice && (
+        <div className="move-notice">
+          <span className="move-notice-text">{moveNotice.text}</span>
+          {moveNotice.weekOffset !== weekOffset && (
+            <button
+              className="move-notice-btn"
+              onClick={() => {
+                setWeekOffset(moveNotice.weekOffset);
+                setMoveNotice(null);
+              }}
+            >
+              Voir
+            </button>
+          )}
+          <button
+            className="move-notice-close"
+            onClick={() => setMoveNotice(null)}
+            title="Fermer"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <WeekQuests
         daily={weekDailyQuests}
         dayKeys={questDayKeys}
@@ -3025,6 +3177,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   </form>
                 );
               }
+              const dayPickerOpen =
+                dayPickerGoal?.goalId === goal.id &&
+                dayPickerGoal?.dayIndex === i;
               return (
                 <div
                   key={goal.id}
@@ -3039,37 +3194,34 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                   />
                   <span
                     className="goal-text"
-                    onClick={() =>
+                    onClick={() => {
+                      setDayPickerGoal(null);
                       setEditingGoal({
                         dayIndex: i,
                         goalId: goal.id,
                         text: goal.text,
                         questIds: goal.questIds ?? [],
                         weekGoalIds: goal.weekGoalIds ?? [],
-                      })
-                    }
+                      });
+                    }}
                     title="Cliquer pour modifier"
                   >
                     {goal.text}
                   </span>
                   <div className="goal-actions">
-                    {i > 0 && (
-                      <button
-                        className="goal-move-btn"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={() => moveGoalToDay(i, goal.id, i - 1)}
-                        title="Jour précédent"
-                      >
-                        ←
-                      </button>
-                    )}
                     <button
-                      className="goal-move-btn"
+                      className={`goal-move-btn goal-day-btn${dayPickerOpen ? " open" : ""}`}
                       onMouseDown={(e) => e.stopPropagation()}
-                      onClick={() => moveGoalForward(i, goal.id)}
-                      title={i < 6 ? "Jour suivant" : "Lundi prochain"}
+                      onClick={() =>
+                        setDayPickerGoal(
+                          dayPickerOpen
+                            ? null
+                            : { dayIndex: i, goalId: goal.id },
+                        )
+                      }
+                      title="Changer de jour"
                     >
-                      →
+                      ⇄
                     </button>
                     {idx > 0 && (
                       <button
@@ -3101,6 +3253,16 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                         ↗
                       </button>
                     )}
+                    {!goal.done && weekOffset !== 0 && (
+                      <button
+                        className="goal-move-btn goal-this-week-btn"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => moveGoalToCurrentWeek(i, goal.id)}
+                        title="Déplacer vers la semaine en cours"
+                      >
+                        <CalendarArrowDown />
+                      </button>
+                    )}
                     <button
                       className="goal-delete-btn"
                       onMouseDown={(e) => e.stopPropagation()}
@@ -3110,6 +3272,26 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                       ×
                     </button>
                   </div>
+                  {/* Rangée posée sous l'objectif : un calque flottant serait rogné
+                      par .calendar-wrapper (overflow: clip) */}
+                  {dayPickerOpen && (
+                    <div className="goal-day-picker">
+                      {DAY_NAMES.map((name, d) => (
+                        <button
+                          key={d}
+                          className={`goal-day-chip${d === i ? " current" : ""}`}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={() => {
+                            if (d !== i) moveGoalToDay(i, goal.id, d);
+                            setDayPickerGoal(null);
+                          }}
+                          title={`${name} ${days[d].getDate()}`}
+                        >
+                          {name.charAt(0)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             };
@@ -3261,6 +3443,8 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
             editingActivity.dayIndex,
           ).filter((a) => a.time && a.id !== editingActivity.activity.id)}
           onEdit={handleEdit}
+          minWeekShift={minWeekOffset - weekOffset}
+          canMoveWeek={!editingActivity.activity._fromPastWeekSetter}
           quests={linkableQuests}
           onDelete={() => {
             const act = editingActivity.activity;

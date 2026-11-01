@@ -161,6 +161,57 @@
   margin-bottom: 0.75rem;
 }
 
+/* Confirme où un événement ou un objectif déplacé a atterri */
+.move-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.5rem 0;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.move-notice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.move-notice-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: none;
+  padding: 0.2rem 0.6rem;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.move-notice-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.move-notice-close {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0 0.2rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.move-notice-close:hover {
+  color: var(--text-primary);
+}
+
 .day-name {
   font-weight: 700;
   font-size: 0.8rem;
@@ -512,6 +563,8 @@
   gap: 3px;
   width: 100%;
   min-width: 0;
+  /* La rangée des jours, quand elle s'ouvre, passe à la ligne sous l'objectif */
+  flex-wrap: wrap;
 }
 
 .goal-priority {
@@ -567,6 +620,56 @@
   line-height: 1;
 }
 .goal-move-btn:hover { color: var(--accent); }
+
+/* Ouvre la rangée des sept jours (remplaçante des anciennes flèches ← →) */
+.goal-day-btn {
+  padding: 0 2px;
+}
+
+.goal-day-btn.open {
+  color: var(--accent);
+}
+
+.goal-day-picker {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px 0 1px;
+}
+
+.goal-day-chip {
+  flex: 1 1 auto;
+  min-width: 15px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.7;
+  cursor: pointer;
+}
+
+.goal-day-chip:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+/* Jour actuel de l'objectif */
+.goal-day-chip.current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Icône (ramener sur la semaine en cours) calée sur la taille des flèches voisines */
+.goal-move-btn svg {
+  display: block;
+  width: 1.25em;
+  height: 1.25em;
+}
 .goal-delete-btn:hover { color: var(--danger); }
 
 .goal-add-btn {
@@ -1222,6 +1325,84 @@
   opacity: 0.85;
 }
 
+/* ── Déplacer un événement vers une autre semaine ── */
+.day-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.day-picker-head label {
+  margin-bottom: 0;
+}
+
+.week-shift-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+}
+
+.week-shift-btn {
+  border: none;
+  background: none;
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.week-shift-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.week-shift-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Largeur fixe : changer de semaine ne fait pas sauter les flèches */
+.week-shift-label {
+  min-width: 7.5rem;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.week-shift-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  color: var(--accent);
+}
+
+.week-shift-reset {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.week-shift-reset:hover {
+  color: var(--text-primary);
+}
+
 .recur-days-picker {
   display: flex;
   gap: 0.4rem;
@@ -1697,6 +1878,12 @@
   .goal-move-btn, .goal-delete-btn {
     font-size: 0.85rem;
     padding: 3px 5px;
+  }
+
+  .goal-day-chip {
+    min-width: 28px;
+    font-size: 0.8rem;
+    line-height: 2;
   }
 
   /* ── Événements style iOS ── */

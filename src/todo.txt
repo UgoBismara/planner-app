@@ -1,6 +1,6 @@
 Planning : 
 - Pouvoir classer rapidement les objectifs
-- Rajouter la date modiafiable dans la popup d'ajout d'événement
+- Rajouter la date modifiable dans la popup d'ajout d'événement (fait pour la modification : jour + semaine ; reste à faire pour l'ajout)
 - Créer un widget sur téléphone (impossible en l'état)
 - Pouvoir swiper aussi dans la partie "Mois"
 - [ ] Ajouter courbe poids
@@ -9,6 +9,12 @@ Planning :
 - [x] Lors d’un ajout d’une « idée » dans « Objectif » le faire directement au clic pas besoin de validation
 - [x] Une fois l’objectif lié à l’idée effectué valider aussi l’idée
 - [x] Pouvoir ajouter des événements dans la partie Mois
+- [x] Déplacer un événement vers une autre semaine (sélecteur de semaine dans « Modifier »)
+- [x] Ramener un objectif sur la semaine en cours en un clic
+- [x] Changer le jour d'un objectif en un clic (rangée L M M J V S D, remplace les flèches ← →)
+- Objectifs non faits des semaines passées : les lister dans la semaine en cours (aujourd'hui il faut aller sur la semaine pour les voir)
+- « Reporter » ne cherche un créneau que dans la semaine affichée, pourrait proposer la suivante
+- Modifier un événement de plusieurs jours commencé une semaine plus tôt agit sur la semaine affichée (bug antérieur) : le changement de semaine y est désactivé en attendant
 
 Repas :
 - [x] (Téléphone) Affichages des repas jour par jour

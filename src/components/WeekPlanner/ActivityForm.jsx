@@ -6,6 +6,16 @@ import { EVENT_TYPES, guessEventType } from '../../data/eventTypes';
 const COLORS = ['#FF453A', '#0A84FF', '#30D158', '#FF9F0A', '#BF5AF2', '#40C8E0', '#FF375F', '#FFD60A', '#64D2FF', '#63E6E2', '#5E5CE6', '#AC8E68'];
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
+function addWeeks(date, weeks) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + weeks * 7);
+  return d;
+}
+
+function shortDate(d) {
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
 function toMin(t) {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
@@ -141,7 +151,9 @@ function pickDistinctColor(usedColors) {
 
 // quests : quêtes quotidiennes et hebdomadaires auxquelles l'événement peut être relié
 // (cocher ✓ l'événement les compte)
-export default function ActivityForm({ dayIndex, days, activity, existingActivities, quests = [], onAdd, onAddRecurring, onEdit, onDelete, onClose }) {
+// minWeekShift : nombre de semaines que l'on peut reculer depuis la semaine affichee
+// (l'application n'ouvre pas les semaines anterieures a sa date plancher).
+export default function ActivityForm({ dayIndex, days, activity, existingActivities, quests = [], minWeekShift = 0, canMoveWeek = true, onAdd, onAddRecurring, onEdit, onDelete, onClose }) {
   const isEditMode = !!activity;
   const effectiveDayIndex = activity?._isContinuation ? activity._storedDayIndex : (dayIndex ?? 0);
 
@@ -156,6 +168,10 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
   const [recurDays, setRecurDays] = useState(activity?.days ?? [effectiveDayIndex]);
   const [endDayOffset, setEndDayOffset] = useState(activity?.endDayOffset ?? 0);
   const [targetDay, setTargetDay] = useState(effectiveDayIndex);
+  // Decalage en semaines par rapport a la semaine affichee : deplace l'evenement
+  // vers une autre semaine sans quitter le formulaire.
+  const [weekShift, setWeekShift] = useState(0);
+  const shiftedDays = days ? days.map((d) => addWeeks(d, weekShift)) : null;
   const [questIds, setQuestIds] = useState(activity?.questIds ?? []);
   // Type choisi ; null = deviné d'après le titre, 'none' = sans type (couleur libre)
   const [category, setCategory] = useState(activity?.category ?? null);
@@ -185,7 +201,7 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
       category,
       ...(isAllDay ? { allDay: true } : {}),
       ...(endDayOffset > 0 && !isRecurring && !isAllDay ? { endDayOffset } : {}),
-      ...(isEditMode && !isRecurring ? { targetDay } : {}),
+      ...(isEditMode && !isRecurring ? { targetDay, targetWeekShift: weekShift } : {}),
     };
 
     if (isEditMode) {
@@ -217,13 +233,41 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
             />
           </div>
 
-          {/* Sélecteur de jour (édition uniquement, hors récurrent) */}
+          {/* Sélecteur de jour et de semaine (édition uniquement, hors récurrent) */}
           {isEditMode && !isRecurring && (
             <div className="form-group">
-              <label>Jour</label>
+              <div className="day-picker-head">
+                <label>Jour</label>
+                {shiftedDays && canMoveWeek && (
+                  <div className="week-shift-picker">
+                    <button
+                      type="button"
+                      className="week-shift-btn"
+                      onClick={() => setWeekShift((w) => w - 1)}
+                      disabled={weekShift <= minWeekShift}
+                      title="Semaine précédente"
+                      aria-label="Semaine précédente"
+                    >
+                      &lsaquo;
+                    </button>
+                    <span className="week-shift-label">
+                      {shortDate(shiftedDays[0])} – {shortDate(shiftedDays[6])}
+                    </span>
+                    <button
+                      type="button"
+                      className="week-shift-btn"
+                      onClick={() => setWeekShift((w) => w + 1)}
+                      title="Semaine suivante"
+                      aria-label="Semaine suivante"
+                    >
+                      &rsaquo;
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="day-picker-row">
                 {DAY_LABELS.map((name, idx) => {
-                  const d = days?.[idx];
+                  const d = shiftedDays?.[idx];
                   return (
                     <button
                       key={idx}
@@ -237,6 +281,18 @@ export default function ActivityForm({ dayIndex, days, activity, existingActivit
                   );
                 })}
               </div>
+              {weekShift !== 0 && (
+                <p className="week-shift-note">
+                  <span>Déplacé vers la semaine du {shortDate(shiftedDays[0])}.</span>
+                  <button
+                    type="button"
+                    className="week-shift-reset"
+                    onClick={() => setWeekShift(0)}
+                  >
+                    Revenir à la semaine affichée
+                  </button>
+                </p>
+              )}
             </div>
           )}
 
