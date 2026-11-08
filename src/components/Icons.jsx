@@ -51,6 +51,7 @@ import {
   TreeDeciduous,
   Trophy,
   UtensilsCrossed,
+  Waves,
   Zap,
 } from 'lucide-react';
 
@@ -81,6 +82,7 @@ export const TabIcon = mapped(
     ideas: Lightbulb,
     vinted: Tag,
     maths: Sigma,
+    swim: Waves,
   },
   CalendarDays,
 );

@@ -1,6 +1,6 @@
 // Plan « Triathlon & Maths » de novembre 2026, importable d'un clic depuis l'onglet Quêtes.
-// Référence détaillée (séances de natation, programme maths, feuille de route) :
-// page Notion « Plan Triathlon & Maths — saison 2026-27 ».
+// Les séances de natation à partir du 10 nov. viennent du programme de l'onglet Natation
+// (data/swimPlan.js), qui écrit leurs titres dans le planning.
 // Les séances sont des événements récurrents du planning (natation, vélo, course,
 // maths + culture), reliés aux quêtes : cocher ✓ l'événement compte la quête. Le détail
 // de chaque séance est le titre de l'occurrence du jour.
@@ -8,6 +8,7 @@
 // (PLAN_REPLACED, OBSOLETE_DAY_TEXTS) ; les doublons sont ignorés.
 
 import { MAX_DAILY, MAX_WEEKLY, MAX_WEEK_GOALS, makeQuest, typeOf, isDailyQuest } from './quests';
+import { TRI_S_STEPS } from './swimPlan';
 
 // Clés de WeekPlanner : objectifs du jour, événements récurrents et leurs occurrences modifiées
 export const DAILY_GOALS_KEY = 'planner_daily_goals';
@@ -32,14 +33,7 @@ const PLAN_QUESTS = [
     label: 'Triathlon S',
     domain: 'sport',
     deadline: '2027-06-30',
-    steps: [
-      'Trouver un club ou un créneau natation encadré',
-      'Nager 400 m de crawl sans m’arrêter',
-      'Choisir la course et m’inscrire',
-      'Nager 750 m sans m’arrêter',
-      'Premier enchaînement vélo → course',
-      'Faire la course 🏁',
-    ],
+    steps: TRI_S_STEPS,
   },
   { id: 'plan_core', type: 'habit', label: 'Gainage 10 min', domain: 'sport', minimum: '1 planche d’une minute' },
   { id: 'plan_memory', type: 'habit', label: 'Palais mental 5 min', domain: 'perso', minimum: 'Revoir 1 palais' },
@@ -65,17 +59,15 @@ const PLAN_SESSIONS = {
   '2026-11-07': ['🚴 Vélo 1 h tranquille'],
   '2026-11-08': ['🏃 Course facile 30 min'],
   '2026-11-09': ['🧮 Graphes bipartis'],
-  '2026-11-10': ['🏊 Séance A technique (~800 m)'],
   '2026-11-11': ['🧮 Dijkstra à la main sur un petit graphe'],
   '2026-11-12': ['🧮 Dijkstra sur un graphe de 8 sommets'],
-  '2026-11-13': ['🏊 Séance B endurance (~800 m)', '🧮 Project Euler n°3'],
+  '2026-11-13': ['🧮 Project Euler n°3'],
   '2026-11-14': ['🚴 Vélo 1 h 15'],
   '2026-11-15': ['🏃 Course facile 35 min'],
   '2026-11-16': ['🧮 Coloration de graphes'],
-  '2026-11-17': ['🏊 Séance A technique (~800 m)'],
   '2026-11-18': ['🧮 L’histoire du théorème des 4 couleurs'],
   '2026-11-19': ['🧮 Colorier la carte des régions de France'],
-  '2026-11-20': ['🏊 Séance B endurance (~800 m)', '🧮 Project Euler n°4'],
+  '2026-11-20': ['🧮 Project Euler n°4'],
   '2026-11-21': ['🚴 Vélo 1 h 30'],
   '2026-11-22': ['🏃 Course facile 40 min', '🧮 Bonus : coder Dijkstra'],
 };
@@ -116,6 +108,10 @@ const CULTURE_SESSIONS = {
   '2026-11-22': '📚 Lotus Bleu · sa place dans l’œuvre : des Cigares du pharaon au Lotus Bleu',
 };
 
+// Séances de natation des premières versions du plan, remplacées par le programme de
+// l'onglet Natation : leurs titres dans le planning peuvent être écrasés
+export const LEGACY_SWIM_TITLES = ['🏊 Séance A technique (~800 m)', '🏊 Séance B endurance (~800 m)'];
+
 // Thème court de chaque cycle, pour le titre de l'événement du soir
 const cultureTheme = (localKey) => {
   const text = CULTURE_SESSIONS[localKey];
@@ -129,8 +125,10 @@ const PLAN_START = '2026-10-26';
 const PLAN_END = '2026-11-22';
 
 // days : 0 = lundi … 6 = dimanche, comme dans WeekPlanner
+export const PLAN_SWIM_EVENT = { id: 'plan_ev_swim', title: '🏊 Natation', days: [1, 4], time: '12:00', endTime: '13:00', color: '#1E88E5', questIds: ['plan_swim'] };
+
 const PLAN_EVENTS = [
-  { id: 'plan_ev_swim', title: '🏊 Natation', days: [1, 4], time: '12:00', endTime: '13:00', color: '#1E88E5', questIds: ['plan_swim'] },
+  PLAN_SWIM_EVENT,
   { id: 'plan_ev_bike', title: '🚴 Vélo', days: [5], time: '10:00', endTime: '11:30', color: '#43A047', questIds: ['plan_bike'] },
   { id: 'plan_ev_run', title: '🏃 Course', days: [6], time: '10:00', endTime: '10:45', color: '#FB8C00', questIds: ['plan_run'] },
   {
@@ -182,6 +180,7 @@ const OBSOLETE_DAY_TEXTS = [
   '🏃 Course facile 30 min (facultatif)',
   '🏃 Course facile (facultatif)',
   ...Object.values(PLAN_SESSIONS).flat(),
+  ...LEGACY_SWIM_TITLES,
 ];
 
 // Objectifs précis de la semaine, par lundi
@@ -193,7 +192,7 @@ const PLAN_WEEK_GOALS = {
 };
 
 // Même convention que toDayKey dans WeekPlanner : minuit local, puis date UTC
-const goalDayKey = (localKey) => {
+export const goalDayKey = (localKey) => {
   const [y, m, d] = localKey.split('-').map(Number);
   return new Date(y, m - 1, d).toISOString().split('T')[0];
 };
@@ -207,7 +206,7 @@ const isoWeekNumber = (date) => {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 };
 
-const plannerWeekKey = (date) => {
+export const plannerWeekKey = (date) => {
   const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - ((date.getDay() + 6) % 7));
   return `planner_week_${monday.getFullYear()}_${String(isoWeekNumber(monday)).padStart(2, '0')}`;
 };

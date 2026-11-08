@@ -38,7 +38,14 @@ Quêtes :
 - But de type « record » (garde la meilleure valeur, ex. test natation 100 m) en plus du cumul
 - Afficher le défi du mois (barre de progression) dans le bandeau de la Semaine
 - Événement coché ✓ et ronds du bandeau hebdo s’additionnent : relier les ronds aux événements pour éviter le double comptage
-- Prolonger le plan Triathlon & Maths au-delà du 22 nov. (événements récurrents déjà en place, titres de séance à générer)
+- Prolonger le plan Triathlon & Maths au-delà du 22 nov. : vélo, course, maths (la natation est faite, onglet Natation)
+
+Natation :
+- Lot 2 : saisir les résultats des tests (distance max, chrono 100 m, mouvements par 25 m) avec record et courbe
+- Lot 2 : succès débloqués à chaque palier, bandeau comme dans Maths
+- Lot 3 : écrire les séances de la phase 5 (vers le M) une fois la course M choisie, et caler S_RACE / M_RACE sur les vraies dates
+- Séance faite un autre jour que prévu : aujourd'hui elle compte pour la semaine de la date prévue
+- npm run check:swim avant de livrer une modification du programme
 
 Maths :
 - Lot 2 : cartes mémo (flashcards par chapitre, révision espacée) et mes propres exercices (formulaire avec aperçu des formules)

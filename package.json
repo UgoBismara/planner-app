@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check:maths": "node scripts/check-maths.js"
+    "check:maths": "node scripts/check-maths.js",
+    "check:swim": "node scripts/check-swim.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.114.0",
