@@ -15,9 +15,12 @@ import {
 
 const dayIndexOf = (date) => (date.getDay() + 6) % 7;
 
-// Titres que l'import peut écraser : ceux qu'il a lui-même écrits (même si le programme a
-// changé depuis), ceux des anciennes versions du plan et le titre générique
-const OWN_TITLES = new Set([...SESSIONS.map(sessionEventTitle), ...LEGACY_SWIM_TITLES, PLAN_SWIM_EVENT.title]);
+// Titres que l'import peut écraser : ceux qu'il a lui-même écrits, y compris par une version
+// précédente du programme (« 🏊 P0 · Titre (550 m) »), ceux des anciens plans et le titre
+// générique. Un titre modifié à la main ne suit pas ce format et reste en place.
+const OWN_TITLE = /^🏊 P\d · .+ \((\d+ m|test)\)$/u;
+const isOwnTitle = (title) =>
+  OWN_TITLE.test(title) || LEGACY_SWIM_TITLES.includes(title) || title === PLAN_SWIM_EVENT.title;
 
 // L'événement natation du planning : celui du plan, sinon un événement relié à la quête
 export const findSwimEvent = (recurring) =>
@@ -36,11 +39,15 @@ export const isSessionDone = (session, recurring, recurringDone) => {
   return Boolean(event && (recurringDone ?? []).includes(occurrenceKey(event.id, session.date)));
 };
 
-export const swimTitlesImported = (recurring, overrides) => {
+// 'missing' : jamais importées ; 'outdated' : le programme a changé depuis l'import ; 'ok'
+export const swimTitlesStatus = (recurring, overrides) => {
   const event = findSwimEvent(recurring);
-  if (!event) return false;
-  const upcoming = SESSIONS.filter((s) => event.days.includes(dayIndexOf(parseDateKey(s.date))));
-  return upcoming.length > 0 && upcoming.every((s) => overrides?.[occurrenceKey(event.id, s.date)]?.title);
+  if (!event) return 'missing';
+  const sessions = SESSIONS.filter((s) => event.days.includes(dayIndexOf(parseDateKey(s.date))));
+  const titles = sessions.map((s) => overrides?.[occurrenceKey(event.id, s.date)]?.title);
+  if (titles.every((t) => !t || t === PLAN_SWIM_EVENT.title)) return 'missing';
+  const stale = sessions.some((s, i) => !titles[i] || (titles[i] !== sessionEventTitle(s) && isOwnTitle(titles[i])));
+  return stale ? 'outdated' : 'ok';
 };
 
 export const withSwimEvent = (recurring) => {
@@ -58,7 +65,7 @@ export const withSwimTitles = (overrides, event) => {
     const key = occurrenceKey(event.id, s.date);
     const current = next[key]?.title;
     const title = sessionEventTitle(s);
-    if (current === title || (current && !OWN_TITLES.has(current))) return;
+    if (current === title || (current && !isOwnTitle(current))) return;
     next[key] = { ...next[key], title };
     written += 1;
   });

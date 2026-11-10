@@ -58,7 +58,7 @@ export const DRILLS = {
   },
   crawl: {
     name: 'Crawl',
-    tip: 'Allure facile : le but est d’arriver au bout sans t’essouffler. Souffle tout l’air sous l’eau. Si tu bois la tasse, arrête-toi, respire, repars : les pauses font partie du jeu.',
+    tip: 'Allure facile : le but est d’arriver au bout sans t’essouffler. Souffle tout l’air sous l’eau, et respire tous les 2 mouvements de bras si tu en as besoin, c’est normal au début. Essoufflé ? Ralentis : trop de vitesse coupe le souffle bien avant les bras. Les pauses font partie du jeu.',
   },
   crawl3: {
     name: 'Crawl, respiration en 3 temps',
@@ -140,15 +140,15 @@ export const PHASES = [
     id: 'p0',
     short: 'P0',
     label: 'Aisance & respiration',
-    weeks: [1, 4],
-    goal: '50 m de crawl sans paniquer',
-    focus: 'Souffler sous l’eau, glisser, respirer sur le côté. Les longueurs de crawl sont courtes, avec autant de repos qu’il faut.',
+    weeks: [1, 2],
+    goal: 'Des 50 m de crawl sans finir essoufflé',
+    focus: 'Les 50 m passent déjà : il reste à respirer sans s’essouffler. Souffler tout l’air sous l’eau, respirer sur le côté, nager lentement.',
   },
   {
     id: 'p1',
     short: 'P1',
     label: 'Technique & respiration en 3 temps',
-    weeks: [5, 12],
+    weeks: [3, 12],
     goal: '100 m, puis 200 m en continu',
     focus: 'Un éducatif nouveau chaque semaine (rattrapé, un bras, 6-3-6, pouce-cuisse) et la respiration des deux côtés. Les séries passent de 25 à 50 puis 100 m.',
   },
@@ -205,12 +205,13 @@ const WEEKS = [
       ],
     },
     B: {
-      title: 'Premières longueurs',
+      title: 'Souffler pour ne pas s’essouffler',
       blocks: [
         [4, 25, 'easy'],
-        [4, 25, 'sideKick', 30],
-        [8, 25, 'crawl', 40],
-        [2, 50, 'crawl', 40, '25 m de crawl, puis 25 m de brasse'],
+        [2, 0, 'bubbles'],
+        [4, 25, 'sideKick', 20],
+        [6, 25, 'crawl', 30, 'Une seule chose en tête : souffler tout l’air sous l’eau'],
+        [8, 50, 'crawl', 45, 'Plus lent que mardi : tu dois arriver sans être essoufflé'],
         [2, 25, 'cool'],
       ],
     },
@@ -220,44 +221,47 @@ const WEEKS = [
       title: 'Respirer sur le côté',
       blocks: [
         [4, 25, 'easy'],
-        [2, 0, 'bubbles'],
-        [6, 25, 'kickRoll', 30],
-        [6, 25, 'sideKick', 30],
-        [6, 25, 'crawl', 40],
+        [6, 25, 'kickRoll', 20],
+        [6, 25, 'sideKick', 20],
+        [4, 25, 'catchup', 30],
+        [6, 50, 'crawl', 45],
         [2, 25, 'cool'],
       ],
     },
     B: {
-      title: 'Enchaîner les 25 m',
+      title: '50 m en contrôle',
       blocks: [
         [4, 25, 'easy'],
         [4, 25, 'kickBoard', 20],
-        [10, 25, 'crawl', 30],
-        [2, 50, 'crawl', 60, 'Tente les 50 m en crawl ; brasse au retour si besoin'],
+        [10, 50, 'crawl', 40, 'Allure lente : après 40 s de repos, tu dois pouvoir repartir'],
+        [2, 25, 'build', 30],
         [2, 25, 'cool'],
       ],
     },
   },
+
+  // ── P1 · Technique & respiration en 3 temps ──
   {
     A: {
-      title: 'Rotation et rattrapé',
+      title: 'Palmes et respiration',
       blocks: [
         [4, 25, 'easy'],
-        [6, 25, 'kickRoll', 20],
-        [4, 25, 'catchup', 30],
-        [8, 25, 'crawl', 30],
-        [2, 50, 'crawl', 60],
+        [4, 25, 'fins', 20],
+        [4, 25, 'kickRoll', 20],
+        [4, 25, 'catchup', 20],
+        [4, 25, 'crawl3', 30],
+        [6, 50, 'crawl', 40],
         [2, 25, 'cool'],
       ],
     },
     B: {
-      title: 'Premiers 50 m',
+      title: 'Séries de 75 m',
       blocks: [
         [4, 25, 'easy'],
-        [4, 25, 'kickBoard', 20],
         [4, 25, 'sideKick', 20],
-        [6, 25, 'crawl', 30],
-        [4, 50, 'crawl', 60],
+        [6, 75, 'crawl', 45],
+        [2, 50, 'crawl3', 40],
+        [2, 25, 'build', 30],
         [2, 25, 'cool'],
       ],
     },
@@ -270,7 +274,7 @@ const WEEKS = [
         [4, 25, 'easy'],
         [4, 25, 'kickRoll', 20],
         [4, 25, 'catchup', 30],
-        [6, 25, 'crawl', 30],
+        [4, 50, 'crawl', 40],
         [2, 25, 'cool'],
       ],
     },
@@ -287,8 +291,6 @@ const WEEKS = [
       ],
     },
   },
-
-  // ── P1 · Technique & respiration en 3 temps ──
   {
     A: {
       title: 'Rattrapé et palmes',
@@ -303,11 +305,11 @@ const WEEKS = [
       ],
     },
     B: {
-      title: 'Séries de 50 m',
+      title: 'Séries de 50 m en 3 temps',
       blocks: [
         [4, 25, 'easy'],
         [4, 25, 'sideKick', 20],
-        [6, 50, 'crawl', 45],
+        [8, 50, 'crawl3', 45],
         [4, 25, 'crawl3', 30],
         [4, 25, 'build', 30],
         [2, 25, 'cool'],

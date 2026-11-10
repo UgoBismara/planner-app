@@ -25,7 +25,7 @@ import {
   findSwimEvent,
   isSessionDone,
   occurrenceKey,
-  swimTitlesImported,
+  swimTitlesStatus,
   triStepDone,
   withSwimCount,
   withSwimEvent,
@@ -72,7 +72,7 @@ export default function SwimBoard() {
   const nowPhase = currentPhase(todayKey);
   const daysToS = daysLeft(S_RACE);
   const daysToM = daysLeft(M_RACE);
-  const imported = swimTitlesImported(recurring, overrides);
+  const titlesStatus = swimTitlesStatus(recurring, overrides);
   const swimQuest = quests.find((q) => q.id === 'plan_swim');
 
   // Une séance passée de la semaine écoulée, pas cochée : on propose d'y revenir
@@ -116,7 +116,7 @@ export default function SwimBoard() {
     if (upgraded !== quests) setQuests(upgraded);
     setImportNotice(
       written > 0
-        ? `${written} séances ajoutées au planning, le mardi et le vendredi à 12h.`
+        ? `${written} séances écrites dans le planning, le mardi et le vendredi à 12h.`
         : 'Le planning avait déjà toutes les séances.',
     );
   };
@@ -169,16 +169,18 @@ export default function SwimBoard() {
         {daysToM > 0 && <> · triathlon M dans {daysToM} jours</>}
       </p>
 
-      {!imported && (
+      {titlesStatus !== 'ok' && (
         <div className="swim-card swim-setup">
           <CalendarPlus size={20} aria-hidden="true" />
           <div>
             <p>
-              Mets les {SESSIONS.length} séances dans le planning : chaque mardi et vendredi à 12h, l’événement
-              🏊 affichera la séance du jour. Les titres que tu as modifiés à la main ne bougent pas.
+              {titlesStatus === 'outdated'
+                ? 'Le programme a changé depuis que tu as mis les séances dans le planning. '
+                : `Mets les ${SESSIONS.length} séances dans le planning : chaque mardi et vendredi à 12h, l’événement 🏊 affichera la séance du jour. `}
+              Les titres que tu as modifiés à la main ne bougent pas.
             </p>
             <button type="button" className="swim-btn primary" onClick={importToPlanner}>
-              Mettre mes séances dans le planning
+              {titlesStatus === 'outdated' ? 'Mettre à jour le planning' : 'Mettre mes séances dans le planning'}
             </button>
           </div>
         </div>
