@@ -352,6 +352,7 @@ function MobileMonthView({
   month,
   recurring,
   exceptions,
+  recurringOverrides,
   recurringDone,
   selectedMonthDay,
   onDayTap,
@@ -390,7 +391,9 @@ function MobileMonthView({
       .filter((r) => r.days.includes(dayIndex))
       .filter((r) => !r.startDate || dayDateStr >= r.startDate)
       .filter((r) => !r.endDate || dayDateStr <= r.endDate)
-      .filter((r) => !exceptions.includes(`${r.id}|${wk}|${dayIndex}`));
+      .filter((r) => !exceptions.includes(`${r.id}|${wk}|${dayIndex}`))
+      // Titre ou horaire modifié pour cette occurrence (ex. la séance du jour d'un plan)
+      .map((r) => ({ ...r, ...(recurringOverrides?.[`${r.id}|${wk}|${dayIndex}`] || {}) }));
 
     let oneTimeEvents = [];
     try {
@@ -2642,6 +2645,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
         month={mobileMonthDate.getMonth()}
         recurring={recurring}
         exceptions={exceptions}
+        recurringOverrides={recurringOverrides}
         selectedMonthDay={selectedMonthDay}
         onDayTap={setSelectedMonthDay}
         onGoToDay={handleGoToDayView}
