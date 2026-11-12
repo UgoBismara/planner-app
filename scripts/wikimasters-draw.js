@@ -2,7 +2,7 @@
 // redirections ni pages d'homonymie) et les ajoute aux cartes de l'onglet Cartes,
 // directement dans Firestore (doc planner/wikimasters-cards, format { v: JSON }).
 //
-// Usage : node scripts/wikimasters-draw.js [N=5] [--dry-run]
+// Usage : node scripts/wikimasters-draw.js [N=5] [--dry-run] [--force]
 // Lancé chaque jour à 8h (Paris) par la routine cloud « Carte WikiMasters du jour ».
 
 const PROJECT = 'planner-app-83b8b';
@@ -56,6 +56,14 @@ async function drawOne(taken) {
 }
 
 const cards = await readCards();
+
+// Garde-fou : un second lancement le même jour (relance, test manuel) n'ajoute rien
+const alreadyToday = cards.filter((c) => c.date === today).length;
+if (alreadyToday >= count && !args.includes('--force')) {
+  console.log(`Déjà ${alreadyToday} carte(s) pour le ${today} : rien à faire (--force pour forcer).`);
+  process.exit(0);
+}
+
 const taken = new Set(cards.map((c) => c.id));
 const drawn = [];
 for (let i = 0; i < count; i++) {
