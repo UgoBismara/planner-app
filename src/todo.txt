@@ -1,5 +1,5 @@
 Planning : 
-- Pouvoir classer rapidement les objectifs
+- [x] Pouvoir classer rapidement les objectifs (poignée de glisser-déposer, remplace les flèches ↑ ↓)
 - Rajouter la date modifiable dans la popup d'ajout d'événement (fait pour la modification : jour + semaine ; reste à faire pour l'ajout)
 - Créer un widget sur téléphone (impossible en l'état)
 - Pouvoir swiper aussi dans la partie "Mois"

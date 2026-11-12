@@ -38,6 +38,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  GripVertical,
   Pin,
   Search,
   TriangleAlert,
@@ -744,6 +745,9 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
   const [moveNotice, setMoveNotice] = useState(null); // { text, weekOffset }
   // Objectif dont la rangee de jours est ouverte, pour changer de jour en un clic
   const [dayPickerGoal, setDayPickerGoal] = useState(null); // { dayIndex, goalId }
+  // Objectif (ou groupe) en train d'être glissé par sa poignée ; les positions sont
+  // appliquées directement au DOM pendant le geste, l'ordre n'est enregistré qu'au lâcher
+  const goalDragRef = useRef(null);
   const [reportingActivity, setReportingActivity] = useState(null);
   const [mobileDay, setMobileDay] = useState(() => {
     const d = getDaysOfWeek(0);
@@ -1966,15 +1970,106 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
     }
   };
 
-  const moveGoal = (i, goalId, dir) => {
-    const goals = getGoalsForDay(i);
-    const idx = goals.findIndex((g) => g.id === goalId);
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= goals.length) return;
-    const updated = [...goals];
-    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
-    setGoalsForDay(i, updated);
+  // ── Réordonner les objectifs par glisser-déposer ──────────────
+  // keys : clés des éléments déplaçables de la zone, dans l'ordre affiché ; apply reçoit
+  // les clés dans le nouvel ordre. Les éléments de la zone sont les frères de l'élément
+  // glissé qui portent le même data-goal-zone.
+  const moveKey = (keys, from, to) => {
+    const next = [...keys];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
   };
+
+  const resetGoalDrag = () => {
+    const drag = goalDragRef.current;
+    if (!drag) return;
+    drag.items.forEach((el) => {
+      el.style.transform = "";
+      el.classList.remove("goal-dragging", "goal-drag-shift");
+    });
+    goalDragRef.current = null;
+  };
+
+  const startGoalDrag = (e, keys, key, apply) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    const item = e.currentTarget.closest("[data-goal-zone]");
+    if (!item) return;
+    const zone = item.dataset.goalZone;
+    const items = [...item.parentElement.children].filter(
+      (el) => el.dataset.goalZone === zone,
+    );
+    const from = items.indexOf(item);
+    if (from < 0 || items.length !== keys.length || keys[from] !== key) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const rects = items.map((el) => el.getBoundingClientRect());
+    item.classList.add("goal-dragging");
+    items.forEach((el) => el !== item && el.classList.add("goal-drag-shift"));
+    goalDragRef.current = { items, rects, from, to: from, startY: e.clientY, keys, apply };
+  };
+
+  const moveGoalDrag = (e) => {
+    const drag = goalDragRef.current;
+    if (!drag) return;
+    const { items, rects, from } = drag;
+    const dy = e.clientY - drag.startY;
+    const fromRect = rects[from];
+    // Bord avant de l'élément glissé (le haut quand il monte, le bas quand il descend) :
+    // un groupe attrapé par son en-tête se place là où est le doigt
+    const probe = dy < 0 ? fromRect.top + dy : fromRect.bottom + dy;
+    const to = rects.filter(
+      (r, i) => i !== from && r.top + r.height / 2 < probe,
+    ).length;
+    // Écart entre deux éléments, pour que les voisins se décalent d'une place exacte
+    const gap = rects.length > 1 ? Math.max(0, rects[1].top - rects[0].bottom) : 0;
+    const step = fromRect.height + gap;
+    items.forEach((el, i) => {
+      if (i === from) el.style.transform = `translateY(${dy}px)`;
+      else if (from < to && i > from && i <= to) el.style.transform = `translateY(${-step}px)`;
+      else if (from > to && i >= to && i < from) el.style.transform = `translateY(${step}px)`;
+      else el.style.transform = "";
+    });
+    drag.to = to;
+  };
+
+  const endGoalDrag = (e, cancelled = false) => {
+    const drag = goalDragRef.current;
+    if (!drag) return;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    const { from, to, keys, apply } = drag;
+    resetGoalDrag();
+    if (!cancelled && from !== to) apply(moveKey(keys, from, to));
+  };
+
+  // Au clavier : flèches haut et bas sur la poignée
+  const keyGoalDrag = (e, keys, key, apply) => {
+    const dir = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const from = keys.indexOf(key);
+    const to = from + dir;
+    if (to < 0 || to >= keys.length) return;
+    apply(moveKey(keys, from, to));
+  };
+
+  const renderGoalGrip = (keys, key, apply, label) => (
+    <button
+      type="button"
+      className="goal-grip"
+      onPointerDown={(e) => startGoalDrag(e, keys, key, apply)}
+      onPointerMove={moveGoalDrag}
+      onPointerUp={(e) => endGoalDrag(e)}
+      onPointerCancel={(e) => endGoalDrag(e, true)}
+      onKeyDown={(e) => keyGoalDrag(e, keys, key, apply)}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      title="Glisser pour réordonner"
+      aria-label={`Déplacer ${label} (glisser, ou flèches haut et bas)`}
+    >
+      <GripVertical size={12} aria-hidden="true" />
+    </button>
+  );
 
   // ── Quêtes du jour ─────────────────────────────────────────────
   // Clé en date locale (convention de l'onglet Quêtes), pas la clé UTC des objectifs.
@@ -2266,6 +2361,39 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
 
   const reportGoal = (fromDayIdx, goal) => {
     moveGoalForward(fromDayIdx, goal.id);
+  };
+
+  // Tous les objectifs en retard d'un coup, à aujourd'hui : reportés d'un seul jour, ceux
+  // du début de semaine resteraient en retard. Une seule écriture pour tous les jours.
+  const reportAllGoals = (items) => {
+    const moving = items.filter((item) => item.type === "goal");
+    if (moving.length === 0) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetKey = toDayKey(today);
+    const ids = new Set(moving.map((item) => item.goal.id));
+    const sourceKeys = new Set(moving.map((item) => dayKey(item.dayIndex)));
+    setDailyGoals((prev) => {
+      const next = { ...prev };
+      sourceKeys.forEach((key) => {
+        // Ancien format (un objet par jour) : son unique objectif fait partie du report
+        const goals = Array.isArray(next[key]) ? next[key] : [];
+        next[key] = goals.filter((g) => !ids.has(g.id));
+      });
+      const existing = Array.isArray(next[targetKey]) ? next[targetKey] : [];
+      next[targetKey] = [
+        ...existing,
+        ...moving.map((item) => ({ ...item.goal, done: false })),
+      ];
+      return next;
+    });
+    setMoveNotice({
+      text:
+        moving.length === 1
+          ? `Objectif « ${moving[0].goal.text} » reporté à aujourd’hui.`
+          : `${moving.length} objectifs reportés à aujourd’hui.`,
+      weekOffset: 0,
+    });
   };
 
   const confirmItems = [];
@@ -3007,6 +3135,15 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
               >
                 Tout valider
               </button>
+              {confirmItems.some((item) => item.type === "goal") && (
+                <button
+                  className="confirm-validate-all-btn confirm-report-all-btn"
+                  onClick={() => reportAllGoals(confirmItems)}
+                  title="Reporter à aujourd’hui tous les objectifs non faits des jours passés"
+                >
+                  Reporter les objectifs
+                </button>
+              )}
             </div>
             <div className="confirm-items">
               {confirmItems.map((item, idx) =>
@@ -3133,8 +3270,38 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 });
               }
             });
-            const renderGoal = (goal) => {
+            // Zones de réordonnancement : les objectifs à faire et les groupes pas
+            // terminés au premier niveau, puis les objectifs à faire de chaque groupe.
+            // Faits, ils descendent d'eux-mêmes et n'ont pas de poignée.
+            const blockKey = (b) => (b.target ? `group:${b.target.id}` : b.goal.id);
+            const isBlockDraggable = (b) =>
+              b.target ? b.goals.some((g) => !g.done) : !b.goal.done;
+            const topKeys = goalBlocks.filter(isBlockDraggable).map(blockKey);
+            const applyTopOrder = (keys) => {
+              const moved = keys.map((k) => goalBlocks.find((b) => blockKey(b) === k));
+              const rest = goalBlocks.filter((b) => !keys.includes(blockKey(b)));
+              setGoalsForDay(
+                i,
+                [...moved, ...rest].flatMap((b) => (b.target ? b.goals : [b.goal])),
+              );
+            };
+            const applyGroupOrder = (ids) => {
+              // Les objectifs du groupe échangent leurs places entre eux
+              const slots = goals
+                .map((g, idx) => (ids.includes(g.id) ? idx : -1))
+                .filter((idx) => idx >= 0);
+              const updated = [...goals];
+              slots.forEach((slot, n) => {
+                updated[slot] = goals.find((g) => g.id === ids[n]);
+              });
+              setGoalsForDay(i, updated);
+            };
+            const renderGoal = (goal, group = null) => {
               const idx = goals.findIndex((g) => g.id === goal.id);
+              const groupKeys = group
+                ? group.goals.filter((g) => !g.done).map((g) => g.id)
+                : null;
+              const zone = goal.done ? null : group ? `group:${group.target.id}` : "top";
               const isEditing =
                 editingGoal?.dayIndex === i &&
                 editingGoal?.goalId === goal.id;
@@ -3188,7 +3355,18 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                 <div
                   key={goal.id}
                   className={`goal-item${goal.done ? " goal-done" : ""}`}
+                  data-goal-zone={zone ?? undefined}
                 >
+                  {zone ? (
+                    renderGoalGrip(
+                      group ? groupKeys : topKeys,
+                      goal.id,
+                      group ? applyGroupOrder : applyTopOrder,
+                      `« ${goal.text} »`,
+                    )
+                  ) : (
+                    <span className="goal-grip-spacer" aria-hidden="true" />
+                  )}
                   <span className="goal-priority">{idx + 1}</span>
                   <input
                     type="checkbox"
@@ -3227,26 +3405,6 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     >
                       ⇄
                     </button>
-                    {idx > 0 && (
-                      <button
-                        className="goal-move-btn"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={() => moveGoal(i, goal.id, -1)}
-                        title="Monter"
-                      >
-                        ↑
-                      </button>
-                    )}
-                    {idx < goals.length - 1 && (
-                      <button
-                        className="goal-move-btn"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={() => moveGoal(i, goal.id, 1)}
-                        title="Descendre"
-                      >
-                        ↓
-                      </button>
-                    )}
                     {!goal.done && (
                       <button
                         className="goal-move-btn goal-next-week-btn"
@@ -3367,8 +3525,16 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                     <div
                       key={block.target.id}
                       className={`goal-group${complete ? " complete" : ""}`}
+                      data-goal-zone={complete ? undefined : "top"}
                     >
                       <div className="goal-group-head">
+                        {!complete &&
+                          renderGoalGrip(
+                            topKeys,
+                            blockKey(block),
+                            applyTopOrder,
+                            `le groupe « ${block.target.label} »`,
+                          )}
                         <span className="goal-group-label">
                           {renderLinkIcon(block.target.kind)}
                           {block.target.label}
@@ -3395,7 +3561,7 @@ export default function WeekPlanner({ weekOffset, setWeekOffset }) {
                           +
                         </button>
                       </div>
-                      {block.goals.map(renderGoal)}
+                      {block.goals.map((g) => renderGoal(g, block))}
                     </div>
                   );
                 })}

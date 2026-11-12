@@ -567,6 +567,43 @@
   flex-wrap: wrap;
 }
 
+/* Poignée de glisser-déposer : touch-action none pour que le doigt déplace l'objectif
+   au lieu de faire défiler la page */
+.goal-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: grab;
+  touch-action: none;
+  opacity: 0.6;
+}
+.goal-grip:hover,
+.goal-grip:focus-visible { color: var(--accent); opacity: 1; }
+.goal-grip:active { cursor: grabbing; }
+
+.goal-grip-spacer {
+  flex-shrink: 0;
+  width: 12px;
+}
+
+/* L'objectif glissé passe au-dessus et suit le pointeur, ses voisins s'écartent */
+.goal-dragging {
+  position: relative;
+  z-index: 5;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+.goal-drag-shift {
+  transition: transform 0.15s var(--ease);
+}
+
 .goal-priority {
   font-size: 0.6rem;
   font-weight: 700;
@@ -920,6 +957,16 @@
 .confirm-validate-all-btn:hover {
   background: var(--warning);
   color: #fff;
+}
+
+/* Variante discrète : reporter n'est pas valider */
+.confirm-report-all-btn {
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
+.confirm-report-all-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .confirm-items {
@@ -1865,6 +1912,17 @@
   .goal-checkbox {
     width: 15px;
     height: 15px;
+  }
+
+  /* Au doigt : une poignée assez large pour être attrapée du premier coup */
+  .goal-grip,
+  .goal-grip-spacer {
+    width: 22px;
+    min-height: 28px;
+  }
+  .goal-grip svg {
+    width: 16px;
+    height: 16px;
   }
 
   .goal-add-btn {
