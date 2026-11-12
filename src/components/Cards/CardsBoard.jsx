@@ -141,24 +141,24 @@ export default function CardsBoard() {
                       >
                         {c.title}
                       </button>
-                      {copiedId === c.id ? (
+                      {copiedId === c.id && (
                         <span className="card-copied" role="status">
                           <Copy size={12} aria-hidden="true" /> Copié
                         </span>
-                      ) : (
-                        <a
-                          className="card-link"
-                          href={c.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Ouvrir ${c.title} sur Wikipédia`}
-                        >
-                          <ExternalLink size={13} aria-hidden="true" />
-                        </a>
                       )}
                     </div>
                     {c.description && <span className="card-desc">{c.description}</span>}
                     {c.extract && <p className="card-extract">{c.extract}</p>}
+                    <a
+                      className="card-link"
+                      href={c.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Voir la page ${c.title} sur Wikipédia`}
+                    >
+                      <ExternalLink size={13} aria-hidden="true" />
+                      Voir la page
+                    </a>
                   </div>
                   <button
                     className="card-catch"

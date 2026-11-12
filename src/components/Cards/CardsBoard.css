@@ -173,13 +173,23 @@
 }
 
 .card-link {
-  flex: none;
+  align-self: flex-start;
   display: inline-flex;
-  padding: 0.2rem;
-  color: var(--text-tertiary);
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
 }
 
 .card-link:hover {
+  border-color: var(--accent);
   color: var(--accent);
 }
 
