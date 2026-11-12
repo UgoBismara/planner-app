@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Check, ExternalLink } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Check, Copy, ExternalLink } from 'lucide-react';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { CARDS_KEY, CAUGHT_KEY, CARDS_PER_DAY } from '../../data/wikimasters';
 import './CardsBoard.css';
@@ -28,6 +28,26 @@ export default function CardsBoard() {
   const [caught, setCaught] = useLocalStorage(CAUGHT_KEY, {});
   const [filter, setFilter] = useState('todo');
   const today = todayIso();
+
+  // Clic sur le titre : copié pour le coller dans la recherche du jeu
+  const [copiedId, setCopiedId] = useState(null);
+  const copiedTimer = useRef(null);
+  const copyTitle = async (card) => {
+    try {
+      await navigator.clipboard.writeText(card.title);
+    } catch {
+      // Repli pour les navigateurs sans API presse-papiers (http, vieux Safari)
+      const ta = document.createElement('textarea');
+      ta.value = card.title;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    setCopiedId(card.id);
+    clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopiedId(null), 1500);
+  };
 
   const toggle = (id) =>
     setCaught((prev) => {
@@ -113,10 +133,30 @@ export default function CardsBoard() {
                 <li key={c.id} className={`card-item${isCaught ? ' caught' : ''}`}>
                   {c.thumb && <img className="card-thumb" src={c.thumb} alt="" loading="lazy" />}
                   <div className="card-body">
-                    <a className="card-title" href={c.url} target="_blank" rel="noreferrer">
-                      {c.title}
-                      <ExternalLink size={13} aria-hidden="true" />
-                    </a>
+                    <div className="card-title-row">
+                      <button
+                        className="card-title"
+                        onClick={() => copyTitle(c)}
+                        title="Copier le titre"
+                      >
+                        {c.title}
+                      </button>
+                      {copiedId === c.id ? (
+                        <span className="card-copied" role="status">
+                          <Copy size={12} aria-hidden="true" /> Copié
+                        </span>
+                      ) : (
+                        <a
+                          className="card-link"
+                          href={c.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Ouvrir ${c.title} sur Wikipédia`}
+                        >
+                          <ExternalLink size={13} aria-hidden="true" />
+                        </a>
+                      )}
+                    </div>
                     {c.description && <span className="card-desc">{c.description}</span>}
                     {c.extract && <p className="card-extract">{c.extract}</p>}
                   </div>
