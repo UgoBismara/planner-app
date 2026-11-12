@@ -24,6 +24,7 @@ import {
   Footprints,
   Hash,
   House,
+  Layers,
   Lightbulb,
   Link2,
   ListChecks,
@@ -83,6 +84,7 @@ export const TabIcon = mapped(
     vinted: Tag,
     maths: Sigma,
     swim: Waves,
+    cards: Layers,
   },
   CalendarDays,
 );

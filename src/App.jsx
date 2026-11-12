@@ -13,6 +13,7 @@ import './App.css';
 // Chargé à la première ouverture : KaTeX, Markdown et le contenu ne pèsent pas sur le planner
 const MathsBoard = lazy(() => import('./components/Maths/MathsBoard'));
 const SwimBoard = lazy(() => import('./components/Swim/SwimBoard'));
+const CardsBoard = lazy(() => import('./components/Cards/CardsBoard'));
 
 // primary : présent dans la barre du bas sur téléphone, les autres passent dans « Plus »
 const TABS = [
@@ -22,6 +23,7 @@ const TABS = [
   { id: 'meals', label: 'Repas', primary: true },
   { id: 'swim', label: 'Natation' },
   { id: 'maths', label: 'Maths' },
+  { id: 'cards', label: 'Cartes' },
   { id: 'nutrition', label: 'Nutrition' },
   { id: 'ideas', label: 'Idées' },
   { id: 'vinted', label: 'Vinted' },
@@ -86,6 +88,11 @@ export default function App() {
         {activeTab === 'swim' && (
           <Suspense fallback={<p className="tab-loading">Chargement…</p>}>
             <SwimBoard />
+          </Suspense>
+        )}
+        {activeTab === 'cards' && (
+          <Suspense fallback={<p className="tab-loading">Chargement…</p>}>
+            <CardsBoard />
           </Suspense>
         )}
       </main>
