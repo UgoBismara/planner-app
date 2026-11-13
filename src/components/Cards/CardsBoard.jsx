@@ -24,7 +24,16 @@ function dayLabel(iso, today) {
 
 export default function CardsBoard() {
   // Les cartes sont déposées par la routine cloud ; l'appli n'écrit que les captures
-  const [cards] = useLocalStorage(CARDS_KEY, []);
+  const [rawCards] = useLocalStorage(CARDS_KEY, []);
+  // Filet de sécurité : le script empêche déjà les doublons, l'affichage aussi
+  const seen = new Set();
+  const cards = rawCards.filter((c) => {
+    const k = c.title.trim().toLocaleLowerCase('fr');
+    if (seen.has(c.id) || seen.has(k)) return false;
+    seen.add(c.id);
+    seen.add(k);
+    return true;
+  });
   const [caught, setCaught] = useLocalStorage(CAUGHT_KEY, {});
   const [filter, setFilter] = useState('todo');
   const today = todayIso();
