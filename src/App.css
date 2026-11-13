@@ -69,6 +69,55 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Menu déroulant « Plus » de la barre du haut */
+.tab-more {
+  position: relative;
+}
+
+.tab-more-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.tab-more-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 0.3rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.tab-more-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tab-more-item:hover {
+  background: var(--bg-hover);
+}
+
+.tab-more-item.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* Pas de règle overflow ici : `overflow-x: auto` ferait de ce bloc un conteneur de
    défilement, et les barres collantes des écrans (semaine, en-tête des jours) ne
    pourraient plus se coller par rapport à la page. Un contenu trop large fait donc

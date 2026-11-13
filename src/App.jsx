@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Ellipsis } from 'lucide-react';
+import { ChevronDown, Ellipsis } from 'lucide-react';
 import WeekPlanner from './components/WeekPlanner/WeekPlanner';
 import MealPlanner from './components/MealPlanner/MealPlanner';
 import NutritionGoal from './components/Nutrition/NutritionGoal';
@@ -15,23 +15,20 @@ const MathsBoard = lazy(() => import('./components/Maths/MathsBoard'));
 const SwimBoard = lazy(() => import('./components/Swim/SwimBoard'));
 const CardsBoard = lazy(() => import('./components/Cards/CardsBoard'));
 
-// primary : présent dans la barre du bas sur téléphone, les autres passent dans « Plus ».
-// hidden : onglet masqué (peu utilisé), ses données restent en place ; retirer le drapeau
-// pour le réafficher.
-const ALL_TABS = [
-  { id: 'week', label: 'Semaine', primary: true },
-  { id: 'swim', label: 'Natation', primary: true },
-  { id: 'maths', label: 'Maths', primary: true },
-  { id: 'cards', label: 'Cartes', primary: true },
-  { id: 'ideas', label: 'Idées', primary: true },
-  { id: 'quests', label: 'Quêtes', hidden: true },
-  { id: 'journal', label: 'Carnet', hidden: true },
-  { id: 'meals', label: 'Repas', hidden: true },
-  { id: 'nutrition', label: 'Nutrition', hidden: true },
-  { id: 'vinted', label: 'Vinted', hidden: true },
+// bar : visible dans la barre du haut sur ordinateur ; primary : dans la barre du bas sur
+// téléphone (4 places). Tous les autres onglets passent dans le menu « Plus ».
+const TABS = [
+  { id: 'week', label: 'Semaine', bar: true, primary: true },
+  { id: 'swim', label: 'Natation', bar: true, primary: true },
+  { id: 'maths', label: 'Maths', bar: true, primary: true },
+  { id: 'cards', label: 'Cartes', bar: true, primary: true },
+  { id: 'ideas', label: 'Idées', bar: true },
+  { id: 'quests', label: 'Quêtes' },
+  { id: 'journal', label: 'Carnet' },
+  { id: 'meals', label: 'Repas' },
+  { id: 'nutrition', label: 'Nutrition' },
+  { id: 'vinted', label: 'Vinted' },
 ];
-const TABS = ALL_TABS.filter((t) => !t.hidden);
-const HAS_MORE = TABS.some((t) => !t.primary);
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('week');
@@ -51,14 +48,16 @@ export default function App() {
     setActiveTab(id);
   };
 
-  const activeIsSecondary = !TABS.find((t) => t.id === activeTab)?.primary;
+  const active = TABS.find((t) => t.id === activeTab);
+  const activeIsSecondary = !active?.primary;
+  const activeInDeskMenu = !active?.bar;
 
   return (
     <div className="app">
       <header className="app-header">
         <h1 className="app-title">Mon Planner</h1>
         <nav className="tab-nav" aria-label="Sections">
-          {TABS.map((tab) => (
+          {TABS.filter((t) => t.bar).map((tab) => (
             <button
               key={tab.id}
               className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
@@ -69,6 +68,40 @@ export default function App() {
               <span className="tab-label">{tab.label}</span>
             </button>
           ))}
+          <div className="tab-more">
+            <button
+              className={`tab-btn ${activeInDeskMenu ? 'active' : ''}`}
+              onClick={() => setMoreOpen((o) => !o)}
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+            >
+              {activeInDeskMenu ? (
+                <TabIcon id={activeTab} className="tab-icon" />
+              ) : (
+                <Ellipsis size={16} className="tab-icon" aria-hidden="true" />
+              )}
+              <span className="tab-label">{activeInDeskMenu ? active.label : 'Plus'}</span>
+              <ChevronDown size={14} className="tab-icon" aria-hidden="true" />
+            </button>
+            {moreOpen && (
+              <>
+                <div className="tab-more-backdrop" onClick={() => setMoreOpen(false)} />
+                <div className="tab-more-menu" role="menu" aria-label="Autres sections">
+                  {TABS.filter((t) => !t.bar).map((tab) => (
+                    <button
+                      key={tab.id}
+                      role="menuitem"
+                      className={`tab-more-item${activeTab === tab.id ? ' active' : ''}`}
+                      onClick={() => openTab(tab.id)}
+                    >
+                      <TabIcon id={tab.id} size={16} />
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </nav>
       </header>
 
@@ -132,17 +165,15 @@ export default function App() {
             <span>{tab.label}</span>
           </button>
         ))}
-        {HAS_MORE && (
-          <button
-            className={`bottom-nav-btn${activeIsSecondary ? ' active' : ''}`}
-            onClick={() => setMoreOpen((o) => !o)}
-            aria-expanded={moreOpen}
-            aria-haspopup="menu"
-          >
-            <Ellipsis size={22} aria-hidden="true" />
-            <span>{activeIsSecondary ? TABS.find((t) => t.id === activeTab).label : 'Plus'}</span>
-          </button>
-        )}
+        <button
+          className={`bottom-nav-btn${activeIsSecondary ? ' active' : ''}`}
+          onClick={() => setMoreOpen((o) => !o)}
+          aria-expanded={moreOpen}
+          aria-haspopup="menu"
+        >
+          <Ellipsis size={22} aria-hidden="true" />
+          <span>{activeIsSecondary ? active.label : 'Plus'}</span>
+        </button>
       </nav>
     </div>
   );
