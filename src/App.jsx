@@ -15,19 +15,23 @@ const MathsBoard = lazy(() => import('./components/Maths/MathsBoard'));
 const SwimBoard = lazy(() => import('./components/Swim/SwimBoard'));
 const CardsBoard = lazy(() => import('./components/Cards/CardsBoard'));
 
-// primary : présent dans la barre du bas sur téléphone, les autres passent dans « Plus »
-const TABS = [
+// primary : présent dans la barre du bas sur téléphone, les autres passent dans « Plus ».
+// hidden : onglet masqué (peu utilisé), ses données restent en place ; retirer le drapeau
+// pour le réafficher.
+const ALL_TABS = [
   { id: 'week', label: 'Semaine', primary: true },
-  { id: 'quests', label: 'Quêtes', primary: true },
-  { id: 'journal', label: 'Carnet', primary: true },
-  { id: 'meals', label: 'Repas', primary: true },
-  { id: 'swim', label: 'Natation' },
-  { id: 'maths', label: 'Maths' },
-  { id: 'cards', label: 'Cartes' },
-  { id: 'nutrition', label: 'Nutrition' },
-  { id: 'ideas', label: 'Idées' },
-  { id: 'vinted', label: 'Vinted' },
+  { id: 'swim', label: 'Natation', primary: true },
+  { id: 'maths', label: 'Maths', primary: true },
+  { id: 'cards', label: 'Cartes', primary: true },
+  { id: 'ideas', label: 'Idées', primary: true },
+  { id: 'quests', label: 'Quêtes', hidden: true },
+  { id: 'journal', label: 'Carnet', hidden: true },
+  { id: 'meals', label: 'Repas', hidden: true },
+  { id: 'nutrition', label: 'Nutrition', hidden: true },
+  { id: 'vinted', label: 'Vinted', hidden: true },
 ];
+const TABS = ALL_TABS.filter((t) => !t.hidden);
+const HAS_MORE = TABS.some((t) => !t.primary);
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('week');
@@ -128,15 +132,17 @@ export default function App() {
             <span>{tab.label}</span>
           </button>
         ))}
-        <button
-          className={`bottom-nav-btn${activeIsSecondary ? ' active' : ''}`}
-          onClick={() => setMoreOpen((o) => !o)}
-          aria-expanded={moreOpen}
-          aria-haspopup="menu"
-        >
-          <Ellipsis size={22} aria-hidden="true" />
-          <span>{activeIsSecondary ? TABS.find((t) => t.id === activeTab).label : 'Plus'}</span>
-        </button>
+        {HAS_MORE && (
+          <button
+            className={`bottom-nav-btn${activeIsSecondary ? ' active' : ''}`}
+            onClick={() => setMoreOpen((o) => !o)}
+            aria-expanded={moreOpen}
+            aria-haspopup="menu"
+          >
+            <Ellipsis size={22} aria-hidden="true" />
+            <span>{activeIsSecondary ? TABS.find((t) => t.id === activeTab).label : 'Plus'}</span>
+          </button>
+        )}
       </nav>
     </div>
   );
