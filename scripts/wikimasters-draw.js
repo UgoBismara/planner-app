@@ -1,56 +1,56 @@
 // Tire N articles au hasard dans Wikipédia FR (articles uniquement, sans
-// redirections ni pages d'homonymie) et les ajoute aux cartes de l'onglet Cartes,
+// redirections ni pages d'homonymie) et les ajoute aux cartes de l'onglet Wikichasse,
 // directement dans Firestore (doc planner/wikimasters-cards, format { v: JSON }).
 //
+// Chaque carte garde ses vues des 30 derniers jours (views), qui donnent sa rareté
+// dans l'onglet (plus l'article est lu, plus la carte est rare, comme dans le jeu).
+// Les cartes bonus tirées par l'appli (doc wikimasters-bonus) sont lues pour ne
+// jamais retomber sur un article déjà sorti.
+//
 // Usage : node scripts/wikimasters-draw.js [N=5] [--dry-run] [--force]
-// Lancé chaque jour à 8h (Paris) par la routine cloud « Carte WikiMasters du jour ».
+//         node scripts/wikimasters-draw.js --backfill   (ajoute les vues manquantes)
+// Lancé chaque jour à 8h (Paris) par la routine cloud « Cartes WikiMasters du jour ».
+
+import { drawCard, parisToday, titleKey, views30 } from '../src/data/wikiDraw.js';
 
 const PROJECT = 'planner-app-83b8b';
 const API_KEY = 'AIzaSyAXdi1h53I67xY4EZ0oHKtI6wtmoXR6hM8';
-const DOC_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/planner/wikimasters-cards?key=${API_KEY}`;
-const UA = 'planner-wikimasters/1.0';
+const docUrl = (key) =>
+  `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/planner/${key}?key=${API_KEY}`;
+const CARDS_URL = docUrl('wikimasters-cards');
+const BONUS_URL = docUrl('wikimasters-bonus');
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const count = Number(args.find((a) => /^\d+$/.test(a)) ?? 5);
+const today = parisToday();
 
-// Date du jour à Paris, AAAA-MM-JJ
-const today = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date());
-
-async function getJson(url, init) {
-  const res = await fetch(url, { ...init, headers: { 'User-Agent': UA, ...init?.headers } });
-  if (!res.ok && res.status !== 404) {
-    throw new Error(`${res.status} ${res.statusText} — ${url}\n${await res.text()}`);
-  }
-  return res.status === 404 ? null : res.json();
-}
-
-// Lit les cartes et l'horodatage du doc : l'écriture n'aboutit que si personne
+// Lit une liste et l'horodatage du doc : l'écriture n'aboutit que si personne
 // n'a modifié le doc entre-temps (deux tirages simultanés ne peuvent pas se cumuler)
-async function readCards() {
-  const doc = await getJson(DOC_URL);
-  const raw = doc?.fields?.v?.stringValue;
-  return { cards: raw ? JSON.parse(raw) : [], updateTime: doc?.updateTime ?? null };
+async function readList(url) {
+  const res = await fetch(url);
+  if (res.status === 404) return { list: [], updateTime: null };
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText} — lecture Firestore\n${await res.text()}`);
+  const doc = await res.json();
+  const raw = doc.fields?.v?.stringValue;
+  return { list: raw ? JSON.parse(raw) : [], updateTime: doc.updateTime ?? null };
 }
 
 async function writeCards(cards, updateTime) {
   const precondition = updateTime
     ? `&currentDocument.updateTime=${encodeURIComponent(updateTime)}`
     : '&currentDocument.exists=false';
-  const res = await fetch(DOC_URL + precondition, {
+  const res = await fetch(CARDS_URL + precondition, {
     method: 'PATCH',
-    headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: { v: { stringValue: JSON.stringify(cards) } } }),
   });
   if (res.ok) return true;
   const text = await res.text();
   // Doc modifié depuis la lecture (ou créé entre-temps) : on relira et recommencera
   if (/FAILED_PRECONDITION|ALREADY_EXISTS/.test(text)) return false;
-  throw new Error(`${res.status} ${res.statusText} — écriture Firestore
-${text}`);
+  throw new Error(`${res.status} ${res.statusText} — écriture Firestore\n${text}`);
 }
-
-const titleKey = (t) => t.trim().toLocaleLowerCase('fr');
 
 // Un doublon = même page (id) ou même titre, l'id couvrant les pages renommées
 function dedupe(cards) {
@@ -64,36 +64,23 @@ function dedupe(cards) {
   });
 }
 
-async function drawOne(takenIds, takenTitles) {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const r = await getJson(
-      'https://fr.wikipedia.org/w/api.php?action=query&list=random&rnnamespace=0&rnfilterredir=nonredirects&rnlimit=1&format=json',
-    );
-    const { id, title } = r.query.random[0];
-    if (takenIds.has(id)) continue;
-    const s = await getJson(
-      `https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`,
-    );
-    if (!s || s.type === 'disambiguation') continue;
-    const finalTitle = s.title ?? title;
-    if (takenTitles.has(titleKey(finalTitle))) continue;
-    return {
-      id,
-      title: finalTitle,
-      description: s.description ?? '',
-      extract: s.extract ?? '',
-      thumb: s.thumbnail?.source ?? '',
-      url: s.content_urls?.desktop?.page ?? `https://fr.wikipedia.org/wiki/${encodeURIComponent(title)}`,
-      date: today,
-    };
+if (args.includes('--backfill')) {
+  const read = await readList(CARDS_URL);
+  const cards = [];
+  for (const c of read.list) {
+    cards.push(typeof c.views === 'number' ? c : { ...c, views: await views30(c.title) });
   }
-  throw new Error('Impossible de tirer un article après 20 essais');
+  if (!dryRun && !(await writeCards(cards, read.updateTime))) {
+    throw new Error('Doc modifié pendant le backfill : relancer.');
+  }
+  for (const c of cards) console.log(`${String(c.views).padStart(7)}  ${c.title}`);
+  process.exit(0);
 }
 
 for (let round = 1; round <= 3; round++) {
-  const read = await readCards();
-  const cards = dedupe(read.cards);
-  const removed = read.cards.length - cards.length;
+  const read = await readList(CARDS_URL);
+  const cards = dedupe(read.list);
+  const removed = read.list.length - cards.length;
 
   // Garde-fou : un second lancement le même jour (relance, test manuel) n'ajoute rien
   const alreadyToday = cards.filter((c) => c.date === today).length;
@@ -106,11 +93,13 @@ for (let round = 1; round <= 3; round++) {
     process.exit(0);
   }
 
-  const takenIds = new Set(cards.map((c) => c.id));
-  const takenTitles = new Set(cards.map((c) => titleKey(c.title)));
+  const { list: bonus } = await readList(BONUS_URL);
+  const taken = [...cards, ...bonus];
+  const takenIds = new Set(taken.map((c) => c.id));
+  const takenTitles = new Set(taken.map((c) => titleKey(c.title)));
   const drawn = [];
   for (let i = 0; i < count; i++) {
-    const card = await drawOne(takenIds, takenTitles);
+    const card = await drawCard(takenIds, takenTitles);
     takenIds.add(card.id);
     takenTitles.add(titleKey(card.title));
     drawn.push(card);

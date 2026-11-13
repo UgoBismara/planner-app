@@ -1,69 +1,225 @@
-.cards-board {
+.hunt {
   max-width: 720px;
   margin: 0 auto;
   padding: 1rem 0.75rem 3rem;
 }
 
-.cards-header {
+/* ── Profil du chasseur ── */
+.hunt-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, #bf5af2 22%, transparent), transparent 60%),
+    radial-gradient(120% 140% at 0% 100%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
+    var(--bg-card);
+}
+
+.hunt-hero-top {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.25rem 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
 }
 
-.cards-title {
+.hunt-name {
   margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  color: var(--text-primary);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  background: linear-gradient(90deg, #ffcc00, #ff9f0a 40%, #bf5af2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-.cards-sub {
+.hunt-tagline {
+  margin: 0.15rem 0 0;
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
-/* ── Compteurs ── */
-.cards-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.cards-stat {
-  display: flex;
-  flex-direction: column;
+.hunt-streak {
+  display: inline-flex;
   align-items: center;
-  padding: 0.65rem 0.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-}
-
-.cards-stat-value {
-  font-size: 1.25rem;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
   font-weight: 700;
-  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
-.cards-stat-label {
+.hunt-streak.on {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.hunt-level {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hunt-level-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffcc00, #ff9f0a);
+  color: #1c1c1e;
+  font-size: 1.15rem;
+  font-weight: 800;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #ffcc00 25%, transparent);
+}
+
+.hunt-level-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.hunt-level-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.hunt-level-title {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hunt-level-xp {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hunt-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+
+.hunt-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff9f0a, #ffcc00);
+  transition: width 0.5s var(--ease);
+}
+
+/* ── Mission du jour ── */
+.hunt-mission {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.hunt-mission.done {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+  background: color-mix(in srgb, var(--success) 8%, var(--bg-card));
+}
+
+.hunt-mission-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.hunt-mission-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hunt-mission.done .hunt-mission-title {
+  color: var(--success);
+}
+
+.hunt-mission-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.hunt-mission-count small {
+  font-weight: 500;
   font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
+.hunt-pips {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.hunt-pip {
+  --rarity: var(--border-strong);
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--rarity);
+  background: transparent;
+  transition: background 0.3s;
+}
+
+.hunt-pip.filled {
+  background: var(--rarity);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--rarity) 60%, transparent);
+}
+
+/* ── Collection ── */
+.hunt-collection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+
+.hunt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--rarity) 45%, transparent);
+  background: color-mix(in srgb, var(--rarity) 10%, transparent);
+  color: var(--rarity);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hunt-chip-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 /* ── Filtres ── */
-.cards-filters {
+.hunt-filters {
   display: flex;
   gap: 0.4rem;
   margin-bottom: 1rem;
 }
 
-.cards-filter {
+.hunt-filter {
   flex: 1;
   padding: 0.45rem 0.4rem;
   border: 1.5px solid var(--border);
@@ -76,25 +232,24 @@
   cursor: pointer;
 }
 
-.cards-filter.active {
+.hunt-filter.active {
   border-color: var(--accent);
   color: var(--text-primary);
   background: var(--bg-hover);
 }
 
-.cards-empty {
+.hunt-empty {
   text-align: center;
   color: var(--text-secondary);
   font-size: 0.9rem;
   padding: 2rem 0;
 }
 
-/* ── Jours et cartes ── */
-.cards-day {
+.hunt-day {
   margin-bottom: 1.25rem;
 }
 
-.cards-day-title {
+.hunt-day-title {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -103,45 +258,117 @@
   color: var(--text-tertiary);
 }
 
-.cards-day-title::first-letter {
-  text-transform: uppercase;
-}
-
-.cards-list {
+.hunt-cards {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Carte à collectionner ── */
+.tcg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1.5px solid color-mix(in srgb, var(--rarity) 55%, var(--border));
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--rarity) 12%, transparent), transparent 55%),
+    var(--bg-card);
+  transition: opacity 0.2s, transform 0.2s var(--ease);
+}
+
+.tcg.rarity-epic {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--rarity) 25%, transparent);
+}
+
+.tcg.rarity-legendary {
+  box-shadow: 0 0 22px color-mix(in srgb, var(--rarity) 35%, transparent);
+  animation: tcg-shine 3s ease-in-out infinite;
+}
+
+@keyframes tcg-shine {
+  50% {
+    box-shadow: 0 0 30px color-mix(in srgb, var(--rarity) 55%, transparent);
+  }
+}
+
+.tcg.caught {
+  opacity: 0.6;
+}
+
+.tcg.caught::after {
+  content: 'CAPTURÉE';
+  position: absolute;
+  top: 2.4rem;
+  right: 0.9rem;
+  padding: 0.15rem 0.5rem;
+  border: 2px solid var(--success);
+  border-radius: var(--radius-sm);
+  color: var(--success);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  transform: rotate(-8deg);
+  pointer-events: none;
+  animation: tcg-stamp 0.35s var(--ease);
+}
+
+@keyframes tcg-stamp {
+  from {
+    transform: rotate(-8deg) scale(2);
+    opacity: 0;
+  }
+}
+
+.tcg-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
 }
 
-.card-item {
+.tcg-rarity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rarity);
+}
+
+.tcg-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tcg-main {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition: opacity 0.15s, border-color 0.15s;
 }
 
-.card-item.caught {
-  opacity: 0.55;
-  border-color: color-mix(in srgb, var(--success) 35%, var(--border));
-}
-
-.card-thumb {
+.tcg-thumb {
   flex: none;
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
   border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--rarity) 40%, var(--border));
   background: var(--bg-elevated);
 }
 
-.card-body {
+.tcg-body {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -149,51 +376,30 @@
   gap: 0.15rem;
 }
 
-.card-title-row {
+.tcg-title-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
 
-.card-title {
+.tcg-title {
   padding: 0;
   border: none;
   background: none;
   font-family: inherit;
-  font-size: 1rem;
-  font-weight: 650;
+  font-size: 1.02rem;
+  font-weight: 700;
   text-align: left;
   color: var(--text-primary);
   overflow-wrap: anywhere;
   cursor: copy;
 }
 
-.card-title:hover {
+.tcg-title:hover {
   color: var(--accent);
 }
 
-.card-link {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.45rem;
-  padding: 0.35rem 0.7rem;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.card-link:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.card-copied {
+.tcg-copied {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -203,12 +409,12 @@
   color: var(--success);
 }
 
-.card-desc {
+.tcg-desc {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
-.card-extract {
+.tcg-extract {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
   line-height: 1.4;
@@ -219,27 +425,352 @@
   overflow: hidden;
 }
 
-.card-catch {
+.tcg-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tcg-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.tcg-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tcg-catch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.9rem;
+  border: 1.5px solid var(--rarity);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rarity) 14%, transparent);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.tcg-catch:active {
+  transform: scale(0.95);
+}
+
+.tcg-catch[aria-pressed='true'] {
+  border-color: var(--success);
+  background: var(--success);
+  color: #000;
+}
+
+/* ── Notification de capture ── */
+.hunt-toast {
+  --rarity: var(--accent);
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottom-nav-h) + 1rem + env(safe-area-inset-bottom));
+  z-index: 60;
+  padding: 0.6rem 1.1rem;
+  border: 1.5px solid var(--rarity);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: var(--shadow), 0 0 18px color-mix(in srgb, var(--rarity) 35%, transparent);
+  transform: translateX(-50%);
+  animation: hunt-toast-in 0.35s var(--ease);
+}
+
+.hunt-toast.mission {
+  --rarity: var(--success);
+}
+
+.hunt-toast.level {
+  --rarity: #ffcc00;
+  background: linear-gradient(90deg, #ff9f0a, #ffcc00);
+  color: #1c1c1e;
+}
+
+@keyframes hunt-toast-in {
+  from {
+    transform: translate(-50%, 1rem) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@media (min-width: 769px) {
+  .hunt-toast {
+    bottom: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tcg.rarity-legendary,
+  .tcg.caught::after,
+  .hunt-toast {
+    animation: none;
+  }
+}
+
+/* ── Cartes bonus ── */
+.tcg-bonus {
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff9f0a, #ffcc00);
+  color: #1c1c1e;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.hunt-bonus-draw {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1.5px dashed color-mix(in srgb, #ffcc00 50%, var(--border));
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.hunt-bonus-draw svg {
+  color: #ffcc00;
+}
+
+.hunt-bonus-draw.error {
+  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+}
+
+.hunt-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hunt-toast.bonus {
+  --rarity: #ffcc00;
+}
+
+/* ── Succès ── */
+.hunt-chips {
+  display: flex;
+  gap: 0.35rem;
+  flex: none;
+}
+
+.hunt-trophies {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, #ffcc00 14%, transparent);
+  color: #ffcc00;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.hunt-views {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.hunt-view {
+  flex: 1;
+  padding: 0.45rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hunt-view.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ach-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in srgb, #ffcc00 35%, var(--border));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, #ffcc00 6%, var(--bg-card));
+  color: #ffcc00;
+}
+
+.ach-summary-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ach-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.ach-summary-title {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ach-summary-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ffcc00;
+}
+
+.ach-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff9f0a, #ffcc00);
+  transition: width 0.5s var(--ease);
+}
+
+.ach-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 0.5rem;
+}
+
+.ach-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.ach-tile.done {
+  border-color: color-mix(in srgb, #ffcc00 45%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #ffcc00 10%, transparent), transparent 60%), var(--bg-card);
+}
+
+.ach-icon {
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 1.5px solid var(--border-strong);
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: transparent;
-  color: transparent;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
 }
 
-.card-catch:hover {
-  border-color: var(--success);
-  color: var(--success);
+.ach-tile.done .ach-icon {
+  background: linear-gradient(135deg, #ffcc00, #ff9f0a);
+  color: #1c1c1e;
+  box-shadow: 0 0 12px color-mix(in srgb, #ffcc00 35%, transparent);
 }
 
-.card-catch[aria-pressed='true'] {
-  background: var(--success);
-  border-color: var(--success);
-  color: #000;
+.ach-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ach-name {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ach-tile:not(.done) .ach-name {
+  color: var(--text-secondary);
+}
+
+.ach-tile.secret .ach-name {
+  letter-spacing: 0.15em;
+}
+
+.ach-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.ach-date {
+  font-size: 0.72rem;
+  color: #ffcc00;
+}
+
+.ach-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ach-progress-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+
+.ach-progress-bar > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--text-tertiary);
+}
+
+.hunt-toast.achievement {
+  --rarity: #ffcc00;
+  background: linear-gradient(90deg, #ff9f0a, #ffcc00);
+  color: #1c1c1e;
 }

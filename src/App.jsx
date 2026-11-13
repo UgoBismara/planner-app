@@ -21,7 +21,7 @@ const TABS = [
   { id: 'week', label: 'Semaine', bar: true, primary: true },
   { id: 'swim', label: 'Natation', bar: true, primary: true },
   { id: 'maths', label: 'Maths', bar: true, primary: true },
-  { id: 'cards', label: 'Cartes', bar: true, primary: true },
+  { id: 'cards', label: 'Wikichasse', bar: true, primary: true },
   { id: 'ideas', label: 'Idées', bar: true },
   { id: 'quests', label: 'Quêtes' },
   { id: 'journal', label: 'Carnet' },
