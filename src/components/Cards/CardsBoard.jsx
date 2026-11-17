@@ -70,7 +70,8 @@ function totalXp(cards, caught) {
 }
 
 export default function CardsBoard() {
-  // Les cartes sont déposées par la routine cloud ; l'appli n'écrit que les captures
+  // Les cartes du jour sont tirées par l'appli à la première ouverture de la journée
+  // (le cloud des routines n'a pas accès à Wikipédia) ; écrites via writeStoredValue
   const [rawCards] = useLocalStorage(CARDS_KEY, []);
   // Cartes bonus : tirées par l'appli quand il ne reste rien à capturer
   const [rawBonus, setBonus] = useLocalStorage(BONUS_KEY, []);
@@ -78,6 +79,7 @@ export default function CardsBoard() {
   // Date de premier déblocage de chaque succès (jamais retirée)
   const [unlocked] = useLocalStorage(ACHIEVEMENTS_KEY, {});
   const [bonusState, setBonusState] = useState('idle'); // idle | drawing | error
+  const [dailyState, setDailyState] = useState('idle'); // idle | drawing | error
   const [view, setView] = useState('cards'); // cards | achievements
   const [filter, setFilter] = useState('todo');
   const [copiedId, setCopiedId] = useState(null);
@@ -113,6 +115,57 @@ export default function CardsBoard() {
   useEffect(() => {
     latest.current = { cards, caught };
   });
+  // Tirage du jour : s'il manque des cartes aujourd'hui, l'appli les tire elle-même.
+  // Petit délai pour laisser Firestore livrer un tirage fait sur un autre appareil ;
+  // Firestore est relu juste avant d'écrire, donc deux appareils ne doublent pas le tirage.
+  const dailyTried = useRef('');
+  const drawDaily = async () => {
+    if (drawingRef.current) return;
+    drawingRef.current = true;
+    dailyTried.current = today;
+    setDailyState('drawing');
+    try {
+      const all = latest.current.cards;
+      const ids = new Set(all.map((c) => c.id));
+      const titles = new Set(all.map((c) => titleKey(c.title)));
+      const need = CARDS_PER_DAY - all.filter((c) => !c.bonus && c.date === today).length;
+      const drawn = [];
+      for (let i = 0; i < need; i++) {
+        const card = await drawCard(ids, titles);
+        ids.add(card.id);
+        titles.add(titleKey(card.title));
+        drawn.push(card);
+      }
+      let added = 0;
+      await writeStoredValue(CARDS_KEY, (base) => {
+        const list = Array.isArray(base) ? base : [];
+        const have = list.filter((c) => c.date === today).length;
+        if (have >= CARDS_PER_DAY) return null;
+        const takenIds = new Set([...list, ...latest.current.cards].map((c) => c.id));
+        const takenTitles = new Set([...list, ...latest.current.cards].map((c) => titleKey(c.title)));
+        const fresh = drawn
+          .filter((c) => !takenIds.has(c.id) && !takenTitles.has(titleKey(c.title)))
+          .slice(0, CARDS_PER_DAY - have);
+        added = fresh.length;
+        return added > 0 ? [...fresh, ...list] : null;
+      });
+      if (added > 0) showToast({ kind: 'bonus', text: `${added} nouvelles cartes à capturer !` });
+      setDailyState('idle');
+    } catch {
+      dailyTried.current = '';
+      setDailyState('error');
+    } finally {
+      drawingRef.current = false;
+    }
+  };
+  useEffect(() => {
+    if (todayCards.length >= CARDS_PER_DAY || dailyState !== 'idle' || dailyTried.current === today) return;
+    const t = setTimeout(drawDaily, 1500);
+    return () => clearTimeout(t);
+    // drawDaily lit l'état courant via latest
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayCards.length, dailyState, today]);
+
   const drawBonus = async () => {
     if (drawingRef.current) return;
     drawingRef.current = true;
@@ -137,12 +190,13 @@ export default function CardsBoard() {
     }
   };
   useEffect(() => {
-    if (cards.length === 0 || todoCount > 0 || bonusState !== 'idle') return;
+    // Pas de bonus tant que le tirage du jour n'est pas complet
+    if (cards.length === 0 || todoCount > 0 || bonusState !== 'idle' || todayCards.length < CARDS_PER_DAY) return;
     const t = setTimeout(drawBonus, 1200);
     return () => clearTimeout(t);
     // drawBonus lit l'état courant via latest : seuls ces compteurs déclenchent
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cards.length, todoCount, bonusState]);
+  }, [cards.length, todoCount, bonusState, todayCards.length]);
 
   const showToast = (t, ms = 2200) => {
     setToast(t);
@@ -340,8 +394,23 @@ export default function CardsBoard() {
         ))}
       </div>
 
-      {cards.length === 0 && (
-        <p className="hunt-empty">Aucune carte pour l'instant : le premier tirage arrive à 8h.</p>
+      {todayCards.length < CARDS_PER_DAY && dailyState !== 'idle' && (
+        <div className={`hunt-bonus-draw${dailyState === 'error' ? ' error' : ''}`} role="status">
+          <Sparkles size={18} aria-hidden="true" />
+          {dailyState === 'error' ? (
+            <>
+              <span>Le tirage des cartes du jour a échoué.</span>
+              <button className="hunt-retry" onClick={() => setDailyState('idle')}>
+                <RotateCcw size={14} aria-hidden="true" /> Réessayer
+              </button>
+            </>
+          ) : (
+            <span>Tirage des cartes du jour…</span>
+          )}
+        </div>
+      )}
+      {cards.length === 0 && dailyState === 'idle' && (
+        <p className="hunt-empty">Aucune carte pour l'instant.</p>
       )}
       {cards.length > 0 && visible.length === 0 && filter === 'caught' && (
         <p className="hunt-empty">Aucune carte capturée pour l’instant.</p>
