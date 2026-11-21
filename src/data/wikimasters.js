@@ -52,7 +52,9 @@ export const titleOf = (level) => TITLES.filter(([min]) => level >= min).pop()[1
 
 // Série : jours de tirage consécutifs dont toutes les cartes ont été capturées.
 // Le jour en cours ne casse pas la série tant qu'il n'est pas fini.
-export function streakOf(cards, caught, today) {
+// freeze (recherche « Gel de série ») : une journée ratée est sautée sans casser
+// la série, au plus une tous les 7 jours
+export function streakOf(cards, caught, today, freeze = false) {
   const byDay = new Map();
   for (const c of cards) {
     const d = byDay.get(c.date) ?? { total: 0, done: 0 };
@@ -61,10 +63,13 @@ export function streakOf(cards, caught, today) {
     byDay.set(c.date, d);
   }
   let streak = 0;
+  let lastFrozen = null;
+  const DAY = 86400000;
   for (const date of [...byDay.keys()].sort().reverse()) {
     const { total, done } = byDay.get(date);
     if (done === total) streak++;
     else if (date === today) continue;
+    else if (freeze && (!lastFrozen || (new Date(lastFrozen) - new Date(date)) / DAY >= 7)) lastFrozen = date;
     else break;
   }
   return streak;

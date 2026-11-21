@@ -1,8 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Eye, ExternalLink, Flame, Gem, Gift, RotateCcw, Sparkles, Target, Trophy } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Eye,
+  ExternalLink,
+  Flame,
+  FlaskConical,
+  Gem,
+  Gift,
+  RotateCcw,
+  Search,
+  Shuffle,
+  Sparkles,
+  Target,
+  Trophy,
+  X,
+} from 'lucide-react';
 import { useLocalStorage, writeStoredValue } from '../../hooks/useLocalStorage';
 import { ACHIEVEMENTS, ACHIEVEMENTS_KEY, buildContext } from '../../data/wikiAchievements';
 import AchievementsView from './AchievementsView';
+import ResearchView from './ResearchView';
+import { EMPTY_RESEARCH, RESEARCH_KEY, effectsOf, pointsEarned, pointsSpent } from '../../data/wikiResearch';
 import { drawCard, titleKey } from '../../data/wikiDraw';
 import {
   BONUS_KEY,
@@ -52,9 +70,13 @@ function uniqueCards(raw) {
   });
 }
 
+// Recherche plein texte : sans casse ni accents
+const norm = (t) => (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 // XP = valeur des cartes capturées (bonus comprises) + bonus pour chaque journée
-// bouclée (les cartes bonus ne comptent pas dans les journées)
-function totalXp(cards, caught) {
+// bouclée (les cartes bonus ne comptent pas dans les journées), le tout multiplié
+// par les recherches de la branche Savoir
+function totalXp(cards, caught, fx) {
   let xp = 0;
   const days = new Map();
   for (const c of cards) {
@@ -65,8 +87,8 @@ function totalXp(cards, caught) {
     if (caught[c.id]) d.done++;
     days.set(c.date, d);
   }
-  for (const d of days.values()) if (d.done === d.total) xp += MISSION_BONUS;
-  return xp;
+  for (const d of days.values()) if (d.done === d.total) xp += MISSION_BONUS * fx.missionMult;
+  return Math.round(xp * fx.xpMult);
 }
 
 export default function CardsBoard() {
@@ -78,9 +100,14 @@ export default function CardsBoard() {
   const [caught, setCaught] = useLocalStorage(CAUGHT_KEY, {});
   // Date de premier déblocage de chaque succès (jamais retirée)
   const [unlocked] = useLocalStorage(ACHIEVEMENTS_KEY, {});
+  // Recherches débloquées et relances utilisées (points gagnés : recalculés)
+  const [researchRaw] = useLocalStorage(RESEARCH_KEY, EMPTY_RESEARCH);
+  const research = { ...EMPTY_RESEARCH, ...(researchRaw ?? {}) };
+  const [busy, setBusy] = useState(false); // recherche ou relance en cours
+  const [query, setQuery] = useState('');
   const [bonusState, setBonusState] = useState('idle'); // idle | drawing | error
   const [dailyState, setDailyState] = useState('idle'); // idle | drawing | error
-  const [view, setView] = useState('cards'); // cards | achievements
+  const [view, setView] = useState('cards'); // cards | research | achievements
   const [filter, setFilter] = useState('todo');
   const [copiedId, setCopiedId] = useState(null);
   const [toast, setToast] = useState(null);
@@ -90,11 +117,17 @@ export default function CardsBoard() {
   const cards = uniqueCards([...rawCards, ...rawBonus]);
   const daily = cards.filter((c) => !c.bonus);
 
-  const xp = totalXp(cards, caught);
+  const fx = effectsOf(research.unlocked);
+  const target = CARDS_PER_DAY + fx.extraCards; // cartes du jour à tirer
+  const earned = pointsEarned(cards, caught);
+  const points = Math.max(0, earned - pointsSpent(research.unlocked));
+  const rerollsLeft = Math.max(0, fx.rerollsPerDay - (research.rerolls[today] ?? 0));
+
+  const xp = totalXp(cards, caught, fx);
   const level = levelOf(xp);
   const levelStart = xpForLevel(level);
   const levelEnd = xpForLevel(level + 1);
-  const streak = streakOf(daily, caught, today);
+  const streak = streakOf(daily, caught, today, fx.freeze);
 
   const achContext = buildContext({ cards, caught, level, today });
   const achResults = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.check(achContext)]));
@@ -122,30 +155,39 @@ export default function CardsBoard() {
   const drawDaily = async () => {
     if (drawingRef.current) return;
     drawingRef.current = true;
-    dailyTried.current = today;
+    dailyTried.current = `${today}:${target}`;
     setDailyState('drawing');
     try {
       const all = latest.current.cards;
       const ids = new Set(all.map((c) => c.id));
       const titles = new Set(all.map((c) => titleKey(c.title)));
-      const need = CARDS_PER_DAY - all.filter((c) => !c.bonus && c.date === today).length;
-      const drawn = [];
-      for (let i = 0; i < need; i++) {
-        const card = await drawCard(ids, titles);
+      const need = target - all.filter((c) => !c.bonus && c.date === today).length;
+      const take = (card) => {
         ids.add(card.id);
         titles.add(titleKey(card.title));
-        drawn.push(card);
+        return card;
+      };
+      const drawn = [];
+      for (let i = 0; i < need; i++) {
+        // Flair : la plus lue de 3 candidates
+        if (i < fx.flairCards) {
+          const cands = [];
+          for (let k = 0; k < 3; k++) cands.push(take(await drawCard(ids, titles)));
+          drawn.push(cands.reduce((a, b) => ((b.views ?? -1) > (a.views ?? -1) ? b : a)));
+        } else {
+          drawn.push(take(await drawCard(ids, titles)));
+        }
       }
       let added = 0;
       await writeStoredValue(CARDS_KEY, (base) => {
         const list = Array.isArray(base) ? base : [];
         const have = list.filter((c) => c.date === today).length;
-        if (have >= CARDS_PER_DAY) return null;
+        if (have >= target) return null;
         const takenIds = new Set([...list, ...latest.current.cards].map((c) => c.id));
         const takenTitles = new Set([...list, ...latest.current.cards].map((c) => titleKey(c.title)));
         const fresh = drawn
           .filter((c) => !takenIds.has(c.id) && !takenTitles.has(titleKey(c.title)))
-          .slice(0, CARDS_PER_DAY - have);
+          .slice(0, target - have);
         added = fresh.length;
         return added > 0 ? [...fresh, ...list] : null;
       });
@@ -159,12 +201,12 @@ export default function CardsBoard() {
     }
   };
   useEffect(() => {
-    if (todayCards.length >= CARDS_PER_DAY || dailyState !== 'idle' || dailyTried.current === today) return;
+    if (todayCards.length >= target || dailyState !== 'idle' || dailyTried.current === `${today}:${target}`) return;
     const t = setTimeout(drawDaily, 1500);
     return () => clearTimeout(t);
     // drawDaily lit l'état courant via latest
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayCards.length, dailyState, today]);
+  }, [todayCards.length, dailyState, today, target]);
 
   const drawBonus = async () => {
     if (drawingRef.current) return;
@@ -191,12 +233,12 @@ export default function CardsBoard() {
   };
   useEffect(() => {
     // Pas de bonus tant que le tirage du jour n'est pas complet
-    if (cards.length === 0 || todoCount > 0 || bonusState !== 'idle' || todayCards.length < CARDS_PER_DAY) return;
+    if (cards.length === 0 || todoCount > 0 || bonusState !== 'idle' || todayCards.length < target) return;
     const t = setTimeout(drawBonus, 1200);
     return () => clearTimeout(t);
     // drawBonus lit l'état courant via latest : seuls ces compteurs déclenchent
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cards.length, todoCount, bonusState, todayCards.length]);
+  }, [cards.length, todoCount, bonusState, todayCards.length, target]);
 
   const showToast = (t, ms = 2200) => {
     setToast(t);
@@ -224,6 +266,51 @@ export default function CardsBoard() {
     }, 1500);
     return () => clearTimeout(t);
   }, [newlyDone]);
+
+  // Débloque une recherche. Firestore est relu avant d'écrire : les points sont
+  // revérifiés sur les recherches réellement enregistrées (autre appareil compris).
+  const doResearch = async (r) => {
+    setBusy(true);
+    let ok = false;
+    await writeStoredValue(RESEARCH_KEY, (base) => {
+      const b = { ...EMPTY_RESEARCH, ...(base ?? {}) };
+      if (b.unlocked[r.id] || earned - pointsSpent(b.unlocked) < r.cost) return null;
+      ok = true;
+      return { ...b, unlocked: { ...b.unlocked, [r.id]: today } };
+    });
+    setBusy(false);
+    if (ok) showToast({ kind: 'research', text: `Recherche terminée : ${r.name}` }, 3000);
+  };
+
+  // Relance : une carte du jour non capturée est remplacée par un nouveau tirage
+  const reroll = async (card) => {
+    if (busy || rerollsLeft <= 0) return;
+    setBusy(true);
+    try {
+      const all = latest.current.cards;
+      const fresh = await drawCard(new Set(all.map((c) => c.id)), new Set(all.map((c) => titleKey(c.title))));
+      let used = false;
+      await writeStoredValue(RESEARCH_KEY, (base) => {
+        const b = { ...EMPTY_RESEARCH, ...(base ?? {}) };
+        const n = b.rerolls[today] ?? 0;
+        if (n >= fx.rerollsPerDay) return null;
+        used = true;
+        // Seul le compteur du jour est gardé
+        return { ...b, rerolls: { [today]: n + 1 } };
+      });
+      if (!used) return;
+      await writeStoredValue(CARDS_KEY, (base) => {
+        const list = Array.isArray(base) ? base : [];
+        if (!list.some((c) => c.id === card.id)) return null;
+        return list.map((c) => (c.id === card.id ? { ...fresh, date: card.date } : c));
+      });
+      showToast({ kind: 'research', text: `Relance : ${fresh.title}` });
+    } catch {
+      showToast({ kind: 'research', text: 'La relance a échoué' });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Clic sur le titre : copié pour le coller dans la recherche du jeu
   const copyTitle = async (card) => {
@@ -254,20 +341,24 @@ export default function CardsBoard() {
     setCaught(next);
 
     const r = rarityOf(card);
-    const newXp = totalXp(cards, next);
+    const newXp = totalXp(cards, next, fx);
+    const gain = newXp - xp;
     const newLevel = levelOf(newXp);
     const dayCards = daily.filter((c) => c.date === card.date);
     const dayDone = !card.bonus && dayCards.every((c) => next[c.id]);
     if (newLevel > level) {
       showToast({ kind: 'level', text: `Niveau ${newLevel} — ${titleOf(newLevel)} !` });
     } else if (dayDone) {
-      showToast({ kind: 'mission', text: `Mission accomplie ! +${r.xp + MISSION_BONUS} XP` });
+      showToast({ kind: 'mission', text: `Mission accomplie ! +${gain} XP` });
     } else {
-      showToast({ kind: r.id, color: r.color, text: `${r.label} capturée ! +${r.xp} XP` });
+      showToast({ kind: r.id, color: r.color, text: `${r.label} capturée ! +${gain} XP` });
     }
   };
 
+  // Une recherche porte sur toute la collection, quel que soit le filtre
+  const q = norm(query.trim());
   const visible = cards.filter((c) => {
+    if (q) return norm(c.title).includes(q) || norm(c.description).includes(q);
     if (filter === 'todo') return !caught[c.id];
     if (filter === 'caught') return caught[c.id];
     return true;
@@ -299,6 +390,14 @@ export default function CardsBoard() {
             <p className="hunt-tagline">Capture les articles du jour dans WikiMasters</p>
           </div>
           <div className="hunt-chips">
+            <button
+              className="hunt-lab-chip"
+              onClick={() => setView(view === 'research' ? 'cards' : 'research')}
+              title="Points de recherche disponibles"
+            >
+              <FlaskConical size={15} aria-hidden="true" />
+              {points}
+            </button>
             <button
               className="hunt-trophies"
               onClick={() => setView(view === 'achievements' ? 'cards' : 'achievements')}
@@ -336,13 +435,18 @@ export default function CardsBoard() {
         <button role="tab" aria-selected={view === 'cards'} className={`hunt-view${view === 'cards' ? ' active' : ''}`} onClick={() => setView('cards')}>
           Cartes
         </button>
+        <button role="tab" aria-selected={view === 'research'} className={`hunt-view${view === 'research' ? ' active' : ''}`} onClick={() => setView('research')}>
+          Recherches
+        </button>
         <button role="tab" aria-selected={view === 'achievements'} className={`hunt-view${view === 'achievements' ? ' active' : ''}`} onClick={() => setView('achievements')}>
-          Succès · {achDone}/{ACHIEVEMENTS.length}
+          Succès
         </button>
       </div>
 
       {view === 'achievements' ? (
         <AchievementsView results={achResults} unlocked={unlocked} />
+      ) : view === 'research' ? (
+        <ResearchView points={points} earned={earned} unlocked={research.unlocked} onResearch={doResearch} busy={busy} />
       ) : (
       <>
       {/* ── Mission du jour ── */}
@@ -353,17 +457,17 @@ export default function CardsBoard() {
             {missionDone ? 'Mission accomplie !' : 'Mission du jour'}
           </span>
           <span className="hunt-mission-count">
-            {todayCaught}/{todayCards.length || CARDS_PER_DAY}
-            {!missionDone && <small> · +{MISSION_BONUS} XP bonus</small>}
+            {todayCaught}/{Math.max(todayCards.length, target)}
+            {!missionDone && <small> · +{Math.round(MISSION_BONUS * fx.missionMult * fx.xpMult)} XP bonus</small>}
           </span>
         </div>
         <div className="hunt-pips">
-          {(todayCards.length ? todayCards : Array.from({ length: CARDS_PER_DAY })).map((c, i) => (
+          {(todayCards.length ? todayCards : Array.from({ length: target })).map((c, i) => (
             <span
               key={c?.id ?? i}
               className={`hunt-pip${c && caught[c.id] ? ' filled' : ''}`}
               style={c ? { '--rarity': rarityOf(c).color } : undefined}
-              title={c ? `${c.title} · ${rarityOf(c).label}` : 'Prochain tirage à 8h'}
+              title={c ? `${c.title} · ${rarityOf(c).label}` : 'Tirage à l’ouverture de l’onglet'}
             />
           ))}
         </div>
@@ -380,6 +484,27 @@ export default function CardsBoard() {
         ))}
       </div>
 
+      <div className="hunt-search">
+        <Search size={16} aria-hidden="true" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher une carte"
+          aria-label="Rechercher une carte par titre ou description"
+        />
+        {query && (
+          <button className="hunt-search-clear" onClick={() => setQuery('')} aria-label="Effacer la recherche">
+            <X size={15} aria-hidden="true" />
+          </button>
+        )}
+      </div>
+
+      {q ? (
+        <p className="hunt-search-count">
+          {visible.length} carte{visible.length > 1 ? 's' : ''} trouvée{visible.length > 1 ? 's' : ''}
+        </p>
+      ) : (
       <div className="hunt-filters" role="tablist">
         {FILTERS.map((f) => (
           <button
@@ -393,8 +518,9 @@ export default function CardsBoard() {
           </button>
         ))}
       </div>
+      )}
 
-      {todayCards.length < CARDS_PER_DAY && dailyState !== 'idle' && (
+      {todayCards.length < target && dailyState !== 'idle' && (
         <div className={`hunt-bonus-draw${dailyState === 'error' ? ' error' : ''}`} role="status">
           <Sparkles size={18} aria-hidden="true" />
           {dailyState === 'error' ? (
@@ -412,10 +538,10 @@ export default function CardsBoard() {
       {cards.length === 0 && dailyState === 'idle' && (
         <p className="hunt-empty">Aucune carte pour l'instant.</p>
       )}
-      {cards.length > 0 && visible.length === 0 && filter === 'caught' && (
+      {cards.length > 0 && visible.length === 0 && filter === 'caught' && !q && (
         <p className="hunt-empty">Aucune carte capturée pour l’instant.</p>
       )}
-      {cards.length > 0 && todoCount === 0 && filter !== 'caught' && (
+      {cards.length > 0 && todoCount === 0 && filter !== 'caught' && !q && (
         <div className={`hunt-bonus-draw${bonusState === 'error' ? ' error' : ''}`} role="status">
           <Gift size={18} aria-hidden="true" />
           {bonusState === 'error' ? (
@@ -457,7 +583,7 @@ export default function CardsBoard() {
                           {c.views.toLocaleString('fr-FR')} vues/30 j ·{' '}
                         </>
                       )}
-                      {r.xp} XP
+                      {Math.round(r.xp * fx.xpMult)} XP
                     </span>
                   </div>
 
@@ -490,6 +616,17 @@ export default function CardsBoard() {
                       <ExternalLink size={13} aria-hidden="true" />
                       Voir la page
                     </a>
+                    {!isCaught && !c.bonus && c.date === today && rerollsLeft > 0 && (
+                      <button
+                        className="tcg-reroll"
+                        onClick={() => reroll(c)}
+                        disabled={busy}
+                        title={`Relancer cette carte (${rerollsLeft} restante${rerollsLeft > 1 ? 's' : ''} aujourd’hui)`}
+                        aria-label={`Relancer ${c.title}`}
+                      >
+                        <Shuffle size={14} aria-hidden="true" />
+                      </button>
+                    )}
                     <button
                       className="tcg-catch"
                       onClick={() => toggle(c)}
