@@ -30,7 +30,6 @@ import ResearchView from './ResearchView';
 import { EMPTY_RESEARCH, RESEARCH_KEY, effectsOf, pointsSpent } from '../../data/wikiResearch';
 import { ACH_POINTS, ACH_POINTS_HIDDEN, MISSION_BONUS, cardXp, computeEconomy } from '../../data/wikiEconomy';
 import { CHESTS_KEY } from '../../data/wikiChests';
-import { QUESTS_START } from '../../data/wikiQuests';
 import { themeOf } from '../../data/wikiThemes';
 import { drawCard, titleKey } from '../../data/wikiDraw';
 import {
@@ -102,7 +101,12 @@ export default function CardsBoard() {
   const [unlocked] = useLocalStorage(ACHIEVEMENTS_KEY, {});
   // Recherches débloquées et relances utilisées (points gagnés : recalculés)
   const [researchRaw] = useLocalStorage(RESEARCH_KEY, EMPTY_RESEARCH);
+  // unlockedNow : recherches achetées sur cet appareil, affichées sans attendre
+  // que Firestore renvoie l'écriture
+  const [unlockedNow, setUnlockedNow] = useState({});
   const research = { ...EMPTY_RESEARCH, ...(researchRaw ?? {}) };
+  research.unlocked = { ...research.unlocked, ...unlockedNow };
+  const researchQueue = useRef(Promise.resolve()); // écritures des achats, une à la fois
   // Coffres ouverts : { [date de la journée]: date d'ouverture }. openedNow couvre
   // le temps que Firestore renvoie l'écriture
   const [openedRaw] = useLocalStorage(CHESTS_KEY, {});
@@ -147,7 +151,7 @@ export default function CardsBoard() {
   const points = Math.max(0, earned - pointsSpent(research.unlocked));
 
   const chestsToOpen = econ.chests.filter((c) => !c.opened);
-  const todayChest = econ.chests.find((c) => c.date === today && !c.opened);
+  const nextChest = chestsToOpen[chestsToOpen.length - 1]; // le plus ancien d'abord
   const questsDone = econ.quests.today.filter((q) => q.done).length;
 
   const todayCards = daily.filter((c) => c.date === today);
@@ -284,17 +288,32 @@ export default function CardsBoard() {
 
   // Débloque une recherche. Firestore est relu avant d'écrire : les points sont
   // revérifiés sur les recherches réellement enregistrées (autre appareil compris).
-  const doResearch = async (r) => {
-    setBusy(true);
-    let ok = false;
-    await writeStoredValue(RESEARCH_KEY, (base) => {
-      const b = { ...EMPTY_RESEARCH, ...(base ?? {}) };
-      if (b.unlocked[r.id] || earned - pointsSpent(b.unlocked) < r.cost) return null;
-      ok = true;
-      return { ...b, unlocked: { ...b.unlocked, [r.id]: today } };
+  // L'achat s'affiche tout de suite ; l'écriture suit, en file pour que des achats
+  // enchaînés ne s'écrasent pas. Refusée (points insuffisants d'après Firestore,
+  // autre appareil compris) : l'achat est retiré.
+  const doResearch = (r) => {
+    if (research.unlocked[r.id] || points < r.cost) return;
+    setUnlockedNow((prev) => ({ ...prev, [r.id]: today }));
+    showToast({ kind: 'research', text: `Recherche terminée : ${r.name}` }, 3000);
+    researchQueue.current = researchQueue.current.then(async () => {
+      let refused = false;
+      await writeStoredValue(RESEARCH_KEY, (base) => {
+        const b = { ...EMPTY_RESEARCH, ...(base ?? {}) };
+        if (b.unlocked[r.id]) return null;
+        if (earned - pointsSpent(b.unlocked) < r.cost) {
+          refused = true;
+          return null;
+        }
+        return { ...b, unlocked: { ...b.unlocked, [r.id]: today } };
+      });
+      if (!refused) return;
+      setUnlockedNow((prev) => {
+        const next = { ...prev };
+        delete next[r.id];
+        return next;
+      });
+      showToast({ kind: 'research', text: `Recherche annulée : pas assez de points` }, 3000);
     });
-    setBusy(false);
-    if (ok) showToast({ kind: 'research', text: `Recherche terminée : ${r.name}` }, 3000);
   };
 
   // Relance : une carte du jour non capturée est remplacée par un nouveau tirage
@@ -363,11 +382,14 @@ export default function CardsBoard() {
     const dayDone = !card.bonus && dayCards.every((c) => next[c.id]);
     const newQuest = after.quests.today.find((q) => q.done && !econ.quests.today.find((o) => o.id === q.id)?.done);
     const weeklyDone = after.quests.weekly.done && !econ.quests.weekly.done;
+    const newChest = after.chests.some((c) => !econ.chests.some((o) => o.id === c.id));
     if (newLevel > level) {
       showToast({ kind: 'level', text: `Niveau ${newLevel} — ${titleOf(newLevel)} !` }, 3000);
     } else if (dayDone) {
-      const chest = card.date >= QUESTS_START ? ' Un coffre t’attend' : '';
+      const chest = newChest ? ' Un coffre t’attend' : '';
       showToast({ kind: 'mission', text: `Mission accomplie ! +${gain} XP.${chest}` }, 3000);
+    } else if (newChest) {
+      showToast({ kind: 'bonus', text: `Coffre débloqué ! +${gain} XP` }, 3000);
     } else if (weeklyDone) {
       showToast({ kind: 'quest', text: `Quête de la semaine terminée ! +${gain} XP` }, 3000);
     } else if (newQuest) {
@@ -385,11 +407,11 @@ export default function CardsBoard() {
     setOpening({ chest, phase: 'shake' });
     setTimeout(() => {
       setOpening((o) => o && { ...o, phase: 'open' });
-      setOpenedNow((prev) => ({ ...prev, [chest.date]: today }));
+      setOpenedNow((prev) => ({ ...prev, [chest.id]: today }));
       writeStoredValue(CHESTS_KEY, (base) => {
         const b = base ?? {};
-        if (b[chest.date]) return null;
-        return { ...b, [chest.date]: today };
+        if (b[chest.id]) return null;
+        return { ...b, [chest.id]: today };
       });
     }, 1100);
   };
@@ -507,7 +529,7 @@ export default function CardsBoard() {
       {view === 'achievements' ? (
         <AchievementsView results={achResults} unlocked={unlocked} />
       ) : view === 'quests' ? (
-        <QuestsView quests={econ.quests} chests={econ.chests} fx={fx} today={today} onOpen={openChest} opening={opening} />
+        <QuestsView quests={econ.quests} chests={econ.chests} progress={econ.chestProgress} fx={fx} today={today} onOpen={openChest} opening={opening} />
       ) : view === 'album' ? (
         <AlbumView ctx={achContext} fx={fx} streak={streak} />
       ) : view === 'research' ? (
@@ -536,13 +558,28 @@ export default function CardsBoard() {
             />
           ))}
         </div>
-        {todayChest && (
-          <button className="hunt-chest-cta" onClick={() => openChest(todayChest)} disabled={Boolean(opening)}>
-            <Package size={18} aria-hidden="true" />
-            Ouvrir le coffre du jour
-          </button>
-        )}
       </section>
+
+      {/* ── Coffres : un toutes les CHEST_EVERY captures ── */}
+      {nextChest ? (
+        <button className="hunt-chest-cta" onClick={() => openChest(nextChest)} disabled={Boolean(opening)}>
+          <Package size={18} aria-hidden="true" />
+          Ouvrir un coffre{chestsToOpen.length > 1 ? ` (${chestsToOpen.length})` : ''}
+        </button>
+      ) : (
+        <div className="hunt-chest-bar" title="Un coffre toutes les 5 cartes capturées">
+          <Package size={16} aria-hidden="true" />
+          <span>Prochain coffre</span>
+          <span className="hunt-chest-pips" aria-hidden="true">
+            {Array.from({ length: econ.chestProgress.every }, (_, i) => (
+              <span key={i} className={i < econ.chestProgress.have ? 'on' : ''} />
+            ))}
+          </span>
+          <strong>
+            {econ.chestProgress.have}/{econ.chestProgress.every}
+          </strong>
+        </div>
+      )}
 
       {/* ── Quêtes du jour (résumé) ── */}
       <button className="hunt-quests-strip" onClick={() => setView('quests')}>
@@ -558,12 +595,6 @@ export default function CardsBoard() {
         <span className="hunt-quests-week">
           Semaine {Math.round((econ.quests.weekly.cur / econ.quests.weekly.target) * 100)} %
         </span>
-        {chestsToOpen.length > 0 && !todayChest && (
-          <span className="hunt-quests-chest">
-            <Package size={14} aria-hidden="true" />
-            {chestsToOpen.length}
-          </span>
-        )}
         <ChevronRight size={16} aria-hidden="true" />
       </button>
 

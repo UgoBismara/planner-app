@@ -1897,3 +1897,62 @@
     animation: none;
   }
 }
+
+/* ── Progression vers le prochain coffre ── */
+.hunt-chest-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in srgb, #ff9f0a 30%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.hunt-chest-bar > svg {
+  color: #ff9f0a;
+}
+
+.hunt-chest-bar strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hunt-chest-pips {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 50px;
+}
+
+.hunt-chest-pips > span {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  transition: background 0.3s;
+}
+
+.hunt-chest-pips > span.on {
+  background: linear-gradient(90deg, #ff9f0a, #ffcc00);
+}
+
+.hunt-chest-cta {
+  margin: 0 0 0.75rem;
+}
+
+.chest-progress {
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.chest-progress strong {
+  color: var(--text-primary);
+}
+
+.chest-progress .hunt-chest-pips {
+  flex-basis: 100%;
+}

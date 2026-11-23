@@ -2,7 +2,7 @@
 // enregistré (cartes, captures, coffres ouverts, recherches, succès).
 import { isShiny, rarityOf } from './wikimasters';
 import { questBoard } from './wikiQuests';
-import { chestsOf } from './wikiChests';
+import { chestProgress, chestsOf } from './wikiChests';
 import { pointsEarned } from './wikiResearch';
 
 export const MISSION_BONUS = 50;
@@ -44,5 +44,6 @@ export function computeEconomy({ cards, caught, opened, fx, today }) {
     points: pointsEarned(cards, caught, fx) + quests.points + chestPoints,
     quests,
     chests,
+    chestProgress: chestProgress({ cards, caught }),
   };
 }

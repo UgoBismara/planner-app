@@ -1,10 +1,13 @@
-// Coffres de Wikichasse : chaque journée parfaite (à partir du lancement) donne un
-// coffre à ouvrir. Le butin dépend de la date (même résultat partout) ; seules
-// les dates des coffres ouverts sont enregistrées, sous CHESTS_KEY, par l'appli.
+// Coffres de Wikichasse : un coffre toutes les CHEST_EVERY cartes capturées (du
+// jour et bonus confondues), à compter du lancement. Le n-ième coffre a toujours
+// le même butin (même résultat partout) ; seuls les coffres ouverts sont
+// enregistrés, sous CHESTS_KEY, par l'appli : { n1: 'AAAA-MM-JJ', n2: … }.
 import { seededRandom } from './wikimasters';
 import { QUESTS_START } from './wikiQuests';
 
 export const CHESTS_KEY = 'wikimasters-chests';
+
+export const CHEST_EVERY = 5;
 
 // weight : chances relatives ; xp et points avant le multiplicateur de recherche
 export const LOOT = [
@@ -18,24 +21,37 @@ export const LOOT = [
 
 const TOTAL = LOOT.reduce((s, l) => s + l.weight, 0);
 
-export function lootOf(date, mult = 1) {
-  let r = seededRandom(`chest:${date}`)() * TOTAL;
+export function lootOf(seed, mult = 1) {
+  let r = seededRandom(`chest:${seed}`)() * TOTAL;
   const l = LOOT.find((x) => (r -= x.weight) < 0) ?? LOOT[0];
   return { ...l, xp: Math.round(l.xp * mult), points: Math.round(l.points * mult) };
 }
 
-// Un coffre par journée de tirage bouclée, de la plus récente à la plus ancienne
+// Dates de capture comptées pour les coffres, de la plus ancienne à la plus récente
+const catchDates = (cards, caught) =>
+  cards
+    .map((c) => caught[c.id])
+    .filter((d) => d && d >= QUESTS_START)
+    .sort();
+
+// Où en est le prochain coffre : have cartes sur CHEST_EVERY
+export const chestProgress = ({ cards, caught }) => ({
+  have: catchDates(cards, caught).length % CHEST_EVERY,
+  every: CHEST_EVERY,
+});
+
+// Tous les coffres gagnés, du plus récent au plus ancien. date : jour de la
+// capture qui l'a fait gagner.
 export function chestsOf({ cards, caught, opened, fx }) {
-  const days = new Map();
-  for (const c of cards) {
-    if (c.bonus || c.date < QUESTS_START) continue;
-    const d = days.get(c.date) ?? { total: 0, done: 0 };
-    d.total++;
-    if (caught[c.id]) d.done++;
-    days.set(c.date, d);
+  const dates = catchDates(cards, caught);
+  const list = [];
+  for (let n = 1; n * CHEST_EVERY <= dates.length; n++) {
+    const id = `n${n}`;
+    list.push({ id, n, date: dates[n * CHEST_EVERY - 1], opened: Boolean(opened[id]), loot: lootOf(`#${n}`, fx.chestMult) });
   }
-  return [...days.entries()]
-    .filter(([, d]) => d.done === d.total)
-    .map(([date]) => ({ date, opened: Boolean(opened[date]), loot: lootOf(date, fx.chestMult) }))
-    .sort((a, b) => b.date.localeCompare(a.date));
+  // Coffres ouverts avec l'ancienne règle (un par journée, clé = date) : gardés
+  for (const key of Object.keys(opened ?? {})) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(key)) list.push({ id: key, n: 0, date: key, opened: true, loot: lootOf(key, fx.chestMult) });
+  }
+  return list.sort((a, b) => b.date.localeCompare(a.date) || b.n - a.n);
 }

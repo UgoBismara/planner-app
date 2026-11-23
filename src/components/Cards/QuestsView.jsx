@@ -72,7 +72,7 @@ function Quest({ q, reward, mult }) {
 }
 
 // quests : questBoard ; chests : chestsOf ; onOpen(chest)
-export default function QuestsView({ quests, chests, fx, today, onOpen, opening }) {
+export default function QuestsView({ quests, chests, progress, fx, today, onOpen, opening }) {
   const done = quests.today.filter((q) => q.done).length;
   const allDone = done === quests.today.length;
   const toOpen = chests.filter((c) => !c.opened);
@@ -124,17 +124,25 @@ export default function QuestsView({ quests, chests, fx, today, onOpen, opening 
         Coffres
         <small>{opened.length} ouverts</small>
       </h3>
-      {toOpen.length === 0 ? (
-        <p className="qst-empty">
-          <Package size={16} aria-hidden="true" /> Boucle la mission du jour pour gagner un coffre.
-        </p>
-      ) : (
+      <div className="qst-empty chest-progress">
+        <Package size={16} aria-hidden="true" />
+        <span>
+          Un coffre toutes les {progress.every} cartes capturées · encore{' '}
+          <strong>{progress.every - progress.have}</strong> avant le prochain
+        </span>
+        <span className="hunt-chest-pips" aria-hidden="true">
+          {Array.from({ length: progress.every }, (_, i) => (
+            <span key={i} className={i < progress.have ? 'on' : ''} />
+          ))}
+        </span>
+      </div>
+      {toOpen.length > 0 && (
         <ul className="chest-list">
           {toOpen.map((c) => (
-            <li key={c.date}>
+            <li key={c.id}>
               <button className="chest-btn" onClick={() => onOpen(c)} disabled={Boolean(opening)}>
                 <Package size={26} aria-hidden="true" />
-                <span>{fmtDay(c.date, today)}</span>
+                <span>{c.n ? `Coffre n° ${c.n}` : fmtDay(c.date, today)}</span>
                 <strong>Ouvrir</strong>
               </button>
             </li>
@@ -144,7 +152,7 @@ export default function QuestsView({ quests, chests, fx, today, onOpen, opening 
       {opened.length > 0 && (
         <ul className="chest-log">
           {opened.slice(0, 7).map((c) => (
-            <li key={c.date} style={{ '--loot': c.loot.color }}>
+            <li key={c.id} style={{ '--loot': c.loot.color }}>
               <PackageOpen size={14} aria-hidden="true" />
               <span className="chest-log-day">{fmtDay(c.date, today)}</span>
               <span className="chest-log-name">{c.loot.name}</span>
