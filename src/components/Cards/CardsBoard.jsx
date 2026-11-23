@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Check,
+  ChevronRight,
+  ClipboardCheck,
   Copy,
   Eye,
   ExternalLink,
@@ -8,9 +10,11 @@ import {
   FlaskConical,
   Gem,
   Gift,
+  Package,
   RotateCcw,
   Search,
   Shuffle,
+  Sparkle,
   Sparkles,
   Target,
   Trophy,
@@ -19,8 +23,15 @@ import {
 import { useLocalStorage, writeStoredValue } from '../../hooks/useLocalStorage';
 import { ACHIEVEMENTS, ACHIEVEMENTS_KEY, buildContext } from '../../data/wikiAchievements';
 import AchievementsView from './AchievementsView';
+import AlbumView from './AlbumView';
+import ChestReveal from './ChestReveal';
+import QuestsView from './QuestsView';
 import ResearchView from './ResearchView';
-import { EMPTY_RESEARCH, RESEARCH_KEY, effectsOf, pointsEarned, pointsSpent } from '../../data/wikiResearch';
+import { EMPTY_RESEARCH, RESEARCH_KEY, effectsOf, pointsSpent } from '../../data/wikiResearch';
+import { ACH_POINTS, ACH_POINTS_HIDDEN, MISSION_BONUS, cardXp, computeEconomy } from '../../data/wikiEconomy';
+import { CHESTS_KEY } from '../../data/wikiChests';
+import { QUESTS_START } from '../../data/wikiQuests';
+import { themeOf } from '../../data/wikiThemes';
 import { drawCard, titleKey } from '../../data/wikiDraw';
 import {
   BONUS_KEY,
@@ -29,6 +40,7 @@ import {
   CARDS_PER_DAY,
   GAME_NAME,
   RARITIES,
+  isShiny,
   levelOf,
   rarityOf,
   streakOf,
@@ -37,7 +49,13 @@ import {
 } from '../../data/wikimasters';
 import './CardsBoard.css';
 
-const MISSION_BONUS = 50;
+const VIEWS = [
+  { id: 'cards', label: 'Cartes' },
+  { id: 'quests', label: 'Quêtes' },
+  { id: 'album', label: 'Album' },
+  { id: 'research', label: 'Labo' },
+  { id: 'achievements', label: 'Succès' },
+];
 
 const FILTERS = [
   { id: 'todo', label: 'À capturer' },
@@ -73,24 +91,6 @@ function uniqueCards(raw) {
 // Recherche plein texte : sans casse ni accents
 const norm = (t) => (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-// XP = valeur des cartes capturées (bonus comprises) + bonus pour chaque journée
-// bouclée (les cartes bonus ne comptent pas dans les journées), le tout multiplié
-// par les recherches de la branche Savoir
-function totalXp(cards, caught, fx) {
-  let xp = 0;
-  const days = new Map();
-  for (const c of cards) {
-    if (caught[c.id]) xp += rarityOf(c).xp;
-    if (c.bonus) continue;
-    const d = days.get(c.date) ?? { total: 0, done: 0 };
-    d.total++;
-    if (caught[c.id]) d.done++;
-    days.set(c.date, d);
-  }
-  for (const d of days.values()) if (d.done === d.total) xp += MISSION_BONUS * fx.missionMult;
-  return Math.round(xp * fx.xpMult);
-}
-
 export default function CardsBoard() {
   // Les cartes du jour sont tirées par l'appli à la première ouverture de la journée
   // (le cloud des routines n'a pas accès à Wikipédia) ; écrites via writeStoredValue
@@ -103,6 +103,12 @@ export default function CardsBoard() {
   // Recherches débloquées et relances utilisées (points gagnés : recalculés)
   const [researchRaw] = useLocalStorage(RESEARCH_KEY, EMPTY_RESEARCH);
   const research = { ...EMPTY_RESEARCH, ...(researchRaw ?? {}) };
+  // Coffres ouverts : { [date de la journée]: date d'ouverture }. openedNow couvre
+  // le temps que Firestore renvoie l'écriture
+  const [openedRaw] = useLocalStorage(CHESTS_KEY, {});
+  const [openedNow, setOpenedNow] = useState({});
+  const opened = { ...(openedRaw ?? {}), ...openedNow };
+  const [opening, setOpening] = useState(null); // { chest, phase: 'shake' | 'open' }
   const [busy, setBusy] = useState(false); // recherche ou relance en cours
   const [query, setQuery] = useState('');
   const [bonusState, setBonusState] = useState('idle'); // idle | drawing | error
@@ -119,22 +125,30 @@ export default function CardsBoard() {
 
   const fx = effectsOf(research.unlocked);
   const target = CARDS_PER_DAY + fx.extraCards; // cartes du jour à tirer
-  const earned = pointsEarned(cards, caught);
-  const points = Math.max(0, earned - pointsSpent(research.unlocked));
   const rerollsLeft = Math.max(0, fx.rerollsPerDay - (research.rerolls[today] ?? 0));
 
-  const xp = totalXp(cards, caught, fx);
+  const econ = computeEconomy({ cards, caught, opened, fx, today });
+  const xp = econ.xp;
   const level = levelOf(xp);
   const levelStart = xpForLevel(level);
   const levelEnd = xpForLevel(level + 1);
   const streak = streakOf(daily, caught, today, fx.freeze);
 
-  const achContext = buildContext({ cards, caught, level, today });
+  const achContext = buildContext({ cards, caught, level, today, fx, econ, research: research.unlocked });
   const achResults = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.check(achContext)]));
-  const achDone = ACHIEVEMENTS.filter((a) => unlocked[a.id] || achResults[a.id].done).length;
+  const achDoneList = ACHIEVEMENTS.filter((a) => unlocked[a.id] || achResults[a.id].done);
+  const achDone = achDoneList.length;
   const newlyDone = ACHIEVEMENTS.filter((a) => achResults[a.id].done && !unlocked[a.id])
     .map((a) => a.id)
     .join(',');
+
+  // Points de recherche : captures, journées, quêtes, coffres et succès
+  const earned = econ.points + achDoneList.reduce((s, a) => s + (a.hidden ? ACH_POINTS_HIDDEN : ACH_POINTS), 0);
+  const points = Math.max(0, earned - pointsSpent(research.unlocked));
+
+  const chestsToOpen = econ.chests.filter((c) => !c.opened);
+  const todayChest = econ.chests.find((c) => c.date === today && !c.opened);
+  const questsDone = econ.quests.today.filter((q) => q.done).length;
 
   const todayCards = daily.filter((c) => c.date === today);
   const todayCaught = todayCards.filter((c) => caught[c.id]).length;
@@ -260,9 +274,10 @@ export default function CardsBoard() {
         return { ...b, ...Object.fromEntries(added.map((id) => [id, todayIso()])) };
       });
       if (added.length === 0) return;
-      const first = ACHIEVEMENTS.find((a) => a.id === added[0]);
-      const more = added.length > 1 ? ` (+${added.length - 1})` : '';
-      showToast({ kind: 'achievement', text: `Succès débloqué : ${first.name}${more}` }, 3500);
+      const list = added.map((id) => ACHIEVEMENTS.find((a) => a.id === id)).filter(Boolean);
+      const pts = list.reduce((s, a) => s + (a.hidden ? ACH_POINTS_HIDDEN : ACH_POINTS), 0);
+      const more = list.length > 1 ? ` (+${list.length - 1})` : '';
+      showToast({ kind: 'achievement', text: `Succès : ${list[0].name}${more} · +${pts} pts` }, 3500);
     }, 1500);
     return () => clearTimeout(t);
   }, [newlyDone]);
@@ -341,19 +356,55 @@ export default function CardsBoard() {
     setCaught(next);
 
     const r = rarityOf(card);
-    const newXp = totalXp(cards, next, fx);
-    const gain = newXp - xp;
-    const newLevel = levelOf(newXp);
+    const after = computeEconomy({ cards, caught: next, opened, fx, today });
+    const gain = after.xp - xp;
+    const newLevel = levelOf(after.xp);
     const dayCards = daily.filter((c) => c.date === card.date);
     const dayDone = !card.bonus && dayCards.every((c) => next[c.id]);
+    const newQuest = after.quests.today.find((q) => q.done && !econ.quests.today.find((o) => o.id === q.id)?.done);
+    const weeklyDone = after.quests.weekly.done && !econ.quests.weekly.done;
     if (newLevel > level) {
-      showToast({ kind: 'level', text: `Niveau ${newLevel} — ${titleOf(newLevel)} !` });
+      showToast({ kind: 'level', text: `Niveau ${newLevel} — ${titleOf(newLevel)} !` }, 3000);
     } else if (dayDone) {
-      showToast({ kind: 'mission', text: `Mission accomplie ! +${gain} XP` });
+      const chest = card.date >= QUESTS_START ? ' Un coffre t’attend' : '';
+      showToast({ kind: 'mission', text: `Mission accomplie ! +${gain} XP.${chest}` }, 3000);
+    } else if (weeklyDone) {
+      showToast({ kind: 'quest', text: `Quête de la semaine terminée ! +${gain} XP` }, 3000);
+    } else if (newQuest) {
+      showToast({ kind: 'quest', text: `Quête terminée : ${newQuest.text} · +${gain} XP` }, 3000);
+    } else if (isShiny(card, fx.shinyRate)) {
+      showToast({ kind: 'shiny', color: r.color, text: `Brillante ${r.label.toLowerCase()} ! +${gain} XP` }, 3000);
     } else {
       showToast({ kind: r.id, color: r.color, text: `${r.label} capturée ! +${gain} XP` });
     }
   };
+
+  // Ouverture d'un coffre : il tremble, puis le butin s'affiche et compte
+  const openChest = (chest) => {
+    if (opening) return;
+    setOpening({ chest, phase: 'shake' });
+    setTimeout(() => {
+      setOpening((o) => o && { ...o, phase: 'open' });
+      setOpenedNow((prev) => ({ ...prev, [chest.date]: today }));
+      writeStoredValue(CHESTS_KEY, (base) => {
+        const b = base ?? {};
+        if (b[chest.date]) return null;
+        return { ...b, [chest.date]: today };
+      });
+    }, 1100);
+  };
+  const closeChest = useCallback(() => {
+    setOpening(null);
+  }, []);
+  // Passage de niveau grâce au coffre : annoncé une fois le butin refermé
+  const levelBeforeChest = useRef(null);
+  useEffect(() => {
+    if (opening?.phase === 'shake') levelBeforeChest.current = level;
+    if (!opening && levelBeforeChest.current !== null) {
+      if (level > levelBeforeChest.current) showToast({ kind: 'level', text: `Niveau ${level} — ${titleOf(level)} !` }, 3000);
+      levelBeforeChest.current = null;
+    }
+  }, [opening, level]);
 
   // Une recherche porte sur toute la collection, quel que soit le filtre
   const q = norm(query.trim());
@@ -432,19 +483,33 @@ export default function CardsBoard() {
       </section>
 
       <div className="hunt-views" role="tablist">
-        <button role="tab" aria-selected={view === 'cards'} className={`hunt-view${view === 'cards' ? ' active' : ''}`} onClick={() => setView('cards')}>
-          Cartes
-        </button>
-        <button role="tab" aria-selected={view === 'research'} className={`hunt-view${view === 'research' ? ' active' : ''}`} onClick={() => setView('research')}>
-          Recherches
-        </button>
-        <button role="tab" aria-selected={view === 'achievements'} className={`hunt-view${view === 'achievements' ? ' active' : ''}`} onClick={() => setView('achievements')}>
-          Succès
-        </button>
+        {VIEWS.map((v) => {
+          const badge = v.id === 'quests' ? chestsToOpen.length : 0;
+          return (
+            <button
+              key={v.id}
+              role="tab"
+              aria-selected={view === v.id}
+              className={`hunt-view${view === v.id ? ' active' : ''}`}
+              onClick={() => setView(v.id)}
+            >
+              {v.label}
+              {badge > 0 && (
+                <span className="hunt-view-badge" aria-label={`${badge} coffre${badge > 1 ? 's' : ''} à ouvrir`}>
+                  {badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {view === 'achievements' ? (
         <AchievementsView results={achResults} unlocked={unlocked} />
+      ) : view === 'quests' ? (
+        <QuestsView quests={econ.quests} chests={econ.chests} fx={fx} today={today} onOpen={openChest} opening={opening} />
+      ) : view === 'album' ? (
+        <AlbumView ctx={achContext} fx={fx} streak={streak} />
       ) : view === 'research' ? (
         <ResearchView points={points} earned={earned} unlocked={research.unlocked} onResearch={doResearch} busy={busy} />
       ) : (
@@ -471,7 +536,36 @@ export default function CardsBoard() {
             />
           ))}
         </div>
+        {todayChest && (
+          <button className="hunt-chest-cta" onClick={() => openChest(todayChest)} disabled={Boolean(opening)}>
+            <Package size={18} aria-hidden="true" />
+            Ouvrir le coffre du jour
+          </button>
+        )}
       </section>
+
+      {/* ── Quêtes du jour (résumé) ── */}
+      <button className="hunt-quests-strip" onClick={() => setView('quests')}>
+        <ClipboardCheck size={16} aria-hidden="true" />
+        <span className="hunt-quests-label">
+          Quêtes <strong>{questsDone}/{econ.quests.today.length}</strong>
+        </span>
+        <span className="hunt-quests-pips" aria-hidden="true">
+          {econ.quests.today.map((q) => (
+            <span key={q.id} className={q.done ? 'on' : ''} style={{ '--p': q.cur / q.target }} />
+          ))}
+        </span>
+        <span className="hunt-quests-week">
+          Semaine {Math.round((econ.quests.weekly.cur / econ.quests.weekly.target) * 100)} %
+        </span>
+        {chestsToOpen.length > 0 && !todayChest && (
+          <span className="hunt-quests-chest">
+            <Package size={14} aria-hidden="true" />
+            {chestsToOpen.length}
+          </span>
+        )}
+        <ChevronRight size={16} aria-hidden="true" />
+      </button>
 
       {/* ── Collection par rareté ── */}
       <div className="hunt-collection">
@@ -482,6 +576,11 @@ export default function CardsBoard() {
             <span className="hunt-chip-label">{r.label}</span>
           </span>
         ))}
+        <span className="hunt-chip shiny" title="Cartes brillantes capturées">
+          <Sparkle size={12} aria-hidden="true" />
+          {achContext.shiny}
+          <span className="hunt-chip-label">Brillantes</span>
+        </span>
       </div>
 
       <div className="hunt-search">
@@ -564,16 +663,23 @@ export default function CardsBoard() {
             {day.cards.map((c) => {
               const isCaught = Boolean(caught[c.id]);
               const r = rarityOf(c);
+              const shiny = isShiny(c, fx.shinyRate);
+              const theme = themeOf(c);
               return (
                 <li
                   key={c.id}
-                  className={`tcg rarity-${r.id}${isCaught ? ' caught' : ''}`}
-                  style={{ '--rarity': r.color }}
+                  className={`tcg rarity-${r.id}${isCaught ? ' caught' : ''}${shiny ? ' shiny' : ''}`}
+                  style={{ '--rarity': r.color, '--theme': theme.color }}
                 >
                   <div className="tcg-top">
                     <span className="tcg-rarity">
                       <Gem size={12} aria-hidden="true" />
                       {r.label}
+                      {shiny && (
+                        <span className="tcg-shiny">
+                          <Sparkle size={10} aria-hidden="true" /> Brillante
+                        </span>
+                      )}
                       {c.bonus && <span className="tcg-bonus">Bonus</span>}
                     </span>
                     <span className="tcg-meta">
@@ -583,7 +689,7 @@ export default function CardsBoard() {
                           {c.views.toLocaleString('fr-FR')} vues/30 j ·{' '}
                         </>
                       )}
-                      {Math.round(r.xp * fx.xpMult)} XP
+                      {cardXp(c, fx)} XP
                     </span>
                   </div>
 
@@ -600,7 +706,10 @@ export default function CardsBoard() {
                           </span>
                         )}
                       </div>
-                      {c.description && <span className="tcg-desc">{c.description}</span>}
+                      <span className="tcg-desc">
+                        <span className="tcg-theme">{theme.short}</span>
+                        {c.description}
+                      </span>
                       {c.extract && <p className="tcg-extract">{c.extract}</p>}
                     </div>
                   </div>
@@ -645,6 +754,10 @@ export default function CardsBoard() {
       ))}
 
       </>
+      )}
+
+      {opening && (
+        <ChestReveal chest={opening.chest} phase={opening.phase} xpMult={fx.xpMult} onClose={closeChest} />
       )}
 
       {toast && (

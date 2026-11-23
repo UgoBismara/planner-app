@@ -46,9 +46,57 @@ const TITLES = [
   [12, 'Encyclopédiste'],
   [17, 'Grand archiviste'],
   [25, 'Légende de Wikipédia'],
+  [35, 'Mémoire du monde'],
+  [50, 'Omniscient'],
 ];
 
 export const titleOf = (level) => TITLES.filter(([min]) => level >= min).pop()[1];
+
+// Hachage 32 bits (FNV-1a + mélange final) : graine de tout ce qui doit être « au
+// hasard » mais identique sur tous les appareils (brillantes, quêtes, coffres)
+export function hash32(str) {
+  let h = 0x811c9dc5;
+  for (const ch of String(str)) {
+    h ^= ch.codePointAt(0);
+    h = Math.imul(h, 0x01000193);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
+// Générateur pseudo-aléatoire (mulberry32) à partir d'une graine texte
+export function seededRandom(seed) {
+  let a = hash32(seed);
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Cartes brillantes : environ une carte sur 25 brille, selon son pageid (même
+// résultat partout, rien à enregistrer). La recherche « Lentille holographique »
+// relève le taux : des cartes déjà capturées peuvent alors se mettre à briller.
+export const SHINY_RATE = 0.04;
+export const isShiny = (card, rate = SHINY_RATE) => (hash32(`shiny:${card.id}`) % 10000) / 10000 < rate;
+
+// Lundi de la semaine d'une date AAAA-MM-JJ (clé de semaine)
+export function weekOf(iso) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+export function addDays(iso, n) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
 
 // Série : jours de tirage consécutifs dont toutes les cartes ont été capturées.
 // Le jour en cours ne casse pas la série tant qu'il n'est pas fini.

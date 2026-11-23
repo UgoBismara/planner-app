@@ -1,4 +1,4 @@
-import { BookOpen, Check, FlaskConical, Layers, Lock, Telescope } from 'lucide-react';
+import { BookOpen, Check, Coins, FlaskConical, Layers, Lock, Telescope } from 'lucide-react';
 import {
   BRANCHES,
   POINTS_BY_RARITY,
@@ -8,7 +8,7 @@ import {
   statusOf,
 } from '../../data/wikiResearch';
 
-const BRANCH_ICONS = { collect: Layers, flair: Telescope, lore: BookOpen };
+const BRANCH_ICONS = { collect: Layers, flair: Telescope, lore: BookOpen, fortune: Coins };
 
 // points : points disponibles ; unlocked : { [id]: 'AAAA-MM-JJ' }
 export default function ResearchView({ points, earned, unlocked, onResearch, busy }) {
@@ -29,7 +29,7 @@ export default function ResearchView({ points, earned, unlocked, onResearch, bus
           </div>
           <p className="lab-hint">
             Capture : {POINTS_BY_RARITY.common} pt (Commune) à {POINTS_BY_RARITY.legendary} pts (Légendaire) ·
-            journée parfaite : +{POINTS_PER_PERFECT_DAY} · {earned} gagnés au total
+            journée parfaite : +{POINTS_PER_PERFECT_DAY} · quêtes, coffres et succès en rapportent aussi · {earned} gagnés au total
           </p>
         </div>
       </div>

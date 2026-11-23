@@ -1054,3 +1054,846 @@
   background: linear-gradient(90deg, #0a84ff, #64d2ff);
   color: #fff;
 }
+
+/* ── Onglets : 5 vues, badge des coffres ── */
+.hunt-view {
+  position: relative;
+  min-width: 0;
+  padding-inline: 0.2rem;
+}
+
+.hunt-view-badge {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ff375f;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 420px) {
+  .hunt-view {
+    font-size: 0.8rem;
+  }
+}
+
+/* ── Coffre du jour (dans la mission) ── */
+.hunt-chest-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.6rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, #ff9f0a, #ffcc00);
+  color: #1c1c1e;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  animation: hunt-chest-pulse 1.6s ease-in-out infinite;
+}
+
+.hunt-chest-cta:disabled {
+  opacity: 0.6;
+  animation: none;
+}
+
+@keyframes hunt-chest-pulse {
+  50% {
+    box-shadow: 0 0 18px color-mix(in srgb, #ffcc00 55%, transparent);
+    transform: scale(1.015);
+  }
+}
+
+/* ── Résumé des quêtes ── */
+.hunt-quests-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in srgb, #30d158 30%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hunt-quests-strip > svg:first-child {
+  color: #30d158;
+}
+
+.hunt-quests-label strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hunt-quests-pips {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 40px;
+}
+
+.hunt-quests-pips > span {
+  --p: 0;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, #30d158 55%, transparent) calc(var(--p) * 100%), transparent 0),
+    var(--bg-hover);
+}
+
+.hunt-quests-pips > span.on {
+  background: #30d158;
+}
+
+.hunt-quests-week {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hunt-quests-chest {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #ff9f0a;
+  font-weight: 800;
+}
+
+.hunt-chip.shiny {
+  --rarity: #ff6ad5;
+  border-color: transparent;
+  background:
+    linear-gradient(var(--bg-main), var(--bg-main)) padding-box,
+    linear-gradient(90deg, #ff6ad5, #ffcc00, #64d2ff, #30d158) border-box;
+}
+
+/* ── Cartes brillantes : bord arc-en-ciel et reflet qui passe ── */
+.tcg.shiny {
+  border-color: transparent;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--rarity) 12%, transparent), transparent 55%) padding-box,
+    linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+    linear-gradient(120deg, #ff6ad5, #ffcc00, #30d158, #64d2ff, #bf5af2, #ff6ad5) border-box;
+  background-size: 100% 100%, 100% 100%, 300% 300%;
+  animation: tcg-holo-border 6s linear infinite;
+  overflow: hidden;
+}
+
+.tcg.shiny::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in srgb, #ffffff 22%, transparent) 45%,
+    color-mix(in srgb, #ff6ad5 14%, transparent) 50%,
+    color-mix(in srgb, #64d2ff 14%, transparent) 55%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  pointer-events: none;
+  animation: tcg-holo-sheen 3.5s ease-in-out infinite;
+}
+
+@keyframes tcg-holo-border {
+  to {
+    background-position: 0 0, 0 0, 300% 0;
+  }
+}
+
+@keyframes tcg-holo-sheen {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.tcg-shiny {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff6ad5, #ffcc00, #64d2ff);
+  color: #1c1c1e;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+.tcg-theme {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme) 50%, transparent);
+  background: color-mix(in srgb, var(--theme) 12%, transparent);
+  color: var(--theme);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.5;
+  vertical-align: 1px;
+}
+
+.hunt-toast.quest {
+  --rarity: #30d158;
+}
+
+.hunt-toast.shiny {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    linear-gradient(90deg, #ff6ad5, #ffcc00, #64d2ff, #30d158) border-box;
+}
+
+@media (max-width: 480px) {
+  .hunt-toast {
+    max-width: calc(100vw - 32px);
+    white-space: normal;
+    text-align: center;
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* ── Succès : groupes et récompenses ── */
+.ach-summary-hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.ach-group {
+  margin-bottom: 1rem;
+}
+
+.ach-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.ach-group-title small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.ach-reward {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ach-tile.done .ach-reward {
+  color: #64d2ff;
+}
+
+/* ── Quêtes ── */
+.qst-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in srgb, #30d158 35%, var(--border));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, #30d158 6%, var(--bg-card));
+  color: #30d158;
+}
+
+.qst-summary.done {
+  background: color-mix(in srgb, #30d158 14%, var(--bg-card));
+}
+
+.qst-summary-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qst-summary-count {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #30d158;
+}
+
+.qst-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.qst {
+  --q: #30d158;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.qst .ach-progress-bar > div {
+  background: var(--q);
+}
+
+.qst.done {
+  border-color: color-mix(in srgb, #30d158 45%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #30d158 10%, transparent), transparent 60%), var(--bg-card);
+}
+
+.qst-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--q) 16%, transparent);
+  color: var(--q);
+}
+
+.qst.done .qst-icon {
+  background: #30d158;
+  color: #000;
+}
+
+.qst-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.qst-text {
+  font-weight: 650;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.qst.done .qst-text {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, #30d158 60%, transparent);
+}
+
+.qst-all {
+  border-style: dashed;
+}
+
+.qst-all .qst-icon {
+  background: color-mix(in srgb, #ffcc00 16%, transparent);
+  color: #ffcc00;
+}
+
+.qst-reward {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qst.done .qst-reward {
+  color: #30d158;
+}
+
+.qst-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* ── Coffres ── */
+.chest-list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+.chest-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.8rem 0.5rem;
+  border: 1.5px solid color-mix(in srgb, #ff9f0a 55%, var(--border));
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, #ffcc00 18%, transparent), transparent 70%), var(--bg-card);
+  color: #ff9f0a;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease);
+}
+
+.chest-btn span {
+  color: var(--text-secondary);
+}
+
+.chest-btn strong {
+  color: var(--text-primary);
+}
+
+.chest-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.chest-btn:disabled {
+  opacity: 0.6;
+}
+
+.chest-btn svg {
+  animation: chest-idle 2.4s ease-in-out infinite;
+}
+
+@keyframes chest-idle {
+  0%,
+  80%,
+  100% {
+    transform: rotate(0);
+  }
+  85% {
+    transform: rotate(-8deg);
+  }
+  90% {
+    transform: rotate(8deg);
+  }
+  95% {
+    transform: rotate(-4deg);
+  }
+}
+
+.chest-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.chest-log li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.chest-log li svg {
+  color: var(--loot);
+}
+
+.chest-log-day {
+  min-width: 6.5rem;
+  color: var(--text-tertiary);
+}
+
+.chest-log-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--loot);
+  font-weight: 650;
+}
+
+.chest-log-gain {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.chest-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+  animation: chest-fade 0.2s ease;
+}
+
+@keyframes chest-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.chest-card {
+  --loot: #ffcc00;
+  width: min(320px, 100%);
+  padding: 1.5rem 1.25rem 1.25rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.chest-card.open {
+  border-color: var(--loot);
+  background: radial-gradient(circle at 50% 25%, color-mix(in srgb, var(--loot) 28%, transparent), transparent 65%), var(--bg-card);
+  box-shadow: var(--shadow), 0 0 40px color-mix(in srgb, var(--loot) 40%, transparent);
+  animation: chest-pop 0.4s var(--ease);
+}
+
+.chest-card.jackpot.open {
+  animation: chest-pop 0.4s var(--ease), chest-jackpot 1.2s ease-in-out 0.4s infinite;
+}
+
+@keyframes chest-pop {
+  from {
+    transform: scale(0.85);
+  }
+}
+
+@keyframes chest-jackpot {
+  50% {
+    box-shadow: var(--shadow), 0 0 70px color-mix(in srgb, var(--loot) 70%, transparent);
+  }
+}
+
+.chest-art {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 0.5rem;
+  color: #ff9f0a;
+}
+
+.chest-card.shake .chest-art {
+  animation: chest-shake 0.55s ease-in-out infinite;
+}
+
+.chest-card.open .chest-art {
+  color: var(--loot);
+}
+
+@keyframes chest-shake {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  20% {
+    transform: rotate(-10deg) scale(1.05);
+  }
+  40% {
+    transform: rotate(10deg) scale(1.08);
+  }
+  60% {
+    transform: rotate(-8deg) scale(1.1);
+  }
+  80% {
+    transform: rotate(6deg) scale(1.12);
+  }
+}
+
+.chest-sparkles {
+  position: absolute;
+  top: -8px;
+  right: -14px;
+  color: #ffcc00;
+  animation: chest-pop 0.5s var(--ease);
+}
+
+.chest-name {
+  margin: 0 0 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.chest-gains {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.chest-gains span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--loot) 16%, transparent);
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.chest-close {
+  width: 100%;
+  padding: 0.6rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--loot);
+  color: #1c1c1e;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ── Album ── */
+.album-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 130px), 1fr));
+  gap: 0.5rem;
+}
+
+.album-stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-tertiary);
+}
+
+.album-stats strong {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.album-stats span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.album-stats small {
+  font-size: 0.7rem;
+}
+
+.album-themes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 0.5rem;
+}
+
+.album-theme {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--t) 9%, transparent), transparent 60%), var(--bg-card);
+}
+
+.album-theme-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--t) 18%, transparent);
+  color: var(--t);
+  box-shadow: 0 0 0 2px var(--tier);
+}
+
+.album-theme-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.album-theme-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.album-theme-name {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.album-tier {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--tier);
+  color: #1c1c1e;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.album-bar > div {
+  background: var(--t) !important;
+}
+
+.album-letters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  gap: 0.3rem;
+}
+
+.album-letters span {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.album-letters span.on {
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #ffcc00, #ff9f0a);
+  color: #1c1c1e;
+}
+
+.album-records {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.album-records li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--rarity) 40%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--rarity);
+  font-size: 0.85rem;
+}
+
+.album-records span {
+  color: var(--text-tertiary);
+}
+
+.album-records a {
+  min-width: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.album-records small {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.album-shinies {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.album-shinies a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+    linear-gradient(90deg, #ff6ad5, #ffcc00, #64d2ff) border-box;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.album-shinies a svg {
+  color: var(--rarity);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tcg.shiny,
+  .tcg.shiny::before,
+  .hunt-chest-cta,
+  .chest-btn svg,
+  .chest-card.shake .chest-art,
+  .chest-card.open,
+  .chest-card.jackpot.open,
+  .chest-overlay {
+    animation: none;
+  }
+}
