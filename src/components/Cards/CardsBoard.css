@@ -1956,3 +1956,10 @@
 .chest-progress .hunt-chest-pips {
   flex-basis: 100%;
 }
+
+/* ── Total des cartes capturées ── */
+.hunt-chip.total {
+  --rarity: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}

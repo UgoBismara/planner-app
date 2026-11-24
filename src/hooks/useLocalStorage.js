@@ -13,6 +13,9 @@ function isFirebaseReady() {
   }
 }
 
+// Fired by writeStoredValue so mounted useLocalStorage hooks pick the write up
+const STORED_VALUE_EVENT = 'planner:stored-value';
+
 // One-shot write to any key, for data seeded outside React state (a week the user
 // isn't viewing). Firestore is read first so a week another device has edited is
 // merged into rather than clobbered, and written back so the next snapshot for that
@@ -41,6 +44,11 @@ export async function writeStoredValue(key, updater) {
 
     const serialized = JSON.stringify(next);
     window.localStorage.setItem(key, serialized);
+    // Mounted hooks for this key only learn of changes from Firestore snapshots,
+    // and our own write never comes back as one (it is skipped while pending, and
+    // the server ack is a metadata-only change onSnapshot doesn't deliver), so
+    // tell them directly
+    window.dispatchEvent(new CustomEvent(STORED_VALUE_EVENT, { detail: { key, serialized } }));
     if (isFirebaseReady()) {
       await setDoc(doc(db, 'planner', key), { v: serialized }).catch(() => {});
     }
@@ -78,6 +86,22 @@ export function useLocalStorage(key, initialValue) {
       setStoredValue(initialValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  // Writes made with writeStoredValue (same tab): apply them right away, and
+  // remember them so the matching Firestore snapshot is ignored
+  useEffect(() => {
+    const onWrite = (e) => {
+      if (e.detail.key !== key) return;
+      try {
+        localWriteRef.current = e.detail.serialized;
+        setStoredValue(JSON.parse(e.detail.serialized));
+      } catch {
+        // unparsable value: keep the current state
+      }
+    };
+    window.addEventListener(STORED_VALUE_EVENT, onWrite);
+    return () => window.removeEventListener(STORED_VALUE_EVENT, onWrite);
   }, [key]);
 
   // Real-time Firestore sync: on mount and on key change, listen for remote updates

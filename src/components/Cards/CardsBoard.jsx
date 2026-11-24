@@ -10,6 +10,7 @@ import {
   FlaskConical,
   Gem,
   Gift,
+  Library,
   Package,
   RotateCcw,
   Search,
@@ -600,6 +601,11 @@ export default function CardsBoard() {
 
       {/* ── Collection par rareté ── */}
       <div className="hunt-collection">
+        <span className="hunt-chip total" title="Cartes capturées au total">
+          <Library size={12} aria-hidden="true" />
+          {achContext.total.toLocaleString('fr-FR')}
+          <span className="hunt-chip-label">Capturées</span>
+        </span>
         {collection.map((r) => (
           <span key={r.id} className="hunt-chip" style={{ '--rarity': r.color }}>
             <Gem size={12} aria-hidden="true" />
