@@ -2,13 +2,15 @@
 // dépensés pour débloquer des améliorations du jeu. Comme l'XP, les points gagnés
 // sont recalculés à partir des captures ; seules les recherches débloquées (et les
 // relances utilisées) sont enregistrées, sous RESEARCH_KEY, écrite par l'appli seule.
-import { SHINY_RATE, isShiny, rarityOf } from './wikimasters';
+import { SHINY_RATE, captureDays, isDrawCard, isShiny, rarityOf } from './wikimasters.js';
 
 export const RESEARCH_KEY = 'wikimasters-research';
 export const EMPTY_RESEARCH = { unlocked: {}, rerolls: {} };
 
-// Points par carte capturée selon sa rareté, plus un forfait par journée parfaite
+// Points par carte capturée selon sa rareté, plus un forfait par jour de capture
+// et par journée parfaite
 export const POINTS_BY_RARITY = { common: 1, uncommon: 2, rare: 4, epic: 8, legendary: 20 };
+export const POINTS_PER_DAY = 1;
 export const POINTS_PER_PERFECT_DAY = 3;
 
 export const BRANCHES = [
@@ -31,6 +33,7 @@ export const RESEARCH = [
   { id: 'reroll2', branch: 'flair', name: 'Double relance', desc: '2 relances par jour', cost: 40, requires: 'flair1' },
   { id: 'flair2', branch: 'flair', name: 'Flair aiguisé', desc: '3 cartes du tirage sur 3 candidates', cost: 90, requires: 'reroll2' },
   { id: 'reroll3', branch: 'flair', name: 'Triple relance', desc: '3 relances par jour', cost: 150, requires: 'flair2' },
+  { id: 'pocket', branch: 'flair', name: 'Poche secrète', desc: '+1 emplacement d’atout', cost: 60, requires: 'reroll3' },
 
   { id: 'xp1', branch: 'lore', name: 'Érudition', desc: '+10 % d’XP sur tout', cost: 20 },
   { id: 'mission', branch: 'lore', name: 'Prime de mission', desc: 'Bonus de mission doublé (100 XP)', cost: 25, requires: 'xp1' },
@@ -47,20 +50,21 @@ export const RESEARCH = [
 
 export const researchById = (id) => RESEARCH.find((r) => r.id === id);
 
-// Points des captures et des journées parfaites (les brillantes comptent multiplié)
+// Points des captures, des jours de capture et des journées parfaites (les
+// brillantes comptent multiplié)
 export function pointsEarned(cards, caught, fx = effectsOf()) {
   let pts = 0;
   const days = new Map();
   for (const c of cards) {
     if (caught[c.id]) pts += (POINTS_BY_RARITY[rarityOf(c).id] ?? 1) * (isShiny(c, fx.shinyRate) ? fx.shinyMult : 1);
-    if (c.bonus) continue;
+    if (!isDrawCard(c)) continue;
     const d = days.get(c.date) ?? { total: 0, done: 0 };
     d.total++;
     if (caught[c.id]) d.done++;
     days.set(c.date, d);
   }
   for (const d of days.values()) if (d.done === d.total) pts += POINTS_PER_PERFECT_DAY;
-  return pts;
+  return pts + captureDays(cards, caught).size * POINTS_PER_DAY;
 }
 
 export const pointsSpent = (unlocked) =>
@@ -80,6 +84,7 @@ export function effectsOf(unlocked = {}) {
     shinyRate: has('shiny1') ? 0.07 : SHINY_RATE,
     shinyMult: has('shiny2') ? 3 : 2,
     questCount: has('quest1') ? 4 : 3,
+    atoutSlots: has('pocket') ? 1 : 0,
   };
 }
 

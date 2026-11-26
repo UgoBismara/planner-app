@@ -2,8 +2,8 @@
 // jour et bonus confondues), à compter du lancement. Le n-ième coffre a toujours
 // le même butin (même résultat partout) ; seuls les coffres ouverts sont
 // enregistrés, sous CHESTS_KEY, par l'appli : { n1: 'AAAA-MM-JJ', n2: … }.
-import { seededRandom } from './wikimasters';
-import { QUESTS_START } from './wikiQuests';
+import { seededRandom } from './wikimasters.js';
+import { QUESTS_START } from './wikiQuests.js';
 
 export const CHESTS_KEY = 'wikimasters-chests';
 

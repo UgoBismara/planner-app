@@ -172,3 +172,27 @@ export const ALBUM_TIERS = [
 
 export const tierOf = (count) => [...ALBUM_TIERS].reverse().find((t) => count >= t.min) ?? null;
 export const nextTierOf = (count) => ALBUM_TIERS.find((t) => count < t.min) ?? null;
+
+// Albums façon Mosaic : chaque thème se remplit page par page, une case par carte
+// capturée (dans l'ordre des captures). Une page complète rapporte une récompense,
+// et la première page d'un thème débloque son atout.
+export const ALBUM_PAGE = 10;
+export const PAGE_REWARD = { xp: 80, points: 5 };
+
+export function albumBoard(cards, caught) {
+  const albums = THEMES.map((t) => {
+    const got = cards
+      .filter((c) => caught[c.id] && themeIdOf(c) === t.id)
+      .sort((a, b) => caught[a.id].localeCompare(caught[b.id]) || a.title.localeCompare(b.title));
+    const pages = Math.floor(got.length / ALBUM_PAGE);
+    return { theme: t, total: got.length, pages, page: got.slice(pages * ALBUM_PAGE) };
+  });
+  const pages = albums.reduce((s, a) => s + a.pages, 0);
+  return {
+    albums,
+    pages,
+    pagesByTheme: Object.fromEntries(albums.map((a) => [a.theme.id, a.pages])),
+    xp: pages * PAGE_REWARD.xp,
+    points: pages * PAGE_REWARD.points,
+  };
+}

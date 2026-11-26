@@ -2,9 +2,10 @@
 // et une quête de la semaine. Elles sont tirées d'après la date (même tirage sur
 // tous les appareils) et remplies d'après les captures du jour : rien n'est
 // enregistré, tout est recalculé.
-import { isShiny, rarityOf, seededRandom, weekOf } from './wikimasters';
-import { THEMES, themeIdOf } from './wikiThemes';
+import { isShiny, rarityOf, seededRandom, weekOf } from './wikimasters.js';
+import { THEMES, themeIdOf } from './wikiThemes.js';
 
+// Objectifs calés sur 1 à 3 captures par jour (capturer dans WikiMasters est long).
 // Les quêtes comptent à partir de leur mise en service (pas de rappel rétroactif)
 export const QUESTS_START = '2026-11-23';
 
@@ -19,12 +20,12 @@ const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 const themesIn = (got) => new Set(got.map(themeIdOf).filter((id) => id !== 'misc')).size;
 
 // make(rnd) → { text, target, measure(got, ctx) } ; got : cartes capturées sur la
-// période, ctx : { missionDone, perfectDays, fx }
+// période (avec caughtOn, sa date de capture), ctx : { activeDays, fx }
 const DAILY = [
   {
     id: 'catch',
     make: (rnd) => {
-      const n = pick(rnd, [5, 6, 7, 8]);
+      const n = pick(rnd, [2, 2, 3]);
       return { text: `Capturer ${n} cartes`, target: n, measure: (got) => got.length };
     },
   },
@@ -39,9 +40,9 @@ const DAILY = [
   {
     id: 'uncommon',
     make: (rnd) => {
-      const n = pick(rnd, [2, 3]);
+      const n = pick(rnd, [1, 2]);
       return {
-        text: `Capturer ${n} cartes Peu communes ou mieux`,
+        text: n > 1 ? `Capturer ${n} cartes Peu communes ou mieux` : 'Capturer 1 carte Peu commune ou mieux',
         target: n,
         measure: (got) => got.filter((c) => rarityOf(c).id !== 'common').length,
       };
@@ -51,11 +52,10 @@ const DAILY = [
     id: 'theme',
     make: (rnd) => {
       const t = pick(rnd, QUEST_THEMES);
-      const n = t.id === 'geo' || t.id === 'people' ? 2 : 1;
       return {
-        text: `Capturer ${plural(n, 'carte')} du thème ${t.name}`,
+        text: `Capturer 1 carte du thème ${t.name}`,
         theme: t.id,
-        target: n,
+        target: 1,
         measure: (got) => got.filter((c) => themeIdOf(c) === t.id).length,
       };
     },
@@ -63,32 +63,25 @@ const DAILY = [
   {
     id: 'photo',
     make: (rnd) => {
-      const n = pick(rnd, [3, 4]);
-      return { text: `Capturer ${n} cartes illustrées`, target: n, measure: (got) => got.filter((c) => c.thumb).length };
+      const n = pick(rnd, [1, 2]);
+      return { text: `Capturer ${plural(n, 'carte')} illustrée${n > 1 ? 's' : ''}`, target: n, measure: (got) => got.filter((c) => c.thumb).length };
     },
   },
   {
     id: 'variety',
     make: (rnd) => {
-      const n = pick(rnd, [3, 4]);
+      const n = pick(rnd, [2, 3]);
       return { text: `Capturer des cartes de ${n} thèmes différents`, target: n, measure: themesIn };
     },
   },
   {
     id: 'bonus',
-    make: (rnd) => {
-      const n = pick(rnd, [1, 2]);
-      return {
-        text: `Capturer ${plural(n, 'carte')} bonus`,
-        target: n,
-        measure: (got) => got.filter((c) => c.bonus).length,
-      };
-    },
+    make: () => ({ text: 'Capturer 1 carte bonus', target: 1, measure: (got) => got.filter((c) => c.bonus).length }),
   },
   {
     id: 'views',
     make: (rnd) => {
-      const n = pick(rnd, [300, 600, 1000]);
+      const n = pick(rnd, [100, 250, 500]);
       return {
         text: `Capturer des cartes cumulant ${n.toLocaleString('fr-FR')} vues`,
         target: n,
@@ -97,8 +90,8 @@ const DAILY = [
     },
   },
   {
-    id: 'mission',
-    make: () => ({ text: 'Boucler la mission du jour', target: 1, measure: (_, ctx) => (ctx.missionDone ? 1 : 0) }),
+    id: 'defi',
+    make: () => ({ text: 'Réussir le défi du jour', target: 1, measure: (got) => (got.some((c) => c.commune && c.caughtOn === c.date) ? 1 : 0) }),
   },
 ];
 
@@ -106,7 +99,7 @@ const WEEKLY = [
   {
     id: 'catch',
     make: (rnd) => {
-      const n = pick(rnd, [25, 30, 40]);
+      const n = pick(rnd, [7, 10, 12]);
       return { text: `Capturer ${n} cartes cette semaine`, target: n, measure: (got) => got.length };
     },
   },
@@ -114,7 +107,7 @@ const WEEKLY = [
     id: 'theme',
     make: (rnd) => {
       const t = pick(rnd, QUEST_THEMES);
-      const n = t.id === 'geo' || t.id === 'people' ? 8 : 5;
+      const n = t.id === 'geo' || t.id === 'people' ? 4 : 3;
       return {
         text: `Capturer ${n} cartes du thème ${t.name}`,
         theme: t.id,
@@ -126,21 +119,21 @@ const WEEKLY = [
   {
     id: 'strong',
     make: () => ({
-      text: 'Capturer 3 cartes Rares ou mieux',
-      target: 3,
+      text: 'Capturer 2 cartes Rares ou mieux',
+      target: 2,
       measure: (got) => got.filter((c) => STRONG.has(rarityOf(c).id)).length,
     }),
   },
   {
-    id: 'perfect',
+    id: 'active',
     make: (rnd) => {
-      const n = pick(rnd, [4, 5]);
-      return { text: `${n} journées parfaites`, target: n, measure: (_, ctx) => ctx.perfectDays };
+      const n = pick(rnd, [5, 6]);
+      return { text: `Capturer au moins une carte ${n} jours`, target: n, measure: (_, ctx) => ctx.activeDays };
     },
   },
   {
     id: 'variety',
-    make: () => ({ text: `Capturer une carte de chacun des ${QUEST_THEMES.length} thèmes`, target: QUEST_THEMES.length, measure: themesIn }),
+    make: () => ({ text: 'Capturer des cartes de 4 thèmes différents', target: 4, measure: themesIn }),
   },
   {
     id: 'epic',
@@ -187,29 +180,16 @@ export function questBoard({ cards, caught, today, fx }) {
     const d = caught[c.id];
     if (!d) continue;
     if (!gotByDay.has(d)) gotByDay.set(d, []);
-    gotByDay.get(d).push(c);
+    gotByDay.get(d).push({ ...c, caughtOn: d });
   }
-  const drawDays = new Map();
-  for (const c of cards) {
-    if (c.bonus) continue;
-    const d = drawDays.get(c.date) ?? { total: 0, done: 0 };
-    d.total++;
-    if (caught[c.id]) d.done++;
-    drawDays.set(c.date, d);
-  }
-  const missionDone = (date) => {
-    const d = drawDays.get(date);
-    return Boolean(d) && d.done === d.total;
-  };
-
   const evalDay = (date) =>
-    dailyQuests(date, fx.questCount).map((q) => evaluate(q, gotByDay.get(date) ?? [], { missionDone: missionDone(date), fx }));
+    dailyQuests(date, fx.questCount).map((q) => evaluate(q, gotByDay.get(date) ?? [], { fx }));
 
   const evalWeek = (week) => {
     const got = [];
     for (const [d, list] of gotByDay) if (weekOf(d) === week) got.push(...list);
-    const perfectDays = [...drawDays.keys()].filter((d) => weekOf(d) === week && missionDone(d)).length;
-    return evaluate(weeklyQuest(week), got, { perfectDays, fx });
+    const activeDays = [...gotByDay.keys()].filter((d) => weekOf(d) === week).length;
+    return evaluate(weeklyQuest(week), got, { activeDays, fx });
   };
 
   let xp = 0;

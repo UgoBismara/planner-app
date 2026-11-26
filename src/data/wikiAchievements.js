@@ -2,9 +2,10 @@
 // la date de premier déblocage est gardée à part (ACHIEVEMENTS_KEY, écrite
 // uniquement par l'appli) pour qu'un succès ne se reverrouille jamais.
 // Chaque succès rapporte des points de recherche (voir wikiEconomy.js).
-import { isShiny, rarityOf, weekOf } from './wikimasters';
-import { THEMES, themeIdOf, tierOf } from './wikiThemes';
-import { RESEARCH } from './wikiResearch';
+import { isDrawCard, isShiny, rarityOf, weekOf } from './wikimasters.js';
+import { ATOUTS } from './wikiAtouts.js';
+import { THEMES, themeIdOf, tierOf } from './wikiThemes.js';
+import { RESEARCH } from './wikiResearch.js';
 
 export const ACHIEVEMENTS_KEY = 'wikimasters-achievements';
 
@@ -15,6 +16,9 @@ export const ACH_GROUPS = [
   { id: 'rarity', name: 'Raretés & brillantes' },
   { id: 'themes', name: 'Thèmes' },
   { id: 'quests', name: 'Quêtes & coffres' },
+  { id: 'arena', name: 'Défis & saisons' },
+  { id: 'atouts', name: 'Atouts & albums' },
+  { id: 'events', name: 'Boss, quiz & événements' },
   { id: 'growth', name: 'Progression' },
   { id: 'secret', name: 'Secrets' },
 ];
@@ -38,7 +42,7 @@ const isPalindrome = (title) => {
 
 // Tout ce dont les succès ont besoin, calculé une seule fois.
 // econ : résultat de computeEconomy ; research : recherches débloquées
-export function buildContext({ cards, caught, level, today, fx, econ, research = {} }) {
+export function buildContext({ cards, caught, level, fx, econ, research = {} }) {
   const got = cards.filter((c) => caught[c.id]);
   const rarity = countBy(got, (c) => rarityOf(c).id);
   const shiny = got.filter((c) => isShiny(c, fx.shinyRate));
@@ -47,7 +51,7 @@ export function buildContext({ cards, caught, level, today, fx, econ, research =
   // Journées de tirage (hors bonus) : complètes ? terminées après coup ?
   const days = new Map();
   for (const c of cards) {
-    if (c.bonus) continue;
+    if (!isDrawCard(c)) continue;
     const d = days.get(c.date) ?? { total: 0, done: 0, lastCatch: '' };
     d.total++;
     if (caught[c.id]) {
@@ -59,12 +63,6 @@ export function buildContext({ cards, caught, level, today, fx, econ, research =
   const dates = [...days.keys()].sort();
   const complete = (date) => days.get(date).done === days.get(date).total;
 
-  let bestStreak = 0;
-  let run = 0;
-  for (const date of dates) {
-    if (complete(date)) bestStreak = Math.max(bestStreak, ++run);
-    else if (date !== today) run = 0;
-  }
 
   const perCatchDay = countBy(got, (c) => caught[c.id]);
   const strongPerDay = countBy(
@@ -98,7 +96,8 @@ export function buildContext({ cards, caught, level, today, fx, econ, research =
     rarity: (id) => rarity.get(id) ?? 0,
     perfectDays: dates.filter(complete).length,
     comeback: dates.some((d) => complete(d) && days.get(d).lastCatch > d),
-    bestStreak,
+    // Série : jours consécutifs avec au moins une capture (voir streakOf)
+    bestStreak: econ.bestStreak,
     bonus: got.filter((c) => c.bonus).length,
     maxPerDay: Math.max(0, ...perCatchDay.values()),
     maxStrongPerDay: Math.max(0, ...strongPerDay.values()),
@@ -115,12 +114,31 @@ export function buildContext({ cards, caught, level, today, fx, econ, research =
     silverThemes: realThemes.filter((t) => ['silver', 'gold', 'diamond'].includes(tierOf(theme.get(t.id) ?? 0)?.id)).length,
     letters: new Set(got.map((c) => initialOf(c.title)).filter(Boolean)).size,
     weekend,
-    late: got.some((c) => !c.bonus && (new Date(caught[c.id]) - new Date(c.date)) / DAY >= 7),
+    late: got.some((c) => isDrawCard(c) && (new Date(caught[c.id]) - new Date(c.date)) / DAY >= 7),
     questsDone: econ.quests.dailyDone,
     questFullDays: econ.quests.fullDays,
     weeklyDone: econ.quests.weeklyDone,
     chestsOpened: econ.chests.filter((c) => c.opened).length,
     jackpot: econ.chests.some((c) => c.opened && c.loot.jackpot),
+    defis: econ.defis.count,
+    defiBest: econ.defis.best,
+    peakDivision: econ.season.peakDivision,
+    finishedSilver: econ.season.finishedSilver,
+    pages: econ.albums.pages,
+    fullPageThemes: Object.values(econ.albums.pagesByTheme).filter((n) => n >= 1).length,
+    atoutsUnlocked: econ.atouts.unlocked.length,
+    atoutsTotal: ATOUTS.length,
+    slots: econ.atouts.slots,
+    maxFired: Math.max(0, ...Object.values(econ.perCard).map((p) => p.atouts)),
+    maxCardXp: Math.max(0, ...Object.values(econ.perCard).map((p) => p.xp)),
+    bosses: econ.boss.kills,
+    fastKill: econ.boss.fastKill,
+    quizCorrect: econ.quizzes.correct,
+    quizPerfect: econ.quizzes.perfect,
+    quizRun: econ.quizzes.bestRun,
+    avent: econ.advent.openedThisYear,
+    aventJackpot: econ.advent.cases.some((c) => c.opened && c.loot.jackpot),
+    ghostWins: econ.season.ghostWins,
     research: Object.keys(research).length,
     researchTotal: RESEARCH.length,
   };
@@ -198,6 +216,34 @@ export const ACHIEVEMENTS = [
   { id: 'chest10', group: 'quests', name: 'Pilleur', desc: 'Ouvrir 10 coffres', check: (x) => atLeast(x.chestsOpened, 10) },
   { id: 'chest50', group: 'quests', name: 'Dragon sur son tas d’or', desc: 'Ouvrir 50 coffres', check: (x) => atLeast(x.chestsOpened, 50) },
 
+  { id: 'defi1', group: 'arena', name: 'Premier défi', desc: 'Capturer la carte commune le jour même', check: (x) => atLeast(x.defis, 1) },
+  { id: 'defi10', group: 'arena', name: 'Habitué de l’arène', desc: 'Réussir 10 défis du jour', check: (x) => atLeast(x.defis, 10) },
+  { id: 'defi30', group: 'arena', name: 'Gladiateur', desc: 'Réussir 30 défis du jour', check: (x) => atLeast(x.defis, 30) },
+  { id: 'defirun5', group: 'arena', name: 'Invaincu', desc: '5 défis réussis d’affilée', check: (x) => atLeast(x.defiBest, 5) },
+  { id: 'div-silver', group: 'arena', name: 'Sur le podium', desc: 'Atteindre la division Argent', check: (x) => atLeast(x.peakDivision, 2) },
+  { id: 'div-gold', group: 'arena', name: 'Médaille d’or', desc: 'Atteindre la division Or', check: (x) => atLeast(x.peakDivision, 3) },
+  { id: 'div-diamond', group: 'arena', name: 'Diamant brut', desc: 'Atteindre la division Diamant', check: (x) => atLeast(x.peakDivision, 5) },
+  { id: 'div-master', group: 'arena', name: 'Grand maître', desc: 'Atteindre la division Maître', check: (x) => atLeast(x.peakDivision, 6) },
+  { id: 'season1', group: 'arena', name: 'Saison bouclée', desc: 'Terminer une saison en Argent ou mieux', check: (x) => atLeast(x.finishedSilver, 1) },
+
+  { id: 'page1', group: 'atouts', name: 'Première page', desc: 'Compléter une page d’album', check: (x) => atLeast(x.pages, 1) },
+  { id: 'page10', group: 'atouts', name: 'Relieur', desc: 'Compléter 10 pages d’album', check: (x) => atLeast(x.pages, 10) },
+  { id: 'page-all', group: 'atouts', name: 'Mosaïque complète', desc: 'Une page complète dans les 7 albums', check: (x) => atLeast(x.fullPageThemes, 7) },
+  { id: 'atout5', group: 'atouts', name: 'Main de joueur', desc: 'Débloquer 5 atouts', check: (x) => atLeast(x.atoutsUnlocked, 5) },
+  { id: 'atout-all', group: 'atouts', name: 'Joker', desc: 'Débloquer tous les atouts', check: (x) => atLeast(x.atoutsUnlocked, x.atoutsTotal) },
+  { id: 'slots3', group: 'atouts', name: 'Arsenal', desc: 'Avoir 3 emplacements d’atout', check: (x) => atLeast(x.slots, 3) },
+
+  { id: 'boss1', group: 'events', name: 'Chasseur de boss', desc: 'Vaincre un boss de la semaine', check: (x) => atLeast(x.bosses, 1) },
+  { id: 'boss5', group: 'events', name: 'Tueur de géants', desc: 'Vaincre 5 boss', check: (x) => atLeast(x.bosses, 5) },
+  { id: 'boss20', group: 'events', name: 'Fléau des boss', desc: 'Vaincre 20 boss', check: (x) => atLeast(x.bosses, 20) },
+  { id: 'quiz10', group: 'events', name: 'Bonne mémoire', desc: '10 bonnes réponses au quiz du jour', check: (x) => atLeast(x.quizCorrect, 10) },
+  { id: 'quiz100', group: 'events', name: 'Puits de science', desc: '100 bonnes réponses au quiz du jour', check: (x) => atLeast(x.quizCorrect, 100) },
+  { id: 'quizp5', group: 'events', name: 'Sans faute', desc: '5 quiz parfaits', check: (x) => atLeast(x.quizPerfect, 5) },
+  { id: 'ghost1', group: 'events', name: 'Plus fort que mon ombre', desc: 'Battre ton rival fantôme sur une semaine', check: (x) => atLeast(x.ghostWins, 1) },
+  { id: 'ghost4', group: 'events', name: 'Toujours mieux', desc: 'Battre ton rival fantôme 4 semaines', check: (x) => atLeast(x.ghostWins, 4) },
+  { id: 'avent12', group: 'events', name: 'Mi-chemin de l’Avent', desc: 'Ouvrir 12 cases du calendrier de l’Avent', check: (x) => atLeast(x.avent, 12) },
+  { id: 'avent24', group: 'events', name: 'Esprit de Noël', desc: 'Ouvrir les 24 cases du calendrier de l’Avent', check: (x) => atLeast(x.avent, 24) },
+
   { id: 'lvl5', group: 'growth', name: 'Montée en grade', desc: 'Atteindre le niveau 5', check: (x) => atLeast(x.level, 5) },
   { id: 'lvl10', group: 'growth', name: 'Vétéran', desc: 'Atteindre le niveau 10', check: (x) => atLeast(x.level, 10) },
   { id: 'lvl20', group: 'growth', name: 'Maître chasseur', desc: 'Atteindre le niveau 20', check: (x) => atLeast(x.level, 20) },
@@ -220,5 +266,10 @@ export const ACHIEVEMENTS = [
   { id: 'mirror', group: 'secret', hidden: true, name: 'Miroir', desc: 'Capturer une carte au titre palindrome', check: (x) => flag(x.got.some((c) => isPalindrome(c.title))) },
   { id: 'digits', group: 'secret', hidden: true, name: 'Numérologue', desc: 'Capturer une carte dont le titre commence par un chiffre', check: (x) => flag(x.got.some((c) => /^\d/.test(c.title.trim()))) },
   { id: 'late', group: 'secret', hidden: true, name: 'Mieux vaut tard', desc: 'Capturer une carte une semaine après son tirage', check: (x) => flag(x.late) },
+  { id: 'combo', group: 'secret', hidden: true, name: 'Combo !', desc: 'Une capture qui déclenche 3 atouts', check: (x) => atLeast(x.maxFired, 3) },
+  { id: 'bighit', group: 'secret', hidden: true, name: 'Coup de maître', desc: 'Une seule capture qui rapporte 300 XP ou plus', check: (x) => flag(x.maxCardXp >= 300) },
+  { id: 'blitz', group: 'secret', hidden: true, name: 'Blitzkrieg', desc: 'Vaincre un boss en 3 jours ou moins', check: (x) => flag(x.fastKill) },
+  { id: 'quizrun7', group: 'secret', hidden: true, name: 'Encyclopédie vivante', desc: '7 quiz parfaits d’affilée', check: (x) => atLeast(x.quizRun, 7) },
+  { id: 'star', group: 'secret', hidden: true, name: 'Étoile du sommet', desc: 'Trouver l’étoile dans le calendrier de l’Avent', check: (x) => flag(x.aventJackpot) },
   { id: 'misc10', group: 'secret', hidden: true, name: 'Inclassable', desc: 'Capturer 10 cartes sans thème (Divers)', check: (x) => atLeast(x.theme('misc'), 10) },
 ];

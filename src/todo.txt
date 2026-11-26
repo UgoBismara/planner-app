@@ -40,6 +40,12 @@ Quêtes :
 - Événement coché ✓ et ronds du bandeau hebdo s’additionnent : relier les ronds aux événements pour éviter le double comptage
 - Prolonger le plan Triathlon & Maths au-delà du 22 nov. : vélo, course, maths (la natation est faite, onglet Natation)
 
+Wikichasse :
+- Multijoueur : page Wikichasse séparée du planner (pseudo par joueur), données par joueur, règles Firestore fermées (aujourd'hui tout le planner est lisible sans compte)
+- Multijoueur : carte commune partagée entre joueurs + classement de la saison entre amis (les règles sont déjà des fonctions pures, prêtes)
+- Échanges / dons de cartes entre amis
+- npm run check:wiki avant de livrer une modification des règles
+
 Natation :
 - Lot 2 : saisir les résultats des tests (distance max, chrono 100 m, mouvements par 25 m) avec record et courbe
 - Lot 2 : succès débloqués à chaque palier, bandeau comme dans Maths

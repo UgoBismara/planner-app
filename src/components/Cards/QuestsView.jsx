@@ -13,6 +13,7 @@ import {
   Gem,
   Target,
   Tag,
+  Swords,
   Trophy,
 } from 'lucide-react';
 import { ALL_QUESTS_REWARD, QUEST_REWARD, WEEKLY_REWARD } from '../../data/wikiQuests';
@@ -31,6 +32,8 @@ const KIND_ICONS = {
   views: Eye,
   mission: ClipboardCheck,
   perfect: CalendarDays,
+  active: CalendarDays,
+  defi: Swords,
   shiny: Sparkle,
 };
 

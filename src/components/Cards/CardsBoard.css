@@ -1963,3 +1963,1176 @@
   border-color: var(--border-strong);
   background: var(--bg-hover);
 }
+
+/* ══ Défis, atouts, saisons, mosaïques ══ */
+
+.hunt-division {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--div) 18%, transparent);
+  color: var(--div);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hunt-mission-sub {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.hunt-mission-count svg {
+  vertical-align: -2px;
+  color: var(--warning);
+}
+
+/* Défi du jour */
+.hunt-defi {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in srgb, #ff375f 35%, var(--border));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, #ff375f 14%, transparent), transparent 60%),
+    var(--bg-card);
+}
+
+.hunt-defi.done {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+  background: color-mix(in srgb, var(--success) 8%, var(--bg-card));
+}
+
+.hunt-defi-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.hunt-defi-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  color: #ff375f;
+}
+
+.hunt-defi.done .hunt-defi-title {
+  color: var(--success);
+}
+
+.hunt-defi-reward {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hunt-defi-card {
+  margin: 0.4rem 0 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.hunt-defi-rarity {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rarity) 18%, transparent);
+  color: var(--rarity);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hunt-defi-mod {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hunt-defi-mod > svg {
+  color: #bf5af2;
+  flex: none;
+}
+
+.hunt-defi-mod strong {
+  color: var(--text-primary);
+}
+
+.hunt-defi-mod > span:first-of-type {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.hunt-defi-atouts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Cartes : défi et bonus déclenchés */
+.tcg.commune {
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ff375f 45%, transparent);
+}
+
+.tcg-defi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #ff375f 18%, transparent);
+  color: #ff375f;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tcg-fired {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.tcg-fired li {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #ffcc00 16%, transparent);
+  color: #ff9f0a;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.tcg-fired li.mod {
+  background: color-mix(in srgb, #bf5af2 16%, transparent);
+  color: #bf5af2;
+}
+
+/* Onglet Atouts */
+.atouts-hand {
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, #ffcc00 12%, transparent), transparent 60%),
+    var(--bg-card);
+}
+
+.atouts-hand-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.atouts-hand-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.atouts-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.atouts-lock.on {
+  color: var(--warning);
+}
+
+.atouts-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.atouts-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 72px;
+  padding: 0.55rem 0.65rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+
+.atouts-slot.filled {
+  border-style: solid;
+  border-color: color-mix(in srgb, #ffcc00 55%, var(--border));
+  background: color-mix(in srgb, #ffcc00 8%, var(--bg-elevated));
+}
+
+.atouts-slot strong {
+  padding-right: 1.4rem;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.atouts-slot span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.atouts-slot button {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.atouts-slot-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: auto;
+  color: var(--text-tertiary);
+}
+
+.atouts-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.atouts-hint svg {
+  vertical-align: -2px;
+  color: #bf5af2;
+}
+
+.atouts-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.atouts-actions button {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.atouts-cancel {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.atouts-save {
+  background: linear-gradient(135deg, #ffcc00, #ff9f0a);
+  color: #1c1c1e;
+}
+
+.atouts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.atout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.atout:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.atout.on {
+  border-color: #ffcc00;
+  background: color-mix(in srgb, #ffcc00 10%, var(--bg-card));
+}
+
+.atout:disabled {
+  cursor: default;
+}
+
+.atout.locked {
+  opacity: 0.55;
+}
+
+.atout-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.atout-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.atout-unlock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: auto;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+
+/* Saison */
+.season-card {
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--div) 40%, var(--border));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, var(--div) 16%, transparent), transparent 60%),
+    var(--bg-card);
+}
+
+.season-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.season-label {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.season-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.6rem 0;
+}
+
+.season-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--div) 22%, transparent);
+  color: var(--div);
+  box-shadow: 0 0 0 2px var(--div);
+}
+
+.season-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.season-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.season-div {
+  font-size: 1.15rem;
+  color: var(--div);
+}
+
+.season-pts {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.season-pts small {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+}
+
+.season-pts small.up {
+  color: var(--success);
+}
+
+.season-pts small.down {
+  color: #ff453a;
+}
+
+.season-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--div);
+  transition: width 0.5s var(--ease);
+}
+
+.season-sub {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.season-ladder {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.season-ladder li {
+  padding: 0.12rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+
+.season-ladder li.reached {
+  border-color: color-mix(in srgb, var(--d) 60%, transparent);
+  color: var(--d);
+}
+
+.season-ladder li.cur {
+  background: var(--d);
+  border-color: var(--d);
+  color: #1c1c1e;
+  font-weight: 800;
+}
+
+.season-rules {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+.season-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.season-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.season-stats small,
+.season-friends {
+  color: var(--text-tertiary);
+}
+
+.season-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.season-history li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--d);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.season-history strong {
+  margin-left: auto;
+  color: var(--d);
+}
+
+/* Album : mosaïques page par page */
+.album-mosaics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.album-mosaic {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.album-mosaic-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.55rem;
+}
+
+.album-mosaic-head .album-theme-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.album-mosaic-page {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.album-cells {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.album-cell {
+  aspect-ratio: 1;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+}
+
+.album-cell.on {
+  border: none;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--rarity) 85%, #fff 15%), color-mix(in srgb, var(--t) 70%, var(--rarity)));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 20%, transparent);
+  animation: album-pop 0.35s var(--ease) both;
+}
+
+.album-cell.on.shiny {
+  background: conic-gradient(from 45deg, #ff375f, #ffcc00, #30d158, #64d2ff, #bf5af2, #ff375f);
+}
+
+.album-mosaic-done {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+@keyframes album-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .album-cell.on {
+    animation: none;
+  }
+}
+
+/* ══ Boss, quiz, Avent, rival fantôme ══ */
+
+.hunt-mini {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.hunt-mini button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hunt-mini-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hunt-mini-boss svg {
+  color: #ff453a;
+  flex: none;
+}
+
+.hunt-mini-boss.dead svg,
+.hunt-mini-quiz.done svg {
+  color: var(--success);
+}
+
+.hunt-mini-quiz svg {
+  color: #64d2ff;
+  flex: none;
+}
+
+.hunt-mini-hp {
+  flex: none;
+  width: 48px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+
+.hunt-mini-hp span {
+  display: block;
+  height: 100%;
+  background: #ff453a;
+}
+
+.tcg-fired li.boss-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: color-mix(in srgb, #ff453a 16%, transparent);
+  color: #ff453a;
+}
+
+/* Boss */
+.boss {
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in srgb, #ff453a 40%, var(--border));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, #ff453a 16%, transparent), transparent 60%),
+    var(--bg-card);
+}
+
+.boss.dead {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+  background: color-mix(in srgb, var(--success) 8%, var(--bg-card));
+}
+
+.boss-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.6rem;
+}
+
+.boss-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, #ff453a 20%, transparent);
+  color: #ff453a;
+}
+
+.boss.dead .boss-icon {
+  background: color-mix(in srgb, var(--success) 20%, transparent);
+  color: var(--success);
+}
+
+.boss-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.boss-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.boss-name {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.boss-left {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.boss-hp {
+  position: relative;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+
+.boss-hp > div {
+  height: 100%;
+  background: linear-gradient(90deg, #ff453a, #ff9f0a);
+  transition: width 0.6s var(--ease);
+}
+
+.boss-hp > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.boss-rule {
+  margin: 0.6rem 0 0.3rem;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.boss-rule em {
+  color: var(--text-secondary);
+}
+
+.boss-reward {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+.boss-hits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boss-hits li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.boss-hits span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boss-hits strong {
+  color: #ff453a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quiz */
+.quiz {
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.quiz-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quiz-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.quiz-title svg {
+  color: #64d2ff;
+}
+
+.quiz-score {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.quiz-hint,
+.quiz-empty,
+.quiz-total {
+  margin: 0.3rem 0 0.6rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.quiz-total {
+  margin: 0.6rem 0 0;
+}
+
+.quiz-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz-q {
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+
+.quiz-q.ok {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+}
+
+.quiz-q.ko {
+  border-color: color-mix(in srgb, #ff453a 45%, var(--border));
+}
+
+.quiz-clue {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.quiz-clue strong {
+  color: var(--text-primary);
+}
+
+.quiz-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.35rem;
+}
+
+.quiz-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.quiz-choice:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.quiz-choice.right {
+  opacity: 1;
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, var(--bg-card));
+}
+
+.quiz-choice.wrong {
+  opacity: 1;
+  border-color: #ff453a;
+  background: color-mix(in srgb, #ff453a 14%, var(--bg-card));
+}
+
+.quiz-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* Calendrier de l'Avent */
+.avent {
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid color-mix(in srgb, #64d2ff 35%, var(--border));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, #64d2ff 12%, transparent), transparent 60%),
+    var(--bg-card);
+}
+
+.avent.teaser {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.avent.teaser svg,
+.avent-title svg {
+  flex: none;
+  color: #64d2ff;
+}
+
+.avent.teaser strong {
+  color: var(--text-primary);
+}
+
+.avent-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.6rem;
+}
+
+.avent-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.avent-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.avent-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.avent-case {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
+  font-family: inherit;
+  cursor: default;
+}
+
+.avent-n {
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.avent-case.today {
+  border-color: #64d2ff;
+}
+
+.avent-case.ready {
+  border-color: #ff375f;
+  background: color-mix(in srgb, #ff375f 16%, var(--bg-elevated));
+  color: #ff375f;
+  cursor: pointer;
+  animation: avent-wiggle 1.6s ease-in-out infinite;
+}
+
+.avent-case.opened {
+  background: color-mix(in srgb, var(--success) 12%, var(--bg-elevated));
+  color: var(--success);
+}
+
+.avent-case.opened.jackpot {
+  background: color-mix(in srgb, #ffcc00 20%, var(--bg-elevated));
+  color: #ffcc00;
+}
+
+.avent-case.missed {
+  opacity: 0.45;
+}
+
+.avent-loot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.avent-hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+@keyframes avent-wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  10% {
+    transform: rotate(-4deg);
+  }
+  20% {
+    transform: rotate(4deg);
+  }
+  30% {
+    transform: rotate(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avent-case.ready {
+    animation: none;
+  }
+}
+
+/* Rival fantôme */
+.ghost {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.ghost.ahead {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+}
+
+.ghost-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ghost-title svg {
+  color: #bf5af2;
+}
+
+.ghost-duel {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.ghost-duel strong {
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ghost-vs {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.ghost-sub {
+  margin: 0;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--text-tertiary);
+}

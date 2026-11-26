@@ -1,6 +1,12 @@
 // Onglet Wikichasse : chaque jour, des articles de Wikipédia FR tirés au hasard,
 // à capturer dans le jeu WikiMasters.
 //
+// Données d'un joueur, toutes recalculées par des fonctions pures (wikiEconomy.js) :
+// le jour où le jeu devient multijoueur, les mêmes fonctions appliquées aux clés
+// d'un ami donnent son score, sa division, ses atouts, sans rien changer aux règles.
+// Ce qui doit être identique pour tous (quêtes, modificateur du jour, brillantes,
+// coffres) est tiré d'une graine (la date, le pageid), jamais de Math.random.
+//
 // Trois clés, chacune avec un seul écrivain, pour qu'aucun n'écrase l'autre :
 // - CARDS_KEY : liste des cartes, écrite UNIQUEMENT par scripts/wikimasters-draw.js
 //   (routine cloud quotidienne, via l'API REST Firestore)
@@ -98,27 +104,47 @@ export function addDays(iso, n) {
   return d.toISOString().slice(0, 10);
 }
 
-// Série : jours de tirage consécutifs dont toutes les cartes ont été capturées.
-// Le jour en cours ne casse pas la série tant qu'il n'est pas fini.
-// freeze (recherche « Gel de série ») : une journée ratée est sautée sans casser
-// la série, au plus une tous les 7 jours
+// Carte du tirage du jour (ni bonus, ni carte commune du défi) : seules celles-là
+// comptent dans les journées parfaites
+export const isDrawCard = (c) => !c.bonus && !c.commune;
+
+export const daysBetween = (a, b) =>
+  Math.round((new Date(`${b}T12:00:00`) - new Date(`${a}T12:00:00`)) / 86400000);
+
+// Jours où au moins une carte a été capturée (date de capture, toutes cartes confondues)
+export const captureDays = (cards, caught) => new Set(cards.map((c) => caught[c.id]).filter(Boolean));
+
+// Série : jours consécutifs avec AU MOINS UNE capture (capturer plusieurs cartes
+// par jour dans WikiMasters est trop dur pour en faire la règle). Le jour en
+// cours ne casse pas la série tant qu'il n'est pas fini.
+// freeze (recherche « Gel de série ») : un jour sans capture est sauté sans
+// casser la série, au plus un tous les 7 jours
 export function streakOf(cards, caught, today, freeze = false) {
-  const byDay = new Map();
-  for (const c of cards) {
-    const d = byDay.get(c.date) ?? { total: 0, done: 0 };
-    d.total++;
-    if (caught[c.id]) d.done++;
-    byDay.set(c.date, d);
-  }
+  const days = captureDays(cards, caught);
+  if (days.size === 0) return 0;
+  const first = [...days].sort()[0];
+  let d = days.has(today) ? today : addDays(today, -1);
   let streak = 0;
   let lastFrozen = null;
-  const DAY = 86400000;
-  for (const date of [...byDay.keys()].sort().reverse()) {
-    const { total, done } = byDay.get(date);
-    if (done === total) streak++;
-    else if (date === today) continue;
-    else if (freeze && (!lastFrozen || (new Date(lastFrozen) - new Date(date)) / DAY >= 7)) lastFrozen = date;
+  while (d >= first) {
+    if (days.has(d)) streak++;
+    else if (freeze && (!lastFrozen || daysBetween(d, lastFrozen) >= 7)) lastFrozen = d;
     else break;
+    d = addDays(d, -1);
   }
   return streak;
+}
+
+// Série atteinte à chaque jour de capture (sans gel) et meilleure série
+export function streakHistory(days) {
+  const at = new Map();
+  let best = 0;
+  let prev = null;
+  for (const d of [...days].sort()) {
+    const n = prev && daysBetween(prev, d) === 1 ? at.get(prev) + 1 : 1;
+    at.set(d, n);
+    best = Math.max(best, n);
+    prev = d;
+  }
+  return { at, best };
 }

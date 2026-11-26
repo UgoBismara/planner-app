@@ -2,6 +2,7 @@ import { BookOpen, Check, Coins, FlaskConical, Layers, Lock, Telescope } from 'l
 import {
   BRANCHES,
   POINTS_BY_RARITY,
+  POINTS_PER_DAY,
   POINTS_PER_PERFECT_DAY,
   RESEARCH,
   researchById,
@@ -29,7 +30,7 @@ export default function ResearchView({ points, earned, unlocked, onResearch, bus
           </div>
           <p className="lab-hint">
             Capture : {POINTS_BY_RARITY.common} pt (Commune) à {POINTS_BY_RARITY.legendary} pts (Légendaire) ·
-            journée parfaite : +{POINTS_PER_PERFECT_DAY} · quêtes, coffres et succès en rapportent aussi · {earned} gagnés au total
+            jour de capture : +{POINTS_PER_DAY} · journée parfaite : +{POINTS_PER_PERFECT_DAY} · quêtes, défis, albums, saisons, coffres et succès en rapportent aussi · {earned} gagnés au total
           </p>
         </div>
       </div>

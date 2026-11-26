@@ -14,7 +14,7 @@ import {
   Volleyball,
 } from 'lucide-react';
 import { isShiny, rarityOf } from '../../data/wikimasters';
-import { ALBUM_TIERS, THEMES, nextTierOf, themeIdOf, tierOf } from '../../data/wikiThemes';
+import { ALBUM_PAGE, PAGE_REWARD, THEMES, themeIdOf, tierOf } from '../../data/wikiThemes';
 import { initialOf } from '../../data/wikiAchievements';
 
 const THEME_ICONS = {
@@ -29,8 +29,9 @@ const THEME_ICONS = {
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-// ctx : contexte des succès (buildContext) pour les stats déjà calculées
-export default function AlbumView({ ctx, fx, streak }) {
+// ctx : contexte des succès (buildContext) pour les stats déjà calculées ;
+// albums : econ.albums (mosaïques page par page)
+export default function AlbumView({ ctx, fx, streak, albums }) {
   const got = ctx.got;
   const letters = new Set(got.map((c) => initialOf(c.title)).filter(Boolean));
   const shinies = got.filter((c) => isShiny(c, fx.shinyRate));
@@ -61,38 +62,51 @@ export default function AlbumView({ ctx, fx, streak }) {
       </ul>
 
       <h3 className="ach-group-title">
-        Thèmes
+        Albums
         <small>
-          paliers {ALBUM_TIERS.map((t) => t.min).join(' · ')}
+          {albums.pages} page{albums.pages > 1 ? 's' : ''} complète{albums.pages > 1 ? 's' : ''} · +{PAGE_REWARD.xp} XP et +{PAGE_REWARD.points} pts par page
         </small>
       </h3>
-      <ul className="album-themes">
-        {THEMES.map((t) => {
-          const n = ctx.theme(t.id);
-          const tier = tierOf(n);
-          const next = nextTierOf(n);
-          const prevMin = tier?.min ?? 0;
+      <ul className="album-mosaics">
+        {albums.albums.map(({ theme: t, total, pages, page }) => {
+          const tier = tierOf(total);
           const Icon = THEME_ICONS[t.id];
           return (
-            <li key={t.id} className="album-theme" style={{ '--t': t.color, '--tier': tier?.color ?? 'transparent' }}>
-              <span className="album-theme-icon">
-                <Icon size={20} aria-hidden="true" />
-              </span>
-              <div className="album-theme-body">
-                <div className="album-theme-row">
-                  <span className="album-theme-name">{t.name}</span>
-                  {tier && <span className="album-tier">{tier.label}</span>}
-                </div>
-                <div className="ach-progress">
-                  <div className="ach-progress-bar album-bar">
-                    <div style={{ width: next ? `${((n - prevMin) / (next.min - prevMin)) * 100}%` : '100%' }} />
-                  </div>
-                  <span>
-                    {n}
-                    {next ? `/${next.min}` : ''}
-                  </span>
-                </div>
+            <li key={t.id} className="album-mosaic" style={{ '--t': t.color, '--tier': tier?.color ?? 'transparent' }}>
+              <div className="album-mosaic-head">
+                <span className="album-theme-icon">
+                  <Icon size={18} aria-hidden="true" />
+                </span>
+                <span className="album-theme-name">{t.name}</span>
+                {tier && <span className="album-tier">{tier.label}</span>}
+                <span className="album-mosaic-page">
+                  Page {pages + 1} · {page.length}/{ALBUM_PAGE}
+                </span>
               </div>
+              <div className="album-cells" aria-label={`${page.length} cases sur ${ALBUM_PAGE}`}>
+                {Array.from({ length: ALBUM_PAGE }, (_, i) => {
+                  const c = page[i];
+                  return c ? (
+                    <a
+                      key={c.id}
+                      className={`album-cell on${isShiny(c, fx.shinyRate) ? ' shiny' : ''}`}
+                      href={c.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ '--rarity': rarityOf(c).color }}
+                      title={`${c.title} · ${rarityOf(c).label}`}
+                      aria-label={c.title}
+                    />
+                  ) : (
+                    <span key={i} className="album-cell" />
+                  );
+                })}
+              </div>
+              {pages > 0 && (
+                <span className="album-mosaic-done">
+                  {pages} page{pages > 1 ? 's' : ''} complète{pages > 1 ? 's' : ''} · {total} cartes au total
+                </span>
+              )}
             </li>
           );
         })}

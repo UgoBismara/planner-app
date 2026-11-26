@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check:maths": "node scripts/check-maths.js",
-    "check:swim": "node scripts/check-swim.js"
+    "check:swim": "node scripts/check-swim.js",
+    "check:wiki": "node scripts/check-wiki.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.114.0",
